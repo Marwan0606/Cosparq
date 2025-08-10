@@ -9,6 +9,17 @@ const saveIdea = async (req,res)=>{
   }
 }
 
+const getIdea = async (req,res)=>{
+  try {
+    userId = req.params.id
+    const idea = await Idea.findOne({userId})
+    res.status(200).json({idea})
+  } catch (error) {
+    res.status(500).json({msg: error})
+  }
+}
+
 module.exports = {
-  saveIdea
+  saveIdea,
+  getIdea
 }

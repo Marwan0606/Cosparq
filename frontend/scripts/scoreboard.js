@@ -1,5 +1,3 @@
-//const ScoreboardResponses = require("../../backend/models/Scoreboard-responses");
-
 const scoreBoard = async (idea)=>{
   try {
 
@@ -13,39 +11,58 @@ const scoreBoard = async (idea)=>{
     */
 
     
-    //idea = await axios.get(`/api/save/idea/${userId}`)
-    let idea = "An AI powered app that helps you manage your day and schedule"
+    let idea = await axios.get(`/api/save/idea/${userId}`)
+    idea = idea.data.idea.idea
+    console.log(idea)
+    //let idea = "An AI powered app that helps you manage your day and schedule"
 
 
-    let response = ''
-    if (!newScoreGenerate) {
-      console.log('getting from database')
-      response = await axios.get(`/api/save/saveScoreResponse/${userId}`)
-    } else {
-      console.log('getting from AI')
-      response = await axios.post('/api/responses/idea', {
-        idea: idea
-      });
+    let response;
+    let resultData;
+    try {
+      response = await axios.get(`/api/save/saveScoreResponse/${userId}`);
+      if (response.data && response.data.scoreResponse) {
+        // Found a response in the database
+        console.log('getting from database');
+        let scoreboardResponse = response.data.scoreResponse.scoreboardResponse
+        resultData = JSON.parse(scoreboardResponse);
+      } else {
+        // Not found in database, get from AI
+        console.log('getting from AI');
+        response = await axios.post('/api/responses/idea', { idea });
+        console.log(response.data.result);
+        let scoreboardResponse = response.data.result;
+        
+        let saveScoreResponse = await axios.post('/api/save/saveScoreResponse', {scoreboardResponse, userId})
+        console.log(saveScoreResponse)
+
+        resultData = JSON.parse(response.data.result);
+      }
+    } catch (error) {
+      // If the GET request fails (e.g., 404 or server error), fallback to AI
+      console.log('Error fetching from database, getting from AI');
+      response = await axios.post('/api/responses/idea', { idea });
+      let saveScoreResponse = await axios.post('/api/save/saveScoreResponse', {scoreboardResponse, userId})
+      console.log(saveScoreResponse)
+      resultData = JSON.parse(response.data.result);
+      // ...use response.data.result...
     }
-    console.log(response.data.result);
 
-    let scoreboardResponse = response.data.result;
+
+    //console.log(response.data.result);
+
+    //let scoreboardResponse = response.data.result;
     
-    newScoreGenerate = false
-    localStorage.setItem('newScoreGenerateValue', newScoreGenerate)
+    //newScoreGenerate = false
+    //localStorage.setItem('newScoreGenerateValue', newScoreGenerate)
 
-    let saveScoreResponse = await axios.post('/api/save/saveScoreResponse', {scoreboardResponse, userId})
-    console.log(saveScoreResponse)
+    //let saveScoreResponse = await axios.post('/api/save/saveScoreResponse', {scoreboardResponse, userId})
+    //console.log(saveScoreResponse)
+
     //localStorage.setItem('response', JSON.stringify(response));
-
-    /*
-    let response = {
-    "result": "{\n  \"Originality\": {\n    \"score\": 60,\n    \"justification\": \"While collaborative to-do apps are common, your focus on real-time sharing, urgency labels, and task ownership adds value. However, these features are not entirely unique, as many existing apps offer similar functionalities.\"\n  },\n  \"Market Demand\": {\n    \"score\": 85,\n    \"justification\": \"The demand for efficient team collaboration tools is high, especially with remote work trends. Teams require effective task management solutions to enhance productivity and accountability.\"\n  },\n  \"Technical Feasibility\": {\n    \"score\": 80,\n    \"justification\": \"Developing a live, collaborative to-do app with features like real-time updates, user assignments, and urgency labels is technically feasible. Existing frameworks and technologies can support such development.\"\n  },\n  \"Barrier to Entry\": {\n    \"score\": 70,\n    \"justification\": \"The market has established players like Trello and Asana. Competing requires differentiation and significant marketing efforts to attract users from these incumbents.\"\n  },\n  \"Monetization Potential\": {\n    \"score\": 75,\n    \"justification\": \"Freemium models with premium features, subscriptions, or enterprise solutions can generate revenue. However, convincing users to pay amidst free alternatives poses a challenge.\"\n  },\n  \"Scalability\": {\n    \"score\": 85,\n    \"justification\": \"The app can scale by adding more users and teams without substantial additional costs, leveraging cloud infrastructure and modular design.\"\n  },\n  \"Regulatory & Legal Complexity\": {\n    \"score\": 60,\n    \"justification\": \"Handling user data requires compliance with data protection regulations like GDPR. Implementing robust security measures is essential to mitigate legal risks.\"\n  },\n  \"Overall\": {\n    \"score\": 70,\n    \"justification\": \"The app addresses a clear need in the market with feasible development plans. However, differentiating from established competitors and ensuring user adoption are critical challenges to its success.\"\n  }\n} "
-    }
-    */
    
 
-    const resultData = JSON.parse(response.data.result);
+    //let resultData = JSON.parse(response.data.result);
 
     //const resultData = JSON.parse(response.result);
 
