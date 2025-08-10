@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Your AI Cofounder — Action Plan</title>
+  <link rel="stylesheet" href="styles/action-page.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet"/>
+</head>
+<body>
+  <div id="sidebar-placeholder"></div>
+  <div class="container">
+
+    <!-- Title & Subtitle -->
+    <h1 class="headline">
+      <span class="gradient-text">Your Startup Action Plan</span>
+    </h1>
+    <p class="subtitle">
+      A comprehensive roadmap to turn your idea into a successful business
+    </p>
+
+    <!-- Concept Card -->
+    <div class="concept-card">
+      <div class="concept-header">
+        <svg class="icon" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none"/><circle cx="12" cy="12" r="6" stroke="currentColor" stroke-width="2" fill="none"/><circle cx="12" cy="12" r="2" fill="currentColor"/></svg>
+        <h3>Your Startup Concept</h3>
+      </div>
+      <div class="concept-content">"Here is the full concept written clearly. Here is the full concept written clearly.Here is the full concept written clearly.Here is the full concept written clearly.Here is the full concept written clearly.Here is the full concept written clearly.Here is the full concept written clearly."</div>
+    </div>
+
+    <!-- MVP & Tech Stack Grid -->
+    <div class="plan-grid">
+      <div class="card mvp-features">
+        <div class="card-header">
+          <svg class="icon" viewBox="0 0 24 24" fill="currentColor"><path d="M2 21l21-9L2 3v7l15 2-15 2v7z"/></svg>
+          <h3>MVP Features</h3>
+        </div>
+        <ul>
+          <li>User registration and authentication</li>
+          <li>Core problem-solving functionality</li>
+          <li>Basic UI and onboarding</li>
+          <li>Payment integration (if applicable)</li>
+          <li>Analytics & feedback collection</li>
+        </ul>
+      </div>
+
+      <div class="card tech-stack">
+        <div class="card-header">
+          <svg class="icon" viewBox="0 0 24 24" fill="currentColor"><path d="M8 3v2h8V3H8zm-3 4v2h14V7H5zm-2 4v2h18v-2H3zm0 4v2h18v-2H3zm2 4v2h14v-2H5z"/></svg>
+          <h3>Recommended Tech Stack</h3>
+        </div>
+        <div class="tags-group">
+          <div class="tag-group"><strong>Frontend:</strong>
+            <span>React</span><span>TypeScript</span><span>Tailwind CSS</span>
+          </div>
+          <div class="tag-group"><strong>Backend:</strong>
+            <span>Node.js</span><span>Express</span><span>PostgreSQL</span>
+          </div>
+          <div class="tag-group"><strong>Infrastructure:</strong>
+            <span>Vercel</span><span>Supabase</span><span>Stripe</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Timeline -->
+    <div class="timeline-card">
+      <div class="card-header">
+        <svg class="icon" viewBox="0 0 24 24" fill="currentColor"><path d="M3 5h18v2H3zm2 4h14v12H5z"/></svg>
+        <h3>10-Week Launch Timeline</h3>
+      </div>
+      <ol class="timeline-list">
+        <li>
+          <div class="step-number">1</div>
+          <div class="step-info">
+            <div class="step-title">Build MVP prototype</div>
+            <div class="step-subtitle">Weeks 1–4</div>
+          </div>
+          <div class="badge high">High</div>
+        </li>
+        <li>
+          <div class="step-number">2</div>
+          <div class="step-info">
+            <div class="step-title">User testing & feedback</div>
+            <div class="step-subtitle">Week 5</div>
+          </div>
+          <div class="badge high">High</div>
+        </li>
+        <li>
+          <div class="step-number">3</div>
+          <div class="step-info">
+            <div class="step-title">Marketing website & landing page</div>
+            <div class="step-subtitle">Week 6</div>
+          </div>
+          <div class="badge medium">Medium</div>
+        </li>
+        <li>
+          <div class="step-number">4</div>
+          <div class="step-info">
+            <div class="step-title">Beta user acquisition</div>
+            <div class="step-subtitle">Weeks 7–8</div>
+          </div>
+          <div class="badge high">High</div>
+        </li>
+        <li>
+          <div class="step-number">5</div>
+          <div class="step-info">
+            <div class="step-title">Public launch preparation</div>
+            <div class="step-subtitle">Weeks 9–10</div>
+          </div>
+          <div class="badge medium">Medium</div>
+        </li>
+      </ol>
+    </div>
+
+    <!-- CTA Buttons -->
+    <div class="cta-buttons">
+      <button class="cta primary">Start Building with AI</button>
+      <button class="cta secondary">Share Plan</button>
+    </div>
+
+  </div>
+  <script>
+    fetch("sidebar.html")
+      .then(res => res.text())
+      .then(html => {
+        document.getElementById("sidebar-placeholder").innerHTML = html;
+
+        const sidebar = document.getElementById("sidebar");
+        const btn = document.querySelector(".js-menu-button"); // <— changed
+
+        if (btn && sidebar) {
+          btn.addEventListener("click", () => {
+            sidebar.classList.toggle("open");
+          });
+        }
+
+        // (optional) click-outside
+        document.addEventListener("click", (e) => {
+          if (sidebar.classList.contains("open") &&
+              !sidebar.contains(e.target) &&
+              !e.target.closest(".js-menu-button")) {
+            sidebar.classList.remove("open");
+          }
+        });
+      });
+  </script>
+</body>
+</html>

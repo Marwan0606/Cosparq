@@ -1,0 +1,87 @@
+<style>
+  :root{
+    --bg:#0f0f10; --panel:#191a1d; --text:#e8e8ea; --muted:#a5a7ae;
+    --border: rgba(255,255,255,0.06); --radius:14px; --shadow:0 10px 30px rgba(0,0,0,.35);
+    --grad: linear-gradient(90deg,#8400ff 0%,#f94016 40%,#f96d16 60%,#3b82f6 100%);
+    font-family:'Inter',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html {color:var(--text)}
+
+  /* Sidebar */
+  .sidebar{
+    position: fixed;
+    top: 0; left: 0;
+    width: 220px;
+    height: 100%;
+    background:#0b0b0c;
+    border-right:1px solid var(--border);
+    padding:24px 16px;
+    display:flex; 
+    flex-direction:column; 
+    gap:16px;
+    transform: translateX(-100%); /* start hidden */
+    transition: transform .25s ease;
+    z-index: 50;
+  }
+  .sidebar.open { transform: translateX(0); }
+
+  .brand{ font-weight:800; font-size:28px; }
+  .menu{ display:flex; flex-direction:column; gap:8px }
+  .menu-section{
+    margin-top:8px; color:var(--muted); font-size:12px; text-transform:uppercase; letter-spacing:.12em;
+  }
+  .menu-item{
+    padding:10px 12px; border-radius:10px; color:var(--text); text-decoration:none;
+    border:1px solid transparent;
+  }
+  .menu-item:hover{ background:#141417; border-color:var(--border) }
+  .menu-item.muted{ color:#b4b6bd }
+  .menu-item.active{ background:#15161a; border-color:var(--border) }
+  .sidebar-foot{ margin-top:auto; font-size:12px; color:var(--muted); display:flex; align-items:center; gap:8px }
+  .kbd{ border:1px solid var(--border); padding:2px 6px; border-radius:6px; background:#121214 }
+
+  .menu-button {
+    position: fixed;
+    left: 15px;
+    top: 15px;
+  }
+  .menu-button { background: transparent; border: 0; padding: 6px; }
+  .menu-icon { background: transparent; display: block; width: 40px; height: 40px; }
+
+</style>
+
+
+<aside class="sidebar js-sidebar" id="sidebar">
+  <div class="brand">CoSparq</div>
+
+  <div class="menu-section">Ideas</div>
+  <nav class="menu">
+    <a href="/dashboard-idea1.html" class="menu-item active">Idea1</a>
+    <a href="/dashboard-idea2.html" class="menu-item">Idea2</a>
+    <a href="/dashboard-idea3.html" class="menu-item">Idea3</a>
+  </nav>
+
+  <div class="menu-section">Workflow</div>
+  <nav class="menu">
+    <a href="/idea-page.html" class="menu-item">New Idea</a>
+    <a href="/scoreboard-page.html" class="menu-item">Scoreboard</a>
+    <a href="/market-research.html" class="menu-item">Market Research</a>
+    <a href="/action-page.html" class="menu-item">Action Plan</a>
+    <a href="/chat-page.html" class="menu-item">AI Chat</a>
+  </nav>
+
+  <div class="menu-section">Account</div>
+  <nav class="menu">
+    <a href="#" class="menu-item muted">Settings</a>
+    <a href="#" class="menu-item muted">Billing</a>
+  </nav>
+
+  <div class="sidebar-foot">
+    <div class="kbd" title="Cmd/Ctrl + K">⌘K</div> Quick Switch
+  </div>
+</aside>
+
+<button class="menu-button js-menu-button">
+  <img class="menu-icon" src="icons/menu-icon.png">
+</button>

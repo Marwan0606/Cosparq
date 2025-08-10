@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    #sidebar {
+      position: fixed;
+      left: -200px; /* hidden */
+      top: 0;
+      width: 200px;
+      height: 100%;
+      background: lightgray;
+      padding: 10px;
+      transition: left 0.3s;
+    }
+    #sidebar.open {
+      left: 0;
+    }
+  </style>
+</head>
+<body>
+
+<button id="menuBtn">☰ Menu</button>
+
+<div id="sidebar">
+  <p>Sidebar content</p>
+  <p><a href="#">Link 1</a></p>
+  <p><a href="#">Link 2</a></p>
+</div>
+
+<script>
+  const sidebar = document.getElementById("sidebar");
+  const btn = document.getElementById("menuBtn");
+
+  btn.onclick = () => {
+    sidebar.classList.toggle("open");
+  };
+
+  document.addEventListener("click", (e) => {
+    if (sidebar.classList.contains("open") && !sidebar.contains(e.target) && e.target !== btn) {
+      sidebar.classList.remove("open");
+    }
+  });
+</script>
+
+</body>
+</html>

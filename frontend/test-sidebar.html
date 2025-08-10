@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <style>
+
+  </style>
+</head>
+<body>
+  
+  <div class="sidebar js-sidebar">
+    <div class="sidebar-contents">
+      <h2 class="logo">CoSparq</h2>
+      <div class="menu-buttons">
+        <button class="menu-button">button</button>
+        <button class="menu-button">button</button>
+        <button class="menu-button">button</button>
+      </div>
+    </div>
+  </div>
+
+
+
+
+  <script>
+    openMenu = document.querySelector('.open-button');
+    sidebar = document.querySelector('.sidebar')
+    
+    document.querySelector('.open-button').addEventListener('click', ()=>{
+      sidebar.classList.toggle("open");
+    })
+
+    document.addEventListener("click", (e) => {
+      if (sidebar.classList.contains("open") && !sidebar.contains(e.target) && e.target !== openMenu) {
+        sidebar.classList.remove("open");
+      }
+    });
+  </script>
+</body>
+</html>
+
+
+

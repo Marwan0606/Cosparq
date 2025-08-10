@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Your AI Cofounder — Pitch Your Idea</title>
+  <link rel="stylesheet" href="styles/idea-page.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+</head>
+<body>
+  <!-- background effects -->
+  <div class="background-glow"></div>
+  <div class="background-grid"></div>
+
+  <!-- main content -->
+  <div class="container">
+    <div class="idea-card">
+      <div class="icon-wrap">
+        <svg viewBox="0 0 24 24" fill="currentColor" class="feature-icon">
+          <path d="M9 21h6v-1H9v1zm3-19a5 5 0 00-5 5c0 2.25 1.5 4.13 3.5 4.72V14h3v-2.28c2-.59 3.5-2.47 3.5-4.72a5 5 0 00-5-5z"/>
+        </svg>
+      </div>
+
+      <h2 class="headline">What's Your Big Idea?</h2>
+      <p class="subtitle">
+        Share your business concept and let’s analyze its potential together.
+      </p>
+
+      <textarea
+        class="idea-input js-input"
+        rows="5"
+        placeholder="Describe your business idea in as much detail as you like…"
+      ></textarea>
+
+      <button class="cta-button js-analyze-button">Analyze My Idea →</button>
+
+      <p class="examples-label">Need inspiration? Try these examples:</p>
+      <div class="examples">
+        <div class="example-item">
+          "A platform that connects local farmers directly with restaurants"
+        </div>
+        <div class="example-item">
+          "An AI-powered app that helps people reduce food waste at home"
+        </div>
+        <div class="example-item">
+          "A virtual coworking space for remote freelancers with built-in productivity tools"
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script
+    src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.21.1/axios.min.js"
+    integrity="sha512-bZS47S7sPOxkjU/4Bt0zrhEtWx0y0CRkhEp8IckzK+ltifIIE9EMIMTuT/mEzoIMewUINruDBIR/jJnbguonqQ=="
+    crossorigin="anonymous"
+    referrerpolicy="no-referrer"
+  ></script>
+  <script type="module" src="./scripts/idea.js"></script>
+</body>
+</html>

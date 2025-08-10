@@ -1,0 +1,121 @@
+/* Base */
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{
+  font-family:'Inter',sans-serif;background:#121212;color:#e0e0e0;
+  display:flex;justify-content:center;align-items:flex-start;padding-top:40px
+}
+.container{width:100%;max-width:1280px;padding:0 24px 80px}
+.page-header{text-align:center;margin-bottom:26px}
+.headline{font-size:clamp(2.2rem,4.2vw,3.6rem);font-weight:800;line-height:1.08;margin-bottom:10px}
+.gradient-text{
+  background:linear-gradient(90deg,#8400ff 0%,#f94016 40%,#f96d16 60%,#3b82f6 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent
+}
+.subtitle{color:#cfcfcf;font-size:1.05rem}
+
+/* Grid skeleton (matches your mock) */
+.grid{
+  display:grid;gap:22px;
+  grid-template-columns:repeat(12,1fr);
+  grid-auto-rows:minmax(160px,auto);
+}
+
+/* Panels / Card aesthetic with gradient border */
+.panel{
+  background:#1a1a1a;border:2px solid transparent;border-radius:16px;
+  background-clip:padding-box,border-box;background-origin:border-box;
+  background-image:linear-gradient(#1a1a1a,#1a1a1a),
+                   linear-gradient(90deg,#8400ff,#ba0186,#f94016,#f96d16,#3b82f6);
+  box-shadow:0 12px 28px rgba(0,0,0,.28);
+  padding:22px
+}
+.panel-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px}
+.panel-title{font-size:1.15rem;font-weight:700}
+.panel-note{color:#9a9a9a;font-size:.9rem}
+
+/* Placement (12-col) */
+.g-monetization{grid-column:1 / span 6; grid-row:1; min-height:360px}
+.g-audience    {grid-column:7 / span 6; grid-row:1; min-height:360px}
+.g-competitors {grid-column:1 / span 4; grid-row:2 / span 2; min-height:500px}
+.g-extra       {grid-column:5 / span 8; grid-row:2; min-height:240px}
+.g-verdict     {grid-column:5 / span 8; grid-row:3; min-height:280px}
+
+/* Content utilities */
+.rows{display:grid;gap:14px}
+.row{background:#171717;border:1px solid #2a2a2a;border-radius:12px;padding:12px}
+.row:hover{border-color:#3b3b3b}
+.bullets{list-style:none;display:grid;gap:6px;line-height:1.55}
+.bullets.two{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+@media (max-width:900px){.bullets.two{grid-template-columns:1fr}}
+.tags{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.tag{
+  font-size:.8rem;padding:6px 10px;border-radius:9999px;
+  background:#141414;border:1px solid #2a2a2a;color:#ddd
+}
+.tag-okay{background:#1d1920;border-color:#3a2b49}
+.tag-good{background:#182018;border-color:#294029}
+
+/* Competitors list */
+.comp-card{
+  background:#171717;border:1px solid #2a2a2a;border-radius:14px;padding:14px;margin-bottom:12px;
+  transition:transform .15s ease,border-color .15s ease
+}
+.comp-card:hover{transform:translateY(-3px);border-color:#3b3b3b}
+.comp-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.comp-name{font-weight:700}
+.comp-link{font-size:.85rem;color:#a7b8ff;text-decoration:none}
+.metric{display:flex;justify-content:space-between;font-size:.95rem;margin:4px 0}
+.badge{display:inline-block;font-size:.75rem;padding:4px 8px;border-radius:9999px;border:1px solid #2a2a2a;background:#141414}
+.badge-amber{color:#ffe5c2;border-color:#4a2d15;background:#24160b}
+
+/* Verdict panel */
+.verdict{display:grid;grid-template-columns:1.4fr .8fr;gap:18px;align-items:center}
+.verdict-justification{color:#d6d6d6;line-height:1.65}
+.verdict-score{display:flex;flex-direction:column;align-items:center;gap:8px}
+.score-ring{
+  --score:72; /* default */
+  width:140px;height:140px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  background:
+    radial-gradient(closest-side,#1a1a1a 78%,transparent 79% 100%),
+    conic-gradient(
+      #8400ff calc(var(--score)*1%), 
+      #2a2a2a 0
+    );
+  position:relative
+}
+.score-ring::after{
+  content:"";position:absolute;inset:6px;border-radius:50%;
+  background:#1a1a1a
+}
+.score-number{font-size:2.2rem;font-weight:800;position:relative;z-index:1}
+.score-label{font-size:.9rem;color:#bdbdbd}
+
+/* Footer */
+.footer-actions{display:flex;gap:14px;align-items:center;justify-content:center;margin-top:24px}
+.cta-button{
+  background:linear-gradient(90deg,#8400ff,#ba0186,#f94016,#f96d16);
+  color:#fff;padding:.9rem 1.4rem;border-radius:9999px;text-decoration:none;font-weight:600
+}
+.cta-button:hover{opacity:.9}
+.cta-note{color:#8f8f8f;font-size:.95rem}
+
+/* Tooltip */
+.tooltip{
+  position:fixed;display:none;pointer-events:none;z-index:9999;
+  background:rgba(28,28,28,.98);color:#eee;padding:10px 12px;border-radius:10px;
+  border:1px solid #2a2a2a;max-width:420px;box-shadow:0 10px 30px rgba(0,0,0,.45)
+}
+.tooltip .t-title{font-weight:700;margin-bottom:6px}
+.tooltip .t-body{color:#ddd;font-size:.92rem;line-height:1.45}
+
+/* Responsive stacking */
+@media (max-width:1200px){
+  .g-monetization{grid-column:1 / span 12}
+  .g-audience    {grid-column:1 / span 12}
+  .g-competitors {grid-column:1 / span 12;grid-row:auto}
+  .g-extra       {grid-column:1 / span 12}
+  .g-verdict     {grid-column:1 / span 12}
+  .verdict{grid-template-columns:1fr;text-align:center}
+}

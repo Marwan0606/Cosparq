@@ -1,0 +1,149 @@
+/* styles.css */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+html, body {
+  height: 100%;
+  font-family: 'Inter', sans-serif;
+  background-color: #121212;
+  color: #e0e0e0;
+}
+
+/* Center container horizontally & give some top breathing room */
+body {
+  display: flex;
+  justify-content: center;
+  padding-top: 150px;
+}
+.container {
+  width: 100%;
+  max-width: 1140px;
+  padding: 0 24px;
+}
+
+/* Hero Section */
+.hero {
+  text-align: center;
+  margin-bottom: 60px;
+}
+.headline {
+  font-size: 5rem;
+  font-weight: 800;
+  line-height: 1.1;
+  margin-bottom: 40px;
+}
+.subtitle {
+  font-size: 1.5rem;
+  color: #cccccc;
+  margin-bottom: 25px;
+}
+.description {
+  font-size: 1.125rem;
+  color: #bbbbbb;
+  margin-bottom: 60px;
+}
+
+.gradient-text {
+  background: linear-gradient(
+    90deg,
+    #8400ff 0%,
+    #f94016 40%,
+    #f96d16 60%,
+    #3b82f6 100%
+  );
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* CTA */
+.cta-wrap {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.cta-button {
+  background: linear-gradient(90deg, #8400ff, #ba0186, #f94016, #f96d16);
+  color: #ffffff;
+  padding: 0.9rem 2rem;
+  border-radius: 9999px;
+  font-weight: 600;
+  font-size: 1rem;
+  text-decoration: none;
+  transition: opacity 0.2s ease;
+}
+.cta-button:hover {
+  opacity: 0.85;
+}
+.cta-note {
+  font-size: 0.95rem;
+  color: #6b6b6b;
+}
+
+/* Features Grid */
+.features {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2.5rem;
+  margin-bottom: 80px;
+}
+
+/* Feature Card */
+.feature-card {
+  background-color: #1f1f1f;
+  border: 1px solid #2c2c2c;
+  border-radius: 16px;
+  padding: 2.5rem 2rem;
+  text-align: center;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.5s ease;
+}
+.feature-card:hover {
+  transform: translateY(-6px);
+  border-color: #444444;
+  
+}
+.feature-icon {
+  width: 56px;
+  height: 56px;
+  margin-bottom: 1rem;
+  color: #8a8a8a;
+}
+.feature-card h3 {
+  font-size: 1.25rem;
+  margin-bottom: 0.75rem;
+  color: #ffffff;
+}
+.feature-card p {
+  font-size: 1rem;
+  color: #bbbbbb;
+  line-height: 1.5;
+}
+
+.target-icon {
+  color: #8400ff;
+}
+
+
+.feature-card1:hover {
+  box-shadow: 0px 4px 40px #8400ff;
+}
+
+.bulb-icon {
+  color: #f94016
+}
+
+.feature-card2:hover {
+  box-shadow: 0px 4px 40px #f94016;
+}
+
+.star-icon {
+  color: #3b82f6
+}
+
+.feature-card3:hover {
+  box-shadow: 0px 4px 40px #3b82f6;
+}

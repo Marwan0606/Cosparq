@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Market Research — ShouldIBuildIt</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles/market-research.css" />
+</head>
+<body>
+  <div id="sidebar-placeholder"></div>
+  <div class="container">
+    <header class="page-header">
+      <h1 class="headline"><span class="gradient-text">Market Research</span></h1>
+      <p class="subtitle">Competitors, market size, pricing insight, and a reality-check on whether you can compete.</p>
+    </header>
+
+    <main class="grid js-grid">
+      <!-- Top row -->
+      
+    </main>
+
+    <footer class="footer-actions">
+      <a class="cta-button" href="/build/action-plan.html">Continue → Action Plan</a>
+      <span class="cta-note">Hover any item for quick context.</span>
+    </footer>
+  </div>
+
+  <!-- Tooltip -->
+  <div id="tooltip" class="tooltip"></div>
+  
+  <script>
+    fetch("sidebar.html")
+      .then(res => res.text())
+      .then(html => {
+        document.getElementById("sidebar-placeholder").innerHTML = html;
+
+        const sidebar = document.getElementById("sidebar");
+        const btn = document.querySelector(".js-menu-button"); // <— changed
+
+        if (btn && sidebar) {
+          btn.addEventListener("click", () => {
+            sidebar.classList.toggle("open");
+          });
+        }
+
+        // (optional) click-outside
+        document.addEventListener("click", (e) => {
+          if (sidebar.classList.contains("open") &&
+              !sidebar.contains(e.target) &&
+              !e.target.closest(".js-menu-button")) {
+            sidebar.classList.remove("open");
+          }
+        });
+      });
+  </script>
+  <script
+    src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.21.1/axios.min.js"
+    integrity="sha512-bZS47S7sPOxkjU/4Bt0zrhEtWx0y0CRkhEp8IckzK+ltifIIE9EMIMTuT/mEzoIMewUINruDBIR/jJnbguonqQ=="
+    crossorigin="anonymous"
+    referrerpolicy="no-referrer"
+  ></script>
+  <script src="scripts/tooltip-market-research.js"></script>
+  <script type="module" src="scripts/market-research.js"></script>
+</body>
+</html>

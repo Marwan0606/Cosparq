@@ -1,0 +1,167 @@
+/* ——— Global & Container ——— */
+* { margin:0; padding:0; box-sizing:border-box; }
+html, body {
+  height:100%;
+  font-family:'Inter',sans-serif;
+  background-color:#121212;
+  color:#e0e0e0;
+}
+body { display:flex; justify-content:center; }
+.container {
+  width:100%; max-width:900px;
+  padding: 40px 24px;
+}
+
+/* ——— Title & Subtitle ——— */
+.headline {
+  font-size:2.5rem; font-weight:800;
+  text-align:center; margin-bottom:8px;
+}
+.subtitle {
+  font-size:1rem; color:#bbbbbb;
+  text-align:center; margin-bottom:32px;
+}
+.gradient-text {
+  background:linear-gradient(
+    90deg,
+    #8400ff 0%, #f94016 40%, #f96d16 60%, #3b82f6 100%
+  );
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+}
+
+/* ——— Concept Card ——— */
+.concept-card {
+  background:#1f1f1f; border:1px solid #2c2c2c;
+  border-radius:12px; padding:16px; margin-bottom:32px;
+}
+.concept-header {
+  display:flex; align-items:center; gap:8px;
+  margin-bottom:8px;
+}
+.concept-header .icon {
+  width:24px; height:24px; color:#8400ff;
+}
+.concept-header h3 {
+  font-size:1.125rem; font-weight:600;
+  color:#ffffff;
+}
+.concept-content {
+  font-size:1rem; color:#cccccc;
+  padding-left:32px;
+}
+
+/* ——— Grid: MVP & Tech Stack ——— */
+.plan-grid {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:24px; margin-bottom:32px;
+}
+.card {
+  background:#1f1f1f; border:1px solid #2c2c2c;
+  border-radius:12px; padding:16px;
+}
+.card-header {
+  display:flex; align-items:center; gap:8px;
+  margin-bottom:12px;
+}
+.card-header .icon {
+  width:20px; height:20px; color:#f96d16;
+}
+.card-header h3 {
+  font-size:1rem; font-weight:600;
+  color:#ffffff;
+}
+
+/* MVP Features */
+.mvp-features ul {
+  list-style:none; padding-left:0;
+}
+.mvp-features li {
+  position:relative; padding-left:24px; margin-bottom:8px;
+  color:#dddddd; line-height:1.4;
+}
+.mvp-features li::before {
+  content:'✔'; position:absolute; left:0; color:#48bb78;
+}
+
+/* Tech Stack */
+.tags-group {
+  display:flex; flex-direction:column; gap:8px;
+}
+.tag-group {
+  display:flex; align-items:center; gap:8px; flex-wrap:wrap;
+}
+.tag-group strong {
+  margin-right:4px; color:#ffffff; font-weight:500;
+}
+.tag-group span {
+  background:#2a2a2a; border:1px solid #3a3a3a;
+  border-radius:9999px; padding:4px 8px; font-size:0.875rem;
+  color:#e0e0e0;
+}
+
+/* ——— Timeline ——— */
+.timeline-card {
+  background:#1f1f1f; border:1px solid #2c2c2c;
+  border-radius:12px; padding:16px; margin-bottom:32px;
+}
+.timeline-card .card-header {
+  color:#f96d16;
+}
+.timeline-list {
+  list-style:none; padding:0; margin:0;
+  display:flex; flex-direction:column; gap:12px;
+}
+.timeline-list li {
+  display:flex; align-items:center; gap:12px;
+  background:#2a2a2a; border-radius:8px;
+  padding:12px 16px; position:relative;
+}
+.step-number {
+  background:rgba(132,0,255,0.1);
+  color:#8400ff;
+  font-weight:600; width:32px; height:32px;
+  display:flex; align-items:center; justify-content:center;
+  border-radius:50%; font-size:1rem;
+}
+.step-info {
+  flex:1;
+}
+.step-title {
+  font-size:1rem; font-weight:600; color:#ffffff;
+}
+.step-subtitle {
+  font-size:0.875rem; color:#bbbbbb;
+}
+.badge {
+  padding:4px 8px; font-size:0.75rem;
+  border-radius:12px; font-weight:600;
+}
+.badge.high {
+  background:#e53e3e; color:#ffffff;
+}
+.badge.medium {
+  background:#555555; color:#ffffff;
+}
+
+/* ——— CTA Buttons ——— */
+.cta-buttons {
+  display:flex; gap:16px; justify-content:center;
+}
+.cta {
+  padding:12px 24px; font-size:1rem; font-weight:600;
+  border-radius:9999px; cursor:pointer; border:1px solid transparent;
+  transition:opacity 0.2s ease;
+}
+.cta.primary {
+  background:linear-gradient(90deg, #8400ff, #ba0186, #f94016, #f96d16);
+  color:#ffffff;
+}
+.cta.secondary {
+  background:none; border-color:#2c2c2c; color:#e0e0e0;
+}
+.cta.primary:hover { opacity:0.85; }
+.cta.secondary:hover {
+  background:#2a2a2a; border-color:#8400ff; color:#ffffff;
+}

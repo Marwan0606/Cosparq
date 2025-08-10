@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AI Cofounder Chat</title>
+  <link rel="stylesheet" href="styles/chat-page.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet"/>
+</head>
+<body>
+  <div id="sidebar-placeholder"></div>
+  <div class="container">
+
+    <!-- Title & Subtitle -->
+    <h1 class="headline">
+      <span class="gradient-text">Your AI Cofounder</span>
+    </h1>
+    <p class="subtitle">Chat with your AI cofounder to refine your idea</p>
+    
+
+    <!-- Chat Window -->
+    <div class="chat-window">
+      <div class="message bot">
+        <div class="avatar">🤖</div>
+        <div class="bubble">
+          Great! I’m now fully familiar with your startup idea. How can I help you move forward today?
+          <div class="timestamp">02:26 PM</div>
+        </div>
+      </div>
+      <div class="message user">
+        <div class="bubble">
+          I’d like to improve my app’s feasibility score.
+          <div class="timestamp">02:27 PM</div>
+        </div>
+      </div>
+      <!-- more messages… -->
+    </div>
+
+    <!-- ◉ Quick Actions (moved here) -->
+    <div class="quick-title">Quick actions to get started:</div>
+    <div class="quick-actions">
+      <button class="quick-btn">⚙️ Help me choose the right tech stack</button>
+      <button class="quick-btn">🎯 How should I validate my MVP features?</button>
+      <button class="quick-btn">💡 What should I focus on first?</button>
+    </div>
+
+    <!-- Input Area -->
+    <div class="chat-input-area">
+      <input
+        type="text"
+        class="chat-input"
+        placeholder="Ask about features, strategy, implementation..."
+      />
+      <button class="send-btn">➤</button>
+    </div>
+
+  </div>
+  <script>
+    fetch("sidebar.html")
+      .then(res => res.text())
+      .then(html => {
+        document.getElementById("sidebar-placeholder").innerHTML = html;
+
+        const sidebar = document.getElementById("sidebar");
+        const btn = document.querySelector(".js-menu-button"); // <— changed
+
+        if (btn && sidebar) {
+          btn.addEventListener("click", () => {
+            sidebar.classList.toggle("open");
+          });
+        }
+
+        // (optional) click-outside
+        document.addEventListener("click", (e) => {
+          if (sidebar.classList.contains("open") &&
+              !sidebar.contains(e.target) &&
+              !e.target.closest(".js-menu-button")) {
+            sidebar.classList.remove("open");
+          }
+        });
+      });
+  </script>
+</body>
+</html>

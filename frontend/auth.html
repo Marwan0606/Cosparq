@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Your AI Cofounder — Auth</title>
+  <link rel="stylesheet" href="styles/auth.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet"/>
+</head>
+<body>
+  <div class="auth-container">
+    <!-- Brand Panel -->
+    <div class="brand-side" aria-hidden="true">
+      <h1>Welcome to Your AI Cofounder</h1>
+      <p>Log in to manage your ideas or sign up to start building with AI.</p>
+      <div class="switcher">
+        <button type="button" class="active" data-target="login">Log In</button>
+        <button type="button" data-target="signup">Sign Up</button>
+      </div>
+    </div>
+
+    <!-- Form Panel -->
+    <div class="form-side">
+      <div class="tabs">
+        <div class="tab-btn active" data-view="login">Log In</div>
+        <div class="tab-btn" data-view="signup">Sign Up</div>
+      </div>
+
+      <!-- LOGIN FORM -->
+      <form id="login-form">
+        <div class="field">
+          <label for="login-email">Email</label>
+          <input id="login-email" class="js-login-email" type="email" placeholder="you@example.com" required/>
+        </div>
+        <div class="field">
+          <label for="login-password">Password</label>
+          <input id="login-password" class="js-login-password" type="password" placeholder="••••••••" required/>
+        </div>
+        <div class="helper">
+          <label><input type="checkbox"/> Remember me</label>
+          <a href="#">Forgot password?</a>
+        </div>
+        <div class="problem js-problem"></div>
+        <button type="submit" class="btn btn-primary js-login">Log In</button>
+        <div class="divider"><span>or</span></div>
+        <div class="inline">
+          <button type="button" class="btn btn-outline">Continue with Google</button>
+          <button type="button" class="btn btn-outline">Continue with Apple</button>
+        </div>
+      </form>
+
+      <!-- SIGN UP FORM -->
+      <form id="signup-form" class="hidden">
+        <div class="field">
+          <label for="signup-name">Full Name</label>
+          <input class="js-signup-name" id="signup-name" type="text" placeholder="Jane Doe" required/>
+        </div>
+        <div class="field">
+          <label for="signup-email">Email</label>
+          <input class="js-signup-email" id="signup-email" type="email" placeholder="you@example.com" required/>
+        </div>
+        <div class="field">
+          <label for="signup-password">Password</label>
+          <input class="js-signup-password" id="signup-password" type="password" placeholder="••••••••" required/>
+        </div>
+        <button type="submit" class="btn btn-primary js-create-account">Create Account</button>
+      </form>
+    </div>
+  </div>
+  <script
+    src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.21.1/axios.min.js"
+    integrity="sha512-bZS47S7sPOxkjU/4Bt0zrhEtWx0y0CRkhEp8IckzK+ltifIIE9EMIMTuT/mEzoIMewUINruDBIR/jJnbguonqQ=="
+    crossorigin="anonymous"
+    referrerpolicy="no-referrer"
+  ></script>
+  <script src="scripts/auth-animations.js"></script>
+  <script src="scripts/auth.js"></script>
+</body>
+</html>
