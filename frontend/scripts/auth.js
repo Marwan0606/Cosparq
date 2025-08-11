@@ -45,7 +45,7 @@ const login = async ()=>{
     localStorage.setItem('user', JSON.stringify(user))
 
     if (localStorage.getItem('user')) {
-      window.location.href = 'dashboard.html';
+      window.location.href = 'idea-page.html';
     } else {
       console.error('Failed to store user in localStorage!');
     }

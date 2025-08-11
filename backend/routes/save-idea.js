@@ -7,6 +7,6 @@ router.post('/idea', saveIdea);
 
 router.get('/idea/:id', getIdea);
 
-router.get('/idea/:id', getIdeas);
+router.get('/ideas/:id', getIdeas);
 
 module.exports = router;

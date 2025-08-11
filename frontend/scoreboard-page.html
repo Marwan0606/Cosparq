@@ -93,5 +93,17 @@
     referrerpolicy="no-referrer"
   ></script>
   <script type="module" src="./scripts/scoreboard.js"></script>
+
+  <script type="module">
+  async function loadSidebar() {
+    const res  = await fetch('sidebar.html');
+    const html = await res.text();
+    document.getElementById('sidebar-placeholder').innerHTML = html;
+
+    const { initSidebar } = await import('./scripts/sidebar.js');
+    await initSidebar();
+  }
+  loadSidebar();
+</script>
 </body>
 </html>
