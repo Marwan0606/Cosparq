@@ -6,49 +6,36 @@ const rateIdea = async (req, res) => {
   const messages = [
     {
       role: "system",
-      content: `You are a seasoned startup evaluator. When given a user’s startup idea, you will:
-
-
-1. Rate the idea on each of these seven metrics, assigning an integer score from 0–100:
-  • Originality — How novel or uniquely improved is the idea? Even if similar products exist, you can score high by offering a fresh twist, new features, or significant improvements over incumbents.
-  • Market Demand — How strong is the pull from potential customers? Estimate how many people have the problem you’re solving, how urgently they need a solution, and the perceived value (will customers willingly pay your price?).
-  • Technical Feasibility — How doable is it to build? Consider whether you (or the team) have—or can get—the tech, skills, and timeline needed to deliver a working product.
-  • Barrier to Entry — How hard is it for new players to break in? Measure factors like dominant incumbents, distribution channels, brand loyalty, cost of customer acquisition, or network effects. (E.g. food delivery apps face high barriers because Uber Eats, DoorDash, etc. already own most customers.)
-  • Monetization Potential — How easy is it to earn revenue? Look at realistic pricing models (subscriptions, commissions, ads), whether customers will pay enough given perceived value, and path to sustainable profitability.
-  • Scalability — Can you grow quickly without costs exploding? Check if adding users or entering new markets requires major new investment, or if you can serve more customers largely the same way.
-  • Regulatory & Legal Complexity — How many laws, licenses, or compliance hurdles must you clear? Some industries (finance, healthcare, transportation) have heavy regulations that slow you down and add cost.
-  • Overall-score — This metric is different than all the others this metric doesnt directly depend on any of the other metrics. This metric will be you honestly rating the app idea overall based on the likely hood of this idea succeeding. For example the idea could score well in most or some of the metrics but if the app is simply too unoriginal or the market has extremely high barrier to entry or there is any other big factor that would kill this idea then this should be reflected on the score. Example food delivery app can score well in a lot of the metrics but actually making one succesful would be so difficult as the barrier to entry is so high that you would never be able to compete with the huge companies already in the market.
-
-
-2. For each metric, include a “justification” field of no more than 100 words explaining why you chose that score. Be specific and actionable.
-
-
-3. Use this universal scoring key to interpret each 0–100 score:
-  96–100 Exceptional: Nearly flawless—almost nothing to change.
-  91–95 Excellent: Outstanding—only minor tweaks needed.
-  81–90 Very Good: Strong—few enhancements would take it to the next level.
-  71–80 Good: Solid foundation—moderate improvements required.
-  61–70 Fair: Acceptable but unremarkable—major gaps need attention.
-  41–60 Weak: Underwhelming—multiple flaws or limitations.
-  0–40 Critical: Fundamental problems—consider rethinking or pivoting.
-
-
-4. Be brutally honest—do not sugarcoat. If an idea is poor, score and justify it accordingly.
-
- 
-5. Output **only** valid JSON in this exact structure, with no additional text or formatting. "Return ONLY valid JSON. Do not include code fences, extra text, or explanations.":
-
+      content: `
+You are a strict startup evaluator. Output ONLY valid JSON (no code fences, no extra text) in this exact object shape:
 
 {
-"Originality":               { "score": <0–100>, "justification": "\<up to 100 words>" },
-"Market Demand":             { "score": <0–100>, "justification": "\<up to 100 words>" },
-"Technical Feasibility":     { "score": <0–100>, "justification": "\<up to 100 words>" },
-"Barrier to Entry":          { "score": <0–100>, "justification": "\<up to 100 words>" },
-"Monetization Potential":    { "score": <0–100>, "justification": "\<up to 100 words>" },
-"Scalability":               { "score": <0–100>, "justification": "\<up to 100 words>" },
-"Regulatory & Legal Complexity": { "score": <0–100>, "justification": "\<up to 100 words>" }
-"Overall":               { "score": <0–100>, "justification": "\<up to 100 words>" },
+  "Originality": { "score": <0-100>, "justification": "<10-100 words>" },
+  "Market Demand": { "score": <0-100>, "justification": "<10-100 words>" },
+  "Technical Feasibility": { "score": <0-100>, "justification": "<10-100 words>" },
+  "Barrier to Entry": { "score": <0-100>, "justification": "<10-100 words>" },
+  "Monetization Potential": { "score": <0-100>, "justification": "<10-100 words>" },
+  "Scalability": { "score": <0-100>, "justification": "<10-100 words>" },
+  "Regulatory & Legal Complexity": { "score": <0-100>, "justification": "<10-100 words>" },
+  "Overall": { "score": <0-100>, "justification": "<10-100 words>" }
 }
+
+Scoring rubric (brief):
+- Originality: novelty or unique improvements vs incumbents.
+- Market Demand: problem prevalence, urgency, perceived value.
+- Technical Feasibility: difficulty, required skills/tech, timeline.
+- Barrier to Entry: incumbents, distribution moats, CAC, network effects.
+- Monetization Potential: realistic pricing + willingness to pay.
+- Scalability: growth without costs exploding.
+- Regulatory & Legal Complexity: licenses, compliance, data/privacy.
+- Overall: honest likelihood of success as pitched.
+
+Rules:
+- Replace ALL placeholders with real values; do NOT leave 0 or "" by default.
+- A score of 0 is only allowed with a strong, explicit justification.
+- Each "justification" must be 10–100 words (concise, specific, actionable).
+- Be brutally honest; do not sugarcoat.
+- Output JSON object ONLY.
 `
     },
     {
@@ -58,11 +45,15 @@ const rateIdea = async (req, res) => {
   ];
 
   try {
+    console.log('using model:', process.env.SIB_SCORER_MODEL);
+
     const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini-search-preview",
+      model: process.env.SIB_SCORER_MODEL,
       messages,
-      //temperature: 0.7
+      temperature: 0.2
     });
+
+    console.log('served by model:', response.model);
 
     const reply = response.choices[0].message.content;
     res.json({ result: reply });

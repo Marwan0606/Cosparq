@@ -22,12 +22,10 @@ const scoreBoard = async (idea)=>{
     try {
       response = await axios.get(`/api/save/saveScoreResponse/${userId}`);
       if (response.data && response.data.scoreResponse) {
-        // Found a response in the database
         console.log('getting from database');
         let scoreboardResponse = response.data.scoreResponse.scoreboardResponse
         resultData = JSON.parse(scoreboardResponse);
       } else {
-        // Not found in database, get from AI
         console.log('getting from AI');
         response = await axios.post('/api/responses/idea', { idea });
         console.log(response.data.result);
@@ -39,13 +37,11 @@ const scoreBoard = async (idea)=>{
         resultData = JSON.parse(response.data.result);
       }
     } catch (error) {
-      // If the GET request fails (e.g., 404 or server error), fallback to AI
       console.log('Error fetching from database, getting from AI');
       response = await axios.post('/api/responses/idea', { idea });
       let saveScoreResponse = await axios.post('/api/save/saveScoreResponse', {scoreboardResponse, userId})
       console.log(saveScoreResponse)
       resultData = JSON.parse(response.data.result);
-      // ...use response.data.result...
     }
 
 

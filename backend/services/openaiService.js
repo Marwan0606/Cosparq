@@ -1,6 +1,8 @@
 // backend/services/openaiService.js
 const OpenAI = require('openai');
-require('dotenv').config();
+//require('dotenv').config();
+const path = require('path');
+require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -9,7 +11,7 @@ const openai = new OpenAI({
 const sendChatPrompt = async (messages) => {
   try {
     const chatCompletion = await openai.chat.completions.create({
-      model: "gpt-4o-mini-search-preview",
+      model: "gpt-3.5-turbo-0125",
       messages,
     });
 
