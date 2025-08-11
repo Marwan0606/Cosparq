@@ -36,9 +36,11 @@ async function populateIdeas() {
       return;
     }
 
+    /*
     menu.innerHTML = ideas
       .map(i => `<a href="/dashboard-idea1.html" class="menu-item">${i.ideaName}</a>`)
       .join('');
+    */
   } catch (err) {
     console.error(err);
   }
@@ -70,6 +72,18 @@ let generateIdeasSideBar = async ()=>{
     let HTML = generateHTML(ideas)
     document.querySelector('.js-menu').innerHTML = HTML
 
+
+    document.querySelectorAll('.menu-item').forEach((link)=>{
+      link.addEventListener('click', (e) => {
+        e.preventDefault(); // ensure we can read/save before navigating
+        const ideaId = link.dataset.productId; // fixed: use the correct variable
+        console.log(`The button clicked has an ideaId of ${ideaId}`);
+        localStorage.setItem('ideaId', JSON.stringify(ideaId)); // store for next page
+
+        window.location.href = link.href; // then navigate
+      })
+    })
+
   } catch (error) {
     console.log(error)
   }
@@ -81,7 +95,7 @@ function generateHTML(ideas) {
   ideas.forEach((idea)=>{
     console.log(idea.ideaName)
     HTML += `
-      <a href="/scoreboard-page.html" class="menu-item active">${idea.ideaName}</a>
+      <a href="/scoreboard-page.html" data-product-id="${idea._id}" class="menu-item active">${idea.ideaName}</a>
     `
   })
   return HTML;
@@ -89,9 +103,13 @@ function generateHTML(ideas) {
 
 generateIdeasSideBar()
 
+
+
+
+
 /*
 function updatelocalStorage() {
-  
+  document.querySelector.getElementById()
   localStorage.setItem('ideaId', )
 }
 */

@@ -29,7 +29,17 @@ const getIdeas = async (req,res)=>{
   }
 }
 
-
+/*
+const getIdeaIdByName = async (req,res)=>{
+  try {
+    name = req.params.id
+    const idea = await Idea.find({ideaName = })
+    res.status(200).json({idea})
+  } catch (error) {
+    res.status(500).json({msg: error})
+  }
+}
+*/
 
 module.exports = {
   saveIdea,
