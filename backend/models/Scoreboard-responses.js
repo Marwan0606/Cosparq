@@ -9,6 +9,10 @@ const ScoreboardResponse = new mongoose.Schema({ //this sets the specific type o
   userId: {
     type:String,
     required:[true, 'must provide rating']
+  },
+  ideaId: {
+    type:String,
+    required:[true, 'must provide ideaId']
   }
 }, {collection: 'scoreboard-responses'});
 

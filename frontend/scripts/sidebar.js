@@ -81,10 +81,17 @@ function generateHTML(ideas) {
   ideas.forEach((idea)=>{
     console.log(idea.ideaName)
     HTML += `
-      <a href="/dashboard-idea1.html" class="menu-item active">${idea.ideaName}</a>
+      <a href="/scoreboard-page.html" class="menu-item active">${idea.ideaName}</a>
     `
   })
   return HTML;
 }
 
 generateIdeasSideBar()
+
+/*
+function updatelocalStorage() {
+  
+  localStorage.setItem('ideaId', )
+}
+*/

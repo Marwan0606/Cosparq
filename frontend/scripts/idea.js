@@ -11,14 +11,17 @@ function getUserInput() {
       console.log(userResponse)
       */
 
-      let newScoreGenerate = true;
+      //let newScoreGenerate = true;
 
-      localStorage.setItem('newScoreGenerateValue', newScoreGenerate)
+      //localStorage.setItem('newScoreGenerateValue', newScoreGenerate)
 
       let idea = document.querySelector('.js-input').value
       let ideaName = document.querySelector('.js-idea-name').value
       console.log(ideaName)
       let response = await axios.post('/api/save/idea', {idea, userId, ideaName})
+
+      console.log(localStorage.setItem('ideaId', JSON.stringify(response.data.idea._id)))
+      
       window.location.href = '/scoreboard-page.html';
 
       /*

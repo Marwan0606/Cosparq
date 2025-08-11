@@ -11,8 +11,8 @@ const saveScoreResponse = async (req,res)=>{
 
 const getScore = async (req,res)=>{
   try {
-    userId = req.params.id
-    const scoreResponse = await scoreboardResponse.findOne({userId: userId})
+    const {userId, ideaId} = req.params
+    const scoreResponse = await scoreboardResponse.findOne({userId, ideaId})
     res.status(200).json({scoreResponse})
   } catch (error) {
     res.status(500).json({msg: error})

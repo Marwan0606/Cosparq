@@ -10,8 +10,12 @@ const scoreBoard = async (idea)=>{
     console.log(newScoreGenerate)
     */
 
+
+    let ideaId = JSON.parse(localStorage.getItem('ideaId'))
+    console.log(`IdeaId is: ${ideaId}`)
     
-    let idea = await axios.get(`/api/save/idea/${userId}`)
+    let idea = await axios.get(`/api/save/idea/${userId}/${ideaId}`)
+    console.log(idea)
     idea = idea.data.idea.idea
     console.log(idea)
     //let idea = "An AI powered app that helps you manage your day and schedule"
@@ -20,7 +24,7 @@ const scoreBoard = async (idea)=>{
     let response;
     let resultData;
     try {
-      response = await axios.get(`/api/save/saveScoreResponse/${userId}`);
+      response = await axios.get(`/api/save/saveScoreResponse/${userId}/${ideaId}`);
       if (response.data && response.data.scoreResponse) {
         console.log('getting from database');
         let scoreboardResponse = response.data.scoreResponse.scoreboardResponse
@@ -31,7 +35,7 @@ const scoreBoard = async (idea)=>{
         console.log(response.data.result);
         let scoreboardResponse = response.data.result;
         
-        let saveScoreResponse = await axios.post('/api/save/saveScoreResponse', {scoreboardResponse, userId})
+        let saveScoreResponse = await axios.post('/api/save/saveScoreResponse', {scoreboardResponse, userId, ideaId})
         console.log(saveScoreResponse)
 
         resultData = JSON.parse(response.data.result);
@@ -39,7 +43,7 @@ const scoreBoard = async (idea)=>{
     } catch (error) {
       console.log('Error fetching from database, getting from AI');
       response = await axios.post('/api/responses/idea', { idea });
-      let saveScoreResponse = await axios.post('/api/save/saveScoreResponse', {scoreboardResponse, userId})
+      let saveScoreResponse = await axios.post('/api/save/saveScoreResponse', {scoreboardResponse, userId, ideaId})
       console.log(saveScoreResponse)
       resultData = JSON.parse(response.data.result);
     }

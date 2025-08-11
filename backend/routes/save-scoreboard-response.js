@@ -5,6 +5,6 @@ const { saveScoreResponse, getScore } = require('../controllers/save-scoreboard-
 
 router.post('/saveScoreResponse', saveScoreResponse);
 
-router.get('/saveScoreResponse/:id', getScore);
+router.get('/saveScoreResponse/:userId/:ideaId', getScore);
 
 module.exports = router;

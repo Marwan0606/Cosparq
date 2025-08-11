@@ -5,7 +5,7 @@ const { saveIdea, getIdea, getIdeas } = require('../controllers/save-idea.js');
 
 router.post('/idea', saveIdea);
 
-router.get('/idea/:id', getIdea);
+router.get('/idea/:userId/:ideaId', getIdea);
 
 router.get('/ideas/:id', getIdeas);
 
