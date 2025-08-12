@@ -17,7 +17,23 @@ let chatResponse = async ()=>{
     //console.log(scoreboard) //FIGURE OUT WAY TO REMOVE JUSTIFICATION
     //console.log(idea)
 
-    userInput = document.querySelector('.chat-input').value
+    let userInput = document.querySelector('.chat-input').value
+
+    const chatWindow = document.querySelector('.js-chat-window');
+    chatWindow.innerHTML += `
+      <div class="message user">
+        <div class="bubble">${userInput}</div>
+      </div>
+      <div class="message bot typing" id="ai-typing">
+        <div class="avatar">🤖</div>
+        <div class="bubble"><em>Typing...</em></div>
+      </div>
+    `;
+    chatWindow.scrollTop = chatWindow.scrollHeight;
+
+    document.querySelector('.chat-input').value = ''
+
+
 
 
     //get previous responses
@@ -36,8 +52,6 @@ let chatResponse = async ()=>{
 
 
 
-
-
     let response = await axios.post('/api/responses/chat', {scoreboard, idea, lastUserResponse, lastAiResponse, userInput})
     console.log(response)
     response = JSON.parse(response.data.result)
@@ -46,7 +60,20 @@ let chatResponse = async ()=>{
     let AiResponse = response.assistant_summary
 
 
-    
+    // Replace typing bubble with AI's real response
+    const typingBubble = document.getElementById('ai-typing');
+    if (typingBubble) {
+      typingBubble.outerHTML = `
+        <div class="message bot">
+          <div class="avatar">🤖</div>
+          <div class="bubble">${reply}</div>
+        </div>
+      `;
+    }
+
+
+
+    /*
     let HTML = '';
     function generateChatBubbles() {
       HTML += `
@@ -68,6 +95,8 @@ let chatResponse = async ()=>{
     }
     HTML = generateChatBubbles()
     document.querySelector('.js-chat-window').innerHTML = HTML
+    */
+
     
 
     //saving responses
@@ -76,6 +105,7 @@ let chatResponse = async ()=>{
 
     await axios.post('api/save/chatRaw', {userMessage: userInput, AiResponse: reply, ideaId, userId})
 
+    loadChatHistory()
 
   } catch (error) {
     console.log(error)
@@ -134,9 +164,9 @@ document.addEventListener('DOMContentLoaded', loadChatHistory);
 //couple of problems when you send a message user message appears only once the response appears also while one response is loading you can send another which is bad
 
 
-
-//WORKING CODE
 /*
+//WORKING CODE
+
 // Function to load all saved chat history on page load
 async function loadChatHistory() {
   try {
@@ -144,7 +174,7 @@ async function loadChatHistory() {
     let userId = user.data.user._id;
     let ideaId = JSON.parse(localStorage.getItem('ideaId'));
 
-    let history = await axios.get(`/api/save/getAllChats/${userId}/${ideaId}`);
+    let history = await axios.get(`/api/save/getAllChatsRaw/${userId}/${ideaId}`);
     let chats = history.data.savedChat || [];
 
     let HTML = '';
@@ -226,6 +256,8 @@ let chatResponse = async () => {
 
     // Save responses
     await axios.post('api/save/chat', { userMessage, AiResponse, ideaId, userId });
+
+    await axios.post('api/save/chatRaw', {userMessage: userInput, AiResponse: reply, ideaId, userId})
 
   } catch (error) {
     console.log(error);
