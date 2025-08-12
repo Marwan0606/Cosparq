@@ -8,6 +8,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
 </head>
 <body>
+  <div id="sidebar-placeholder"></div>
   <!-- background effects -->
   <div class="background-glow"></div>
   <div class="background-grid"></div>
@@ -51,12 +52,28 @@
     </div>
   </div>
 
+
+
+
   <script
     src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.21.1/axios.min.js"
     integrity="sha512-bZS47S7sPOxkjU/4Bt0zrhEtWx0y0CRkhEp8IckzK+ltifIIE9EMIMTuT/mEzoIMewUINruDBIR/jJnbguonqQ=="
     crossorigin="anonymous"
     referrerpolicy="no-referrer"
   ></script>
+
   <script type="module" src="./scripts/idea.js"></script>
+
+  <script type="module">
+    async function loadSidebar() {
+      const res  = await fetch('sidebar.html');
+      const html = await res.text();
+      document.getElementById('sidebar-placeholder').innerHTML = html;
+
+      const { initSidebar } = await import('./scripts/sidebar.js');
+      await initSidebar();
+    }
+    loadSidebar();
+  </script>
 </body>
 </html>

@@ -17,6 +17,11 @@
 
     <main class="grid js-grid">
       <!-- Top row -->
+      <div class="empty-message-container">
+        <div class="empty-message">
+          It seems like you have no ideas started, input your first idea so you can see this page
+        </div>
+      </div>
       
     </main>
 
@@ -29,31 +34,7 @@
   <!-- Tooltip -->
   <div id="tooltip" class="tooltip"></div>
   
-  <script>
-    fetch("sidebar.html")
-      .then(res => res.text())
-      .then(html => {
-        document.getElementById("sidebar-placeholder").innerHTML = html;
 
-        const sidebar = document.getElementById("sidebar");
-        const btn = document.querySelector(".js-menu-button"); // <— changed
-
-        if (btn && sidebar) {
-          btn.addEventListener("click", () => {
-            sidebar.classList.toggle("open");
-          });
-        }
-
-        // (optional) click-outside
-        document.addEventListener("click", (e) => {
-          if (sidebar.classList.contains("open") &&
-              !sidebar.contains(e.target) &&
-              !e.target.closest(".js-menu-button")) {
-            sidebar.classList.remove("open");
-          }
-        });
-      });
-  </script>
   <script
     src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.21.1/axios.min.js"
     integrity="sha512-bZS47S7sPOxkjU/4Bt0zrhEtWx0y0CRkhEp8IckzK+ltifIIE9EMIMTuT/mEzoIMewUINruDBIR/jJnbguonqQ=="
@@ -62,5 +43,17 @@
   ></script>
   <script src="scripts/tooltip-market-research.js"></script>
   <script type="module" src="scripts/market-research.js"></script>
+
+  <script type="module">
+    async function loadSidebar() {
+      const res  = await fetch('sidebar.html');
+      const html = await res.text();
+      document.getElementById('sidebar-placeholder').innerHTML = html;
+
+      const { initSidebar } = await import('./scripts/sidebar.js');
+      await initSidebar();
+    }
+    loadSidebar();
+  </script>
 </body>
 </html>

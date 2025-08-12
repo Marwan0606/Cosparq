@@ -6,28 +6,39 @@ const createUser = async ()=>{
     const name = document.querySelector('.js-signup-name').value
     const email = document.querySelector('.js-signup-email').value
     const password = document.querySelector('.js-signup-password').value
-    const user = await axios.post('http://localhost:5004/api/users/register', {name, email, password})
+    let user = await axios.post('http://localhost:5004/api/users/register', {name, email, password})
+
 
     console.log(user)
-    user = response.data.user
+    user = user.data.user
     userId = user._id
 
     localStorage.setItem('user', JSON.stringify(user))
 
     if (localStorage.getItem('user')) {
-      window.location.href = '/starter/starter-page.html';
+      window.location.href = 'idea-page.html';
     } else {
       console.error('Failed to store user in localStorage!');
     }
     
   } catch (error) {
     console.log(error)
-    if (error.response) {
-      console.log('Status:', error.response.status)
-      console.log('Response Data:', error.response.data)
+
+    if (error.response && error.response.status === 409) {
+      let errorMessage = 'Email is already linked to an existing account'
+      document.querySelector('.js-error-message').innerHTML = errorMessage
+    } else {
+      console.error('Unexpected error:', error);
+    }
+
+    /*
+    if (error.user) {
+      console.log('Status:', error.user.status)
+      console.log('Response Data:', error.user.data)
     } else {
       console.log('Error Message:', error.message)
     }
+    */
   }
 }
 
@@ -36,7 +47,7 @@ const login = async ()=>{
     const email = document.querySelector('.js-login-email').value
     const password = document.querySelector('.js-login-password').value
 
-    const user = await axios.post('http://localhost:5004/api/users/login', {email, password})
+    let user = await axios.post('http://localhost:5004/api/users/login', {email, password})
 
     console.log(user)
     //user = data.user

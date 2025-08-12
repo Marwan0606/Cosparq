@@ -10,7 +10,7 @@ const scoreBoard = async (idea)=>{
     console.log(newScoreGenerate)
     */
 
-
+    
     let ideaId = JSON.parse(localStorage.getItem('ideaId'))
     console.log(`IdeaId is: ${ideaId}`)
     

@@ -73,7 +73,7 @@ let generateIdeasSideBar = async ()=>{
     document.querySelector('.js-menu').innerHTML = HTML
 
 
-    document.querySelectorAll('.menu-item').forEach((link)=>{
+    document.querySelectorAll('.menu-item-ideas').forEach((link)=>{
       link.addEventListener('click', (e) => {
         e.preventDefault(); // ensure we can read/save before navigating
         const ideaId = link.dataset.productId; // fixed: use the correct variable
@@ -93,23 +93,12 @@ let generateIdeasSideBar = async ()=>{
 function generateHTML(ideas) {
   let HTML = ``
   ideas.forEach((idea)=>{
-    console.log(idea.ideaName)
+    console.log(`Idea Name: ${idea.ideaName}`)
     HTML += `
-      <a href="/scoreboard-page.html" data-product-id="${idea._id}" class="menu-item active">${idea.ideaName}</a>
+      <a href="/scoreboard-page.html" data-product-id="${idea._id}" class="menu-item menu-item-ideas active">${idea.ideaName}</a>
     `
   })
   return HTML;
 }
 
 generateIdeasSideBar()
-
-
-
-
-
-/*
-function updatelocalStorage() {
-  document.querySelector.getElementById()
-  localStorage.setItem('ideaId', )
-}
-*/

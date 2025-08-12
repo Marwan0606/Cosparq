@@ -5,6 +5,8 @@ const UserSchema = new mongoose.Schema({ //this sets the specific type of data e
     type:String,
     required:[true, 'must provide name'], //these are validators that control what the user can input
     trim:true, //removes extra spaces
+    unique:true,
+    lowercase:true
   },
   password: {
     type:String,

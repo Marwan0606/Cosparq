@@ -23,7 +23,11 @@
     </h1>
 
     <div class="scoreboard js-scoreboard">
-
+      <div class="empty-message-container">
+        <div class="empty-message">
+          It seems like you have no ideas started, input your first idea so you can see this page
+        </div>
+      </div>
     </div>
 
   </div>
@@ -56,33 +60,6 @@
       keyPanel.classList.toggle('hidden');
     });
   </script>
-
-  <script>
-    fetch("sidebar.html")
-      .then(res => res.text())
-      .then(html => {
-        document.getElementById("sidebar-placeholder").innerHTML = html;
-
-        const sidebar = document.getElementById("sidebar");
-        const btn = document.querySelector(".js-menu-button"); // <— changed
-
-        if (btn && sidebar) {
-          btn.addEventListener("click", () => {
-            sidebar.classList.toggle("open");
-          });
-        }
-
-        // (optional) click-outside
-        document.addEventListener("click", (e) => {
-          if (sidebar.classList.contains("open") &&
-              !sidebar.contains(e.target) &&
-              !e.target.closest(".js-menu-button")) {
-            sidebar.classList.remove("open");
-          }
-        });
-      });
-  </script>
-
 
 
 

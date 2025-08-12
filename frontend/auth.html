@@ -61,8 +61,9 @@
         </div>
         <div class="field">
           <label for="signup-password">Password</label>
-          <input class="js-signup-password" id="signup-password" type="password" placeholder="••••••••" required/>
+          <input class="js-signup-password" id="signup-password" type="password" placeholder="••••••••" required minlength="6"/>
         </div>
+        <div class="js-error-message" style="color: rgb(248, 78, 11); margin-top: 8px; margin-bottom: 10px; font-weight: 700;"></div>
         <button type="submit" class="btn btn-primary js-create-account">Create Account</button>
       </form>
     </div>
