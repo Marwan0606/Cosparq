@@ -172,3 +172,95 @@ body {
   opacity: 0.85;
 }
 
+.typing {
+  display: flex;
+  gap: 4px;
+}
+
+.typing-dot {
+  width: 6px;
+  height: 6px;
+  background-color: #bbb;
+  border-radius: 50%;
+  animation: blink 1.4s infinite both;
+}
+
+.typing-dot:nth-child(1) {
+  animation-delay: 0s;
+}
+.typing-dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+.typing-dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes blink {
+  0% { opacity: 0.2; }
+  20% { opacity: 1; }
+  100% { opacity: 0.2; }
+}
+
+
+/* --- Message Animations --- */
+@keyframes slideInRight {
+  0% {
+    transform: translateX(40px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideInLeft {
+  0% {
+    transform: translateX(-40px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Remove animation from all messages by default */
+.message.user,
+.message.bot {
+  opacity: 1; /* keep them visible */
+  transform: none;
+}
+
+/* Only animate messages that have the .new class */
+.message.user.new {
+  animation: slideInRight 0.3s ease forwards;
+}
+.message.bot.new {
+  animation: slideInLeft 0.3s ease forwards;
+}
+
+.message.new .bubble {
+  animation: popIn 0.25s ease forwards;
+}
+
+
+/* Optional: slight scale pop when appearing */
+@keyframes popIn {
+  0% {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.02);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.message .bubble {
+  animation: popIn 0.25s ease forwards;
+}
+

@@ -21,12 +21,16 @@ let chatResponse = async ()=>{
 
     const chatWindow = document.querySelector('.js-chat-window');
     chatWindow.innerHTML += `
-      <div class="message user">
+      <div class="message user new">
         <div class="bubble">${userInput}</div>
       </div>
-      <div class="message bot typing" id="ai-typing">
+      <div class="message bot typing-container" id="ai-typing">
         <div class="avatar">🤖</div>
-        <div class="bubble"><em>Typing...</em></div>
+        <div class="bubble typing">
+          <span class="typing-dot"></span>
+          <span class="typing-dot"></span>
+          <span class="typing-dot"></span>
+        </div>
       </div>
     `;
     chatWindow.scrollTop = chatWindow.scrollHeight;
@@ -71,32 +75,11 @@ let chatResponse = async ()=>{
       `;
     }
 
-
-
-    /*
-    let HTML = '';
-    function generateChatBubbles() {
-      HTML += `
-      <div class="message user">
-        <div class="bubble">
-          ${userInput}
-          <div class="timestamp">02:27 PM</div>
-        </div>
-      </div>
-      <div class="message bot">
-        <div class="avatar">🤖</div>
-        <div class="bubble">
-          ${reply}
-          <div class="timestamp">02:26 PM</div>
-        </div>
-      </div>
-      `
-      return HTML
-    }
-    HTML = generateChatBubbles()
-    document.querySelector('.js-chat-window').innerHTML = HTML
-    */
-
+    setTimeout(() => {
+      document.querySelectorAll('.message.new').forEach(msg => {
+        msg.classList.remove('new');
+      });
+    }, 400); // slightly longer than animation duration
     
 
     //saving responses
