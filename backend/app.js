@@ -9,6 +9,7 @@ const users = require('./routes/users')
 const saveIdea = require('./routes/save-idea.js')
 const saveScoreResponse = require('./routes/save-scoreboard-response.js')
 const saveMarket = require('./routes/save-market.js')
+const saveChat = require('./routes/save-chats.js')
 
 app.use('/', express.static(path.join(__dirname, '../frontend')));
 
@@ -23,6 +24,8 @@ app.use('/api/save', saveIdea);
 app.use('/api/save', saveScoreResponse);
 
 app.use('/api/save', saveMarket);
+
+app.use('/api/save', saveChat);
 
 const port = process.env.PORT || 5004
 
