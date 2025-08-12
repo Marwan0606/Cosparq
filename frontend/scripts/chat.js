@@ -39,13 +39,14 @@ let chatResponse = async ()=>{
 
 
     let response = await axios.post('/api/responses/chat', {scoreboard, idea, lastUserResponse, lastAiResponse, userInput})
+    console.log(response)
     response = JSON.parse(response.data.result)
     let reply = response.reply
     let userMessage = response.user_summary
     let AiResponse = response.assistant_summary
 
 
-
+    
     let HTML = '';
     function generateChatBubbles() {
       HTML += `
@@ -67,11 +68,13 @@ let chatResponse = async ()=>{
     }
     HTML = generateChatBubbles()
     document.querySelector('.js-chat-window').innerHTML = HTML
-
+    
 
     //saving responses
 
     await axios.post('api/save/chat', {userMessage, AiResponse, ideaId, userId})
+
+    await axios.post('api/save/chatRaw', {userMessage: userInput, AiResponse: reply, ideaId, userId})
 
 
   } catch (error) {
@@ -93,7 +96,7 @@ async function loadChatHistory() {
     let userId = user.data.user._id;
     let ideaId = JSON.parse(localStorage.getItem('ideaId'));
 
-    let history = await axios.get(`/api/save/getAllChats/${userId}/${ideaId}`);
+    let history = await axios.get(`/api/save/getAllChatsRaw/${userId}/${ideaId}`);
     let chats = history.data.savedChat || [];
 
     let HTML = '';
