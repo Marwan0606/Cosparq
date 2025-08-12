@@ -19,20 +19,8 @@
     
 
     <!-- Chat Window -->
-    <div class="chat-window">
-      <div class="message bot">
-        <div class="avatar">🤖</div>
-        <div class="bubble">
-          Great! I’m now fully familiar with your startup idea. How can I help you move forward today?
-          <div class="timestamp">02:26 PM</div>
-        </div>
-      </div>
-      <div class="message user">
-        <div class="bubble">
-          I’d like to improve my app’s feasibility score.
-          <div class="timestamp">02:27 PM</div>
-        </div>
-      </div>
+    <div class="chat-window js-chat-window">
+
       <!-- more messages… -->
     </div>
 
@@ -49,12 +37,19 @@
       <input
         type="text"
         class="chat-input"
-        placeholder="Ask about features, strategy, implementation..."
+        placeholder="Ask about features, strategy, implementation, how to improve your scores..."
       />
-      <button class="send-btn">➤</button>
+      <button class="send-btn js-send">➤</button>
     </div>
 
   </div>
+  <script
+    src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.21.1/axios.min.js"
+    integrity="sha512-bZS47S7sPOxkjU/4Bt0zrhEtWx0y0CRkhEp8IckzK+ltifIIE9EMIMTuT/mEzoIMewUINruDBIR/jJnbguonqQ=="
+    crossorigin="anonymous"
+    referrerpolicy="no-referrer"
+  ></script>
+  <script src="./scripts/chat.js"></script>
   <script>
     fetch("sidebar.html")
       .then(res => res.text())
