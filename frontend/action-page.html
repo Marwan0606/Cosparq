@@ -120,30 +120,23 @@
     </div>
 
   </div>
-  <script>
-    fetch("sidebar.html")
-      .then(res => res.text())
-      .then(html => {
-        document.getElementById("sidebar-placeholder").innerHTML = html;
 
-        const sidebar = document.getElementById("sidebar");
-        const btn = document.querySelector(".js-menu-button"); // <— changed
+  <script
+    src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.21.1/axios.min.js"
+    integrity="sha512-bZS47S7sPOxkjU/4Bt0zrhEtWx0y0CRkhEp8IckzK+ltifIIE9EMIMTuT/mEzoIMewUINruDBIR/jJnbguonqQ=="
+    crossorigin="anonymous"
+    referrerpolicy="no-referrer"
+  ></script>
+  <script type="module">
+  async function loadSidebar() {
+    const res  = await fetch('sidebar.html');
+    const html = await res.text();
+    document.getElementById('sidebar-placeholder').innerHTML = html;
 
-        if (btn && sidebar) {
-          btn.addEventListener("click", () => {
-            sidebar.classList.toggle("open");
-          });
-        }
-
-        // (optional) click-outside
-        document.addEventListener("click", (e) => {
-          if (sidebar.classList.contains("open") &&
-              !sidebar.contains(e.target) &&
-              !e.target.closest(".js-menu-button")) {
-            sidebar.classList.remove("open");
-          }
-        });
-      });
-  </script>
+    const { initSidebar } = await import('./scripts/sidebar.js');
+    await initSidebar();
+  }
+  loadSidebar();
+</script>
 </body>
 </html>

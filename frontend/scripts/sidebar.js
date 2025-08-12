@@ -16,6 +16,7 @@ export async function initSidebar() {
 
   // then populate the Ideas list
   await populateIdeas();
+  highlightActiveLink();
 }
 
 async function populateIdeas() {
@@ -80,10 +81,14 @@ let generateIdeasSideBar = async ()=>{
         console.log(`The button clicked has an ideaId of ${ideaId}`);
         localStorage.setItem('ideaId', JSON.stringify(ideaId)); // store for next page
 
+        document.querySelectorAll('.menu-item-ideas').forEach(a => a.classList.remove('active'));
+        link.classList.add('active');
+
         window.location.href = link.href; // then navigate
+        
       })
     })
-
+    highlightActiveLink();
   } catch (error) {
     console.log(error)
   }
@@ -95,10 +100,43 @@ function generateHTML(ideas) {
   ideas.forEach((idea)=>{
     console.log(`Idea Name: ${idea.ideaName}`)
     HTML += `
-      <a href="/scoreboard-page.html" data-product-id="${idea._id}" class="menu-item menu-item-ideas active">${idea.ideaName}</a>
+      <a href="/scoreboard-page.html" data-product-id="${idea._id}" class="menu-item menu-item-ideas">${idea.ideaName}</a>
     `
   })
   return HTML;
 }
 
 generateIdeasSideBar()
+
+function highlightActiveLink() {
+  const path = location.pathname.replace(/\/+$/, '');
+
+  // ---- 1) WORKFLOW SECTION ONLY (exclude the Ideas list .js-menu) ----
+  const workflowLinks = document.querySelectorAll('#sidebar nav.menu:not(.js-menu) .menu-item');
+
+  // Clear active on workflow links
+  workflowLinks.forEach(a => a.classList.remove('active'));
+
+  // URL-based highlight for workflow links (skip placeholders/muted)
+  workflowLinks.forEach(link => {
+    const rawHref = link.getAttribute('href') || '';
+    if (link.classList.contains('muted')) return;
+    if (!rawHref || rawHref === '#' || rawHref.startsWith('javascript:')) return;
+
+    const hrefPath = new URL(link.href, location.origin).pathname.replace(/\/+$/, '');
+    if (hrefPath === path) link.classList.add('active');
+  });
+
+  // ---- 2) IDEAS SECTION: highlight ONLY the stored ideaId ----
+  const ideaLinks = document.querySelectorAll('#sidebar .js-menu .menu-item-ideas');
+  ideaLinks.forEach(a => a.classList.remove('active'));
+
+  const selectedId = JSON.parse(localStorage.getItem('ideaId') || 'null');
+  if (selectedId) {
+    const activeIdea = document.querySelector(
+      `#sidebar .js-menu .menu-item-ideas[data-product-id="${selectedId}"]`
+    );
+    if (activeIdea) activeIdea.classList.add('active');
+  }
+}
+

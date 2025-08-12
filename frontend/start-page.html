@@ -20,7 +20,7 @@
         Get intelligent feedback, dynamic scoring, and step-by-step guidance from idea to execution
       </p>
       <div class="cta-wrap">
-        <a href="#" class="cta-button">Start Building →</a>
+        <a href="/auth.html" class="cta-button">Start Building →</a>
       </div>
     </header>
 
@@ -55,5 +55,58 @@
       </div>
     </section>
   </div>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const el = document.querySelector('.gradient-text');
+
+      const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
+      async function type(text, speed = 60) {
+        el.classList.add('typing');
+        for (let i = 0; i < text.length; i++) {
+          el.textContent = (el.textContent || '') + text[i];
+          await sleep(speed);
+        }
+      }
+
+      async function backspace(count, speed = 40) {
+        el.classList.add('typing');
+        for (let i = 0; i < count; i++) {
+          el.textContent = el.textContent.slice(0, -1);
+          await sleep(speed);
+        }
+      }
+
+      (async function run() {
+        // start fresh (overwrites existing "Your AI Cofounder" in markup)
+        el.textContent = '';
+
+        // 1) Type full phrase
+        await type('Your AI Startup Cofounder', 90);
+        await sleep(600);
+
+        // 2) Delete just "Cofounder"
+        await backspace('Cofounder'.length, 90);
+        await sleep(200);
+        await type('Analyst', 100);
+        await sleep(600);
+
+        // 3) Swap Helper -> Assistant
+        await backspace('Analyst'.length, 90);
+        await sleep(200);
+        await type('Advisor', 100);
+        await sleep(800);
+
+        // 4) Delete whole thing and write final line
+        await backspace(el.textContent.length, 70);
+        await sleep(600);
+        await type('Introducing CoSparq', 70);
+
+        // stop caret blink after finishing
+        el.classList.remove('typing');
+      })();
+    });
+  </script>
+
 </body>
 </html>

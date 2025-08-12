@@ -16,7 +16,7 @@ const createUser = async ()=>{
     localStorage.setItem('user', JSON.stringify(user))
 
     if (localStorage.getItem('user')) {
-      window.location.href = 'idea-page.html';
+      window.location.href = 'auth.html';
     } else {
       console.error('Failed to store user in localStorage!');
     }
