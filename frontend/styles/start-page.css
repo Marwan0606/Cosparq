@@ -74,10 +74,11 @@ body {
   font-weight: 600;
   font-size: 1rem;
   text-decoration: none;
-  transition: opacity 0.2s ease;
+  transition: opacity 0.2s ease, transform 0.2s ease;
 }
 .cta-button:hover {
   opacity: 0.85;
+  transform: scale(1.05);
 }
 .cta-note {
   font-size: 0.95rem;
@@ -169,3 +170,38 @@ body {
     border-right-color: transparent;
   }
 }
+
+
+
+
+/* Gradient glow behind the CTA (matches button gradient) */
+.cta-button {
+  position: relative;          /* needed for the pseudo-element */
+  z-index: 0;                  /* keep glow behind the button */
+}
+
+.cta-button::before {
+  content: "";
+  position: absolute;
+  inset: -6px;                 /* spread of the glow */
+  border-radius: 9999px;       /* same pill shape */
+  background: linear-gradient(90deg, #8400ff, #ba0186, #f94016, #f96d16);
+  filter: blur(18px);
+  opacity: 0.55;               /* base glow strength */
+  z-index: -1;                 /* put under the button */
+  pointer-events: none;
+  transition: filter .2s ease, opacity .2s ease, transform .2s ease;
+  will-change: filter, opacity, transform;
+}
+
+.cta-button:hover::before {
+  opacity: 0.85;
+  filter: blur(24px);
+  transform: scale(1.1);
+}
+
+.cta-button:focus-visible::before {
+  opacity: 0.9;
+  filter: blur(26px);
+}
+

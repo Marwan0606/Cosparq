@@ -16,9 +16,21 @@ const scoreBoard = async (idea)=>{
     
     let idea = await axios.get(`/api/save/idea/${userId}/${ideaId}`)
     console.log(idea)
+    const ideaText = idea?.data?.idea?.idea;
+    if (!ideaText) {
+      document.querySelector('.js-scoreboard').innerHTML = `
+        <div class="empty-message-container">
+          <div class="empty-message">
+            It seems like you have no ideas started, input your first idea so you can see this page
+          </div>
+        </div>
+      `
+      return;
+    }
     idea = idea.data.idea.idea
     console.log(idea)
     //let idea = "An AI powered app that helps you manage your day and schedule"
+
 
 
     let response;

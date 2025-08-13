@@ -5,8 +5,22 @@ const marketBoard = async (idea)=>{
     let userId = user.data.user._id
     console.log(userId)
 
+    let ideaId = JSON.parse(localStorage.getItem('ideaId'))
+    console.log(`IdeaId is: ${ideaId}`)
 
-    let idea = await axios.get(`/api/save/idea/${userId}`)
+
+    let idea = await axios.get(`/api/save/idea/${userId}/${ideaId}`)
+    const ideaText = idea?.data?.idea?.idea;
+    if (!ideaText) {
+      document.querySelector('.js-grid').innerHTML = `
+        <div class="empty-message-container">
+          <div class="empty-message">
+            It seems like you have no ideas started, input your first idea so you can see this page
+          </div>
+        </div>
+      `
+      return;
+    }
     idea = idea.data.idea.idea
     console.log(idea)
 
@@ -14,7 +28,7 @@ const marketBoard = async (idea)=>{
     let response;
     let resultData;
     try {
-      response = await axios.get(`/api/save/saveMarket/${userId}`);
+      response = await axios.get(`/api/save/saveMarket/${userId}/${ideaId}`);
       if (response.data && response.data.marketResponse) {
         console.log('getting from database');
         let marketResponse = response.data.marketResponse.marketResearchResponse
@@ -25,7 +39,7 @@ const marketBoard = async (idea)=>{
         console.log(response.data.result);
         let marketResearchResponse = response.data.result;
         
-        let saveMarketResponse = await axios.post('/api/save/saveMarket', {marketResearchResponse, userId})
+        let saveMarketResponse = await axios.post('/api/save/saveMarket', {marketResearchResponse, userId, ideaId})
         console.log(saveMarketResponse)
 
         resultData = JSON.parse(response.data.result);
@@ -33,7 +47,7 @@ const marketBoard = async (idea)=>{
     } catch (error) {
       console.log('Error fetching from database, getting from AI');
       response = await axios.post('/api/responses/research', { idea });
-      let saveMarketResponse = await axios.post('/api/save/saveMarket', {marketResearchResponse, userId})
+      let saveMarketResponse = await axios.post('/api/save/saveMarket', {marketResearchResponse, userId, ideaId})
       console.log(saveMarketResponse)
       resultData = JSON.parse(response.data.result);
     }

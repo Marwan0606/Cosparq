@@ -9,6 +9,10 @@ const MarketResponse = new mongoose.Schema({ //this sets the specific type of da
   userId: {
     type:String,
     required:[true, 'must provide rating']
+  },
+  ideaId: {
+    type:String,
+    required:[true, 'must provide ideaId']
   }
 }, {collection: 'market-research-responses'});
 

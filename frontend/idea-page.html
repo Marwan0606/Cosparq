@@ -30,25 +30,14 @@
       <textarea
         class="idea-input js-input"
         rows="5"
-        placeholder="Describe your business idea in as much detail as you like…"
+        placeholder="Describe your business idea in as much detail as you can…"
       ></textarea>
 
       <input class="idea-name js-idea-name" placeholder="Put your idea name or any name to identify this idea">
 
       <button class="cta-button js-analyze-button">Analyze My Idea →</button>
 
-      <p class="examples-label">Need inspiration? Try these examples:</p>
-      <div class="examples">
-        <div class="example-item">
-          "A platform that connects local farmers directly with restaurants"
-        </div>
-        <div class="example-item">
-          "An AI-powered app that helps people reduce food waste at home"
-        </div>
-        <div class="example-item">
-          "A virtual coworking space for remote freelancers with built-in productivity tools"
-        </div>
-      </div>
+
     </div>
   </div>
 
@@ -75,5 +64,45 @@
     }
     loadSidebar();
   </script>
+
+
+
+
+
+
+  <script>
+  (() => {
+    const el = document.querySelector('.idea-input.js-input');
+    if (!el) return;
+
+    const text  = 'Describe your idea in as much detail as you can…';
+    const speed = 40; // ms per character
+    let i = 0;
+    let stopped = false;
+
+    // If user focuses or types, stop the effect
+    function stop() { stopped = true; }
+    el.addEventListener('focus', stop);
+    el.addEventListener('input', stop);
+
+    // If there’s already text, don’t animate
+    if (el.value) return;
+
+    // Start from empty placeholder so the typing is visible
+    el.placeholder = '';
+
+    function type() {
+      if (stopped) return;
+      el.placeholder = text.slice(0, i++);
+      if (i <= text.length) {
+        setTimeout(type, speed);
+      }
+    }
+
+    // small delay so it feels smooth on load
+    setTimeout(type, 250);
+  })();
+  </script>
+
 </body>
 </html>

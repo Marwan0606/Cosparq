@@ -5,6 +5,6 @@ const {saveMarketResponse, getMarket} = require('../controllers/save-market.js')
 
 router.post('/saveMarket', saveMarketResponse);
 
-router.get('/saveMarket/:id', getMarket);
+router.get('/saveMarket/:userId/:ideaId', getMarket);
 
 module.exports = router;

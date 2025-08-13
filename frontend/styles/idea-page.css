@@ -2,8 +2,8 @@
   position: fixed;
   padding-top: 0;
 
-  background: radial-gradient(at bottom right, #aa00ff, transparent 45%),
-              radial-gradient(at top left, #d83a1e, transparent 45%);
+  background: radial-gradient(at bottom right, #d83a1e, transparent 45%),
+              radial-gradient(at top left, #aa00ff, transparent 45%);
 
   z-index: 0;
   animation: background-glowing 5s ease-in-out infinite alternate;
@@ -157,4 +157,23 @@ body {
 }
 .example-item:hover {
   background-color: #333333;
+}
+
+
+.idea-name {
+  width: 100%;
+  background-color: #2a2a2a;
+  border: 1px solid #3a3a3a;
+  border-radius: 12px;
+  padding: 1rem;
+  color: #e0e0e0;
+  font-size: 1rem;
+  line-height: 1.5;
+  resize: vertical;
+  outline: none;
+  transition: border-color 0.2s ease;
+  margin-bottom: 24px;
+}
+.idea-name:focus {
+  border-color: #ff6200;
 }

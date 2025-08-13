@@ -82,25 +82,25 @@
         el.textContent = '';
 
         // 1) Type full phrase
-        await type('Your AI Startup Cofounder', 90);
+        await type('Your AI Startup Cofounder', 60);
         await sleep(600);
 
         // 2) Delete just "Cofounder"
-        await backspace('Cofounder'.length, 90);
+        await backspace('Cofounder'.length, 40);
         await sleep(200);
-        await type('Analyst', 100);
+        await type('Analyst', 60);
         await sleep(600);
 
         // 3) Swap Helper -> Assistant
-        await backspace('Analyst'.length, 90);
+        await backspace('Analyst'.length, 40);
         await sleep(200);
-        await type('Advisor', 100);
+        await type('Advisor', 60);
         await sleep(800);
 
         // 4) Delete whole thing and write final line
-        await backspace(el.textContent.length, 70);
+        await backspace(el.textContent.length, 35);
         await sleep(600);
-        await type('Introducing CoSparq', 70);
+        await type('Introducing CoSparq', 60);
 
         // stop caret blink after finishing
         el.classList.remove('typing');

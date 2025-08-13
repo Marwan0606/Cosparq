@@ -27,9 +27,9 @@
     <!-- ◉ Quick Actions (moved here) -->
     <div class="quick-title">Quick actions to get started:</div>
     <div class="quick-actions">
-      <button class="quick-btn">⚙️ Help me choose the right tech stack</button>
-      <button class="quick-btn">🎯 How should I validate my MVP features?</button>
-      <button class="quick-btn">💡 What should I focus on first?</button>
+      <button class="quick-btn quick-btn-1">⚙️ Help me choose the right tech stack</button>
+      <button class="quick-btn quick-btn-2">🎯 How should I validate my MVP features?</button>
+      <button class="quick-btn quick-btn-3">💡 What should I focus on first?</button>
     </div>
 
     <!-- Input Area -->
@@ -61,5 +61,88 @@
   }
   loadSidebar();
 </script>
+
+
+<script>
+(() => {
+  const input = document.querySelector('.chat-input');
+  if (!input) return;
+
+  // Don't animate if the user already typed something
+  if (input.value) return;
+
+  const PREFIX   = 'Ask about ';
+  const SUFFIXES = [
+    'features',
+    'strategy',
+    'implementation',
+    'developing your idea',
+    'improving your scores',
+    'the correct tech stack',
+    'your first step'
+  ];
+
+  const TYPE_MS   = 45;   // typing speed
+  const ERASE_MS  = 35;   // deleting speed
+  const HOLD_MS   = 1100; // pause after finishing a suffix
+  const GAP_MS    = 300;  // pause before starting the next suffix
+
+  let stopped = false;
+  let suffixIndex = 0;
+
+  // Stop the effect if user engages
+  function stop() { stopped = true; }
+  input.addEventListener('focus', stop);
+  input.addEventListener('input', stop);
+
+  // Helper: type a string into placeholder
+  function typeToPlaceholder(fullText, startLen, endLen, step, delay, done) {
+    let i = startLen;
+    function tick() {
+      if (stopped) return;
+      input.placeholder = fullText.slice(0, i);
+      if ((step > 0 && i < endLen) || (step < 0 && i > endLen)) {
+        i += step;
+        setTimeout(tick, delay);
+      } else {
+        done && done();
+      }
+    }
+    tick();
+  }
+
+  // 1) Type the static prefix once
+  function typePrefixThenCycle() {
+    input.placeholder = '';
+    typeToPlaceholder(PREFIX, 0, PREFIX.length, +1, TYPE_MS, () => {
+      cycleSuffixes();
+    });
+  }
+
+  // 2) Type current suffix, hold, then erase just the suffix, move to next
+  function cycleSuffixes() {
+    if (stopped) return;
+    const suffix = SUFFIXES[suffixIndex];
+    const full   = PREFIX + suffix;
+
+    // Type the suffix after the already-typed prefix
+    typeToPlaceholder(full, PREFIX.length, full.length, +1, TYPE_MS, () => {
+      if (stopped) return;
+      setTimeout(() => {
+        // Delete only the suffix back to the prefix
+        typeToPlaceholder(full, full.length, PREFIX.length, -1, ERASE_MS, () => {
+          if (stopped) return;
+          suffixIndex = (suffixIndex + 1) % SUFFIXES.length;
+          setTimeout(cycleSuffixes, GAP_MS);
+        });
+      }, HOLD_MS);
+    });
+  }
+
+  // small delay so the page feels settled
+  setTimeout(typePrefixThenCycle, 250);
+})();
+</script>
+
 </body>
 </html>

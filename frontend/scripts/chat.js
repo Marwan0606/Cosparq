@@ -143,8 +143,26 @@ async function loadChatHistory() {
 document.addEventListener('DOMContentLoaded', loadChatHistory);
 
 
-
 //couple of problems when you send a message user message appears only once the response appears also while one response is loading you can send another which is bad
+
+
+
+document.querySelector('.quick-btn-1').addEventListener('click', ()=>{
+  let text = document.querySelector('.quick-btn-1').innerHTML
+  document.querySelector('.chat-input').value = text
+})
+
+document.querySelector('.quick-btn-2').addEventListener('click', ()=>{
+  let text = document.querySelector('.quick-btn-2').innerHTML
+  document.querySelector('.chat-input').value = text
+})
+
+document.querySelector('.quick-btn-3').addEventListener('click', ()=>{
+  let text = document.querySelector('.quick-btn-3').innerHTML
+  document.querySelector('.chat-input').value = text
+})
+
+
 
 
 /*

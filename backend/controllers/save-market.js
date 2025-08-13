@@ -11,8 +11,8 @@ const saveMarketResponse = async (req,res)=>{
 
 const getMarket = async (req,res)=>{
   try {
-    userId = req.params.id
-    const marketResponse = await marketResponses.findOne({userId: userId})
+    const {userId, ideaId} = req.params
+    const marketResponse = await marketResponses.findOne({userId, _id: ideaId})
     res.status(200).json({marketResponse})
   } catch (error) {
     res.status(500).json({msg: error})
