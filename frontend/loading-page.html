@@ -177,7 +177,65 @@
     <!-- Bottom-right status -->
     <div class="status dotting">Loading</div>
   </div>
+<script>
+(function () {
+  const LOGIN_URL = '/auth.html';
 
+  // don't loop on the login page itself
+  const IS_LOGIN_PAGE = location.pathname.endsWith('/login.html');
+
+  function isLoggedIn() {
+    try {
+      const raw = localStorage.getItem('user');
+      if (!raw) return false;
+      const u = JSON.parse(raw);
+      // match your structure: user.data.user._id
+      return !!(u && u.data && u.data.user && u.data.user._id);
+    } catch (_) {
+      return false;
+    }
+  }
+
+  function redirectToLogin() {
+    if (!IS_LOGIN_PAGE) {
+      // replace() avoids polluting history with a broken page
+      location.replace(LOGIN_URL);
+    }
+  }
+
+  // Initial check ASAP
+  if (!isLoggedIn()) redirectToLogin();
+
+  // If localStorage is cleared/changed in another tab
+  window.addEventListener('storage', (e) => {
+    // e.key === null means localStorage.clear()
+    if (e.key === 'user' || e.key === null) {
+      if (!isLoggedIn()) redirectToLogin();
+    }
+  });
+
+  // Re-check when user comes back to the tab
+  window.addEventListener('visibilitychange', () => {
+    if (!document.hidden && !isLoggedIn()) redirectToLogin();
+  });
+
+  // Optional: if you use axios, catch auth failures
+  if (window.axios) {
+    axios.interceptors.response.use(
+      (res) => res,
+      (err) => {
+        const status = err?.response?.status;
+        if (status === 401 || status === 403) redirectToLogin();
+        return Promise.reject(err);
+      }
+    );
+  }
+
+  // (Optional) Same-tab “instant” nuke catch:
+  // uncomment if you want a lightweight periodic check.
+  // setInterval(() => { if (!isLoggedIn()) redirectToLogin(); }, 1500);
+})();
+</script>
   <script src="scripts/loading.js"></script>
 </body>
 </html>

@@ -1,3 +1,22 @@
+const sendBtn = document.querySelector('.js-send');
+const inputEl = document.querySelector('.chat-input');
+
+let isBusy = false;
+
+function setBusy(state) {
+  isBusy = state;
+
+  // lock/unlock controls
+  sendBtn.disabled = state;
+  inputEl.disabled = state;
+  document.querySelectorAll('.quick-btn').forEach(b => b.disabled = state);
+
+  // visual: loader vs arrow
+  sendBtn.classList.toggle('is-busy', state);
+  sendBtn.innerHTML = state ? '<span class="loader"></span>' : '➤';
+}
+
+
 let chatResponse = async ()=>{
   try {
 
@@ -18,6 +37,7 @@ let chatResponse = async ()=>{
     //console.log(idea)
 
     let userInput = document.querySelector('.chat-input').value
+    setBusy(true);
 
     const chatWindow = document.querySelector('.js-chat-window');
     chatWindow.innerHTML += `
@@ -92,14 +112,26 @@ let chatResponse = async ()=>{
 
   } catch (error) {
     console.log(error)
+  } finally {
+    setBusy(false);
   }
 }
 
 
 
 document.querySelector('.js-send').addEventListener('click', ()=>{
+  if (isBusy) return; 
   chatResponse()
 })
+
+// Send on Enter
+inputEl.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    e.preventDefault();           // stop accidental form submits / beeps
+    if (!isBusy) chatResponse();  // respects your busy lock + empty check inside chatResponse
+  }
+});
+
 
 
 // Load all saved chat history when page loads
@@ -161,114 +193,3 @@ document.querySelector('.quick-btn-3').addEventListener('click', ()=>{
   let text = document.querySelector('.quick-btn-3').innerHTML
   document.querySelector('.chat-input').value = text
 })
-
-
-
-
-/*
-//WORKING CODE
-
-// Function to load all saved chat history on page load
-async function loadChatHistory() {
-  try {
-    let user = JSON.parse(localStorage.getItem('user'));
-    let userId = user.data.user._id;
-    let ideaId = JSON.parse(localStorage.getItem('ideaId'));
-
-    let history = await axios.get(`/api/save/getAllChatsRaw/${userId}/${ideaId}`);
-    let chats = history.data.savedChat || [];
-
-    let HTML = '';
-    chats.forEach(chat => {
-      HTML += generateChatBubbles(chat.userMessage, chat.AiResponse);
-    });
-
-    document.querySelector('.js-chat-window').innerHTML = HTML;
-
-    // Scroll to bottom
-    document.querySelector('.js-chat-window').scrollTop =
-      document.querySelector('.js-chat-window').scrollHeight;
-
-  } catch (error) {
-    console.log(error);
-  }
-}
-
-// Reusable function for chat bubbles
-function generateChatBubbles(userText, botText) {
-  return `
-    <div class="message user">
-      <div class="bubble">
-        ${userText}
-      </div>
-    </div>
-    <div class="message bot">
-      <div class="avatar">🤖</div>
-      <div class="bubble">
-        ${botText}
-      </div>
-    </div>
-  `;
-}
-
-let chatResponse = async () => {
-  try {
-    let user = JSON.parse(localStorage.getItem('user'));
-    let userId = user.data.user._id;
-    let ideaId = JSON.parse(localStorage.getItem('ideaId'));
-
-    let scoreboard = await axios.get(`/api/save/saveScoreResponse/${userId}/${ideaId}`);
-    scoreboard = scoreboard.data.scoreResponse.scoreboardResponse;
-
-    let idea = await axios.get(`/api/save/idea/${userId}/${ideaId}`);
-    idea = idea.data.idea.idea;
-
-    let userInput = document.querySelector('.chat-input').value;
-
-    // get previous responses
-    let historyResponses = await axios.get(`api/save/getChat/${userId}/${ideaId}`);
-    let lastUserResponse = '';
-    let lastAiResponse = '';
-
-    const saved = historyResponses.data?.savedChat || null;
-    if (saved) {
-      lastUserResponse = historyResponses.data.savedChat.userMessage;
-      lastAiResponse = historyResponses.data.savedChat.AiResponse;
-    }
-
-    let response = await axios.post('/api/responses/chat', {
-      scoreboard,
-      idea,
-      lastUserResponse,
-      lastAiResponse,
-      userInput
-    });
-    response = JSON.parse(response.data.result);
-    let reply = response.reply;
-    let userMessage = response.user_summary;
-    let AiResponse = response.assistant_summary;
-
-    // Append new messages instead of replacing
-    document.querySelector('.js-chat-window').innerHTML += generateChatBubbles(userInput, reply);
-
-    // Scroll to bottom
-    document.querySelector('.js-chat-window').scrollTop =
-      document.querySelector('.js-chat-window').scrollHeight;
-
-    // Save responses
-    await axios.post('api/save/chat', { userMessage, AiResponse, ideaId, userId });
-
-    await axios.post('api/save/chatRaw', {userMessage: userInput, AiResponse: reply, ideaId, userId})
-
-  } catch (error) {
-    console.log(error);
-  }
-};
-
-// Load chat history when page loads
-document.addEventListener('DOMContentLoaded', loadChatHistory);
-
-document.querySelector('.js-send').addEventListener('click', () => {
-  chatResponse();
-});
-*/
