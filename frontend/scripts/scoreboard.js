@@ -14,10 +14,22 @@ const scoreBoard = async (idea)=>{
     let ideaId = JSON.parse(localStorage.getItem('ideaId'))
     console.log(`IdeaId is: ${ideaId}`)
     
-    let idea = await axios.get(`/api/save/idea/${userId}/${ideaId}`)
-    console.log(idea)
-    const ideaText = idea?.data?.idea?.idea;
-    if (!ideaText) {
+    let ideaExists = true
+    let idea;
+    try {
+      idea = await axios.get(`/api/save/idea/${userId}/${ideaId}`)
+    } catch (error) {
+      console.log('idea doesnt exist')
+      ideaExists = false
+    }
+    
+    const ideaDoc = idea?.data?.idea || null;
+    const ideaText = (ideaDoc?.idea || '').trim();
+    //console.log(idea)
+    //const ideaText = idea?.data?.idea?.idea;
+    //console.log(ideaText)
+
+    if (!ideaExists || !ideaText) {
       document.querySelector('.js-scoreboard').innerHTML = `
         <div class="empty-message-container">
           <div class="empty-message">
