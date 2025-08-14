@@ -175,3 +175,83 @@ function tooltip(resultData) {
     });
   });
 }
+
+
+
+
+
+
+
+
+//THIS IS FOR THE CODE FOR REGENERATING SCOREBOARD
+
+document.querySelector('.js-regenerate-response-btn').addEventListener('click', async ()=>{
+  let user = JSON.parse(localStorage.getItem('user'))
+  let userId = user.data.user._id
+  let ideaId = JSON.parse(localStorage.getItem('ideaId'))
+
+  console.log(userId)
+  console.log(ideaId)
+
+  let chatLogs = await getChatLogs(userId, ideaId)
+  let newIdea = await renewIdea(userId, ideaId, chatLogs)
+  await updateIdea(userId, ideaId, newIdea)
+  await deleteScoreboard(userId, ideaId)
+  window.location.reload();
+
+  let idea = sessionStorage.getItem('idea');
+  scoreBoard(idea)
+})
+
+const getChatLogs = async (userId, ideaId)=>{
+  try {
+    let resp = await axios.get(`/api/save/getAllChats/${userId}/${ideaId}`);
+    const chatLogs  = Array.isArray(resp.data?.savedChat) ? resp.data.savedChat : [];
+    console.log(chatLogs)
+    let listOfChats = ''
+    chatLogs.forEach((chatLog)=>{
+      listOfChats += chatLog.userMessage
+      listOfChats += chatLog.AiResponse
+    })
+    //console.log(listOfChats)
+    return listOfChats
+  } catch (error) {
+    console.log(error)
+  }
+}
+
+
+const renewIdea = async(userId, ideaId, chatLogs)=>{
+  try {
+    let oldIdea = await axios.get(`/api/save/idea/${userId}/${ideaId}`)
+    console.log(oldIdea)
+    let {data} = await axios.post('/api/responses/renewIdea', { oldIdea, chatLogs });
+    console.log(data)
+    let newIdea = JSON.parse(data.result)
+    newIdea = newIdea.idea
+    console.log(newIdea)
+    
+    return newIdea
+  } catch (error) {
+    console.log(error)
+  }
+}
+
+
+const updateIdea = async(userId, ideaId, newIdea)=>{
+  try {
+    await axios.patch(`/api/save/idea/${userId}/${ideaId}`, {idea: newIdea})
+    return
+  } catch (error) {
+    console.log(error)
+  }
+}
+
+const deleteScoreboard = async (userId, ideaId, newIdea)=>{
+  try {
+    await axios.delete(`/api/save/saveScoreResponse/${userId}/${ideaId}`)
+    return
+  } catch (error) {
+    console.log(error)
+  }
+}

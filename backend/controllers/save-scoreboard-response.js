@@ -19,7 +19,18 @@ const getScore = async (req,res)=>{
   }
 }
 
+const deleteScore = async (req,res)=>{
+  try {
+    const {userId, ideaId} = req.params
+    const scoreResponse = await scoreboardResponse.findOneAndDelete({userId, ideaId})
+    res.status(200).json({scoreResponse})
+  } catch (error) {
+    res.status(500).json({msg: error})
+  }
+}
+
 module.exports = {
   saveScoreResponse,
-  getScore
+  getScore,
+  deleteScore
 }

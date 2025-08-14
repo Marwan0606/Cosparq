@@ -12,7 +12,7 @@ body {
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  padding-top: 30px;
+  padding-top: 20px;
 }
 .container {
   width: 100%;
@@ -252,15 +252,15 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 24px;
+  margin-bottom: 14px;
 }
 
 .next-button {
-  background: linear-gradient(90deg, #8400ff, #ba0186, #f94016, #f96d16);
+  background: linear-gradient(90deg, #8400ffdc, #ba0185dc, #f94016dc, #f96d16dc);
   color: #ffffff;
   border: none;
   border-radius: 10px;
-  padding: 14px 70px;
+  padding: 14px 30px;
   font-size: 1rem;
   cursor: pointer;
   transition: background-color 0.2s ease;
@@ -423,4 +423,26 @@ svg{ width:100%; max-width:780px; height:100%; max-height:500px }
 @media (prefers-reduced-motion: reduce){
   .link.glow,.node.glow{ animation-duration: 400ms; }
   .dotting::after{ animation:none; content:'...' }
+}
+
+.regenerate-response-btn {
+  background: linear-gradient(90deg, #8400ffdc, #ba0185dc, #f94016dc, #f96d16dc);
+  color: #ffffff;
+  border: none;
+  border-radius: 10px;
+  padding: 14px 20px;
+
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.bottom-btns {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  margin-top: 20px;
+  margin-bottom: 20px;
+  gap: 20px;
 }

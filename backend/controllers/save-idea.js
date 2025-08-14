@@ -19,6 +19,20 @@ const getIdea = async (req,res)=>{
   }
 }
 
+const updateIdea = async (req, res)=>{
+  try {
+    const {userId, ideaId} = req.params
+    const idea = await Idea.findOneAndUpdate({userId, _id: ideaId}, req.body, {
+      new: true,
+      runValidators: true, //WE NEED TO SET THIS OBJECT FOR ALL UPDATE OPERATION AS IT TELLS THE COMPUTER TO SHOW THE NEW UPDATED TASK
+    })
+    res.status(200).json({idea})
+  } catch (error) {
+    res.status(500).json({msg: error})
+  }
+}
+
+
 const getIdeas = async (req,res)=>{
   try {
     userId = req.params.id
@@ -44,5 +58,6 @@ const getIdeaIdByName = async (req,res)=>{
 module.exports = {
   saveIdea,
   getIdea,
+  updateIdea,
   getIdeas
 }
