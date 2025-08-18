@@ -34,7 +34,7 @@ In the .env you will need the following:
 
 Once ready while in the backend folder in your terminal run npm start or node app.js
 
-Screenshots of the App (COPY THE LINK PART AND PASTE IT INTO BROWSER):
+Screenshots of the App:
 
 <img width="1705" height="915" alt="Screenshot 2025-08-18 at 7 10 11 PM" src="https://github.com/user-attachments/assets/be65df54-523f-4ae6-b5fd-72b26864c4d1" />
 
