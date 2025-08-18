@@ -32,7 +32,10 @@ In the .env you will need the following:
   JWT_SECRET=your_jwt_secret
   OPENAI_API_KEY=your_openai_key
 
+To run this app:
+You need to install dependencies (npm install) to get node modules and ensure your .env has valid keys
 Once ready while in the backend folder in your terminal run npm start or node app.js
+
 
 Screenshots of the App:
 
