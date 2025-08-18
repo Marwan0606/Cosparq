@@ -1,6 +1,5 @@
 const scoreBoard = async (idea)=>{
   try {
-
     let user = JSON.parse(localStorage.getItem('user'))
     let userId = user.data.user._id
     console.log(userId)
@@ -195,6 +194,7 @@ document.querySelector('.js-regenerate-response-btn').addEventListener('click', 
 
   let chatLogs = await getChatLogs(userId, ideaId)
   let newIdea = await renewIdea(userId, ideaId, chatLogs)
+  newIdea = await popup(newIdea)
   await updateIdea(userId, ideaId, newIdea)
   await deleteScoreboard(userId, ideaId)
   window.location.reload();
@@ -255,3 +255,32 @@ const deleteScoreboard = async (userId, ideaId, newIdea)=>{
     console.log(error)
   }
 }
+
+
+function popup(newIdea) {
+  return new Promise((resolve) => {
+    const popupOverlay = document.getElementById('popupOverlay');
+    const confirmBtn = document.getElementById('confirmBtn');
+    const popupInput = document.getElementById('popupInput');
+
+    popupOverlay.classList.add('active');
+    popupInput.value = newIdea;
+
+    confirmBtn.onclick = () => {
+      popupOverlay.classList.remove('active')
+      resolve(popupInput.value); // return the final input value
+    };
+  });
+}
+
+/*
+document.getElementById('showPopup').addEventListener('click', ()=>{
+  popup('test')
+})
+*/
+
+/*
+document.querySelector('.confirm-button').addEventListener('click', ()=>{
+  popupOverlay.style.display = 'none';
+})
+*/
