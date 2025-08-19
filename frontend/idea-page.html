@@ -8,6 +8,14 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
 </head>
 <body>
+
+  
+
+
+
+
+
+  
   <div id="sidebar-placeholder"></div>
   <!-- background effects -->
   <div class="background-glow"></div>
@@ -41,6 +49,7 @@
     </div>
   </div>
 <script>
+/*
 (function () {
   const LOGIN_URL = '/auth.html';
 
@@ -98,6 +107,27 @@
   // uncomment if you want a lightweight periodic check.
   // setInterval(() => { if (!isLoggedIn()) redirectToLogin(); }, 1500);
 })();
+*/
+
+
+(function () {
+  const LOGIN_URL = '/auth.html';
+
+  // If you're already on auth.html, do nothing
+  if (location.pathname.endsWith('/auth.html')) return;
+
+  const token = localStorage.getItem('accessToken');
+  if (!token) {
+    // Not logged in (no token) → redirect
+    return location.replace(LOGIN_URL);
+  }
+
+  // Optionally: verify expiry client-side with jwt-decode or
+  // ping a /token/verify endpoint. Otherwise, just let the
+  // axios interceptor handle 401s server-side.
+})();
+
+
 </script>
 
 
@@ -109,7 +139,7 @@
     referrerpolicy="no-referrer"
   ></script>
 
-  <script type="module" src="./scripts/idea.js"></script>
+  
 
   <script type="module">
     async function loadSidebar() {
@@ -122,7 +152,6 @@
     }
     loadSidebar();
   </script>
-
 
 
 
@@ -162,5 +191,6 @@
   })();
   </script>
 
+  <script type="module" src="./scripts/idea.js"></script>
 </body>
 </html>

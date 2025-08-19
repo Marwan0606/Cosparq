@@ -1,5 +1,18 @@
+// set-axios-defaults.js
+const token = localStorage.getItem('accessToken');
+
+if (!token) {
+  window.location.href = 'auth.html';
+} else {
+  axios.defaults.baseURL = 'http://localhost:5004';
+  axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+}
+
+
+
 // scripts/sidebar.js
 export async function initSidebar() {
+  console.log('initsidebar ran')
   // hook up the open/close button
   const sidebar = document.getElementById('sidebar');
   const btn = document.querySelector('.js-menu-button');
@@ -19,31 +32,66 @@ export async function initSidebar() {
   highlightActiveLink();
 }
 
+
+
+
+
 async function populateIdeas() {
   try {
-    const user = JSON.parse(localStorage.getItem('user'));
-    const userId = user?.data?.user?._id;
-    if (!userId) {
-      console.warn('No userId in localStorage');
-      return;
-    }
+    console.log('populateIdeas ran')
+    console.log('Requesting ideas with header:', axios.defaults.headers.common.Authorization);
+    // 1) Fetch _all_ ideas for the authenticated user; no userId in the path
+    const { data } = await axios.get('/api/save/ideas');
+    console.log(data)
+    const ideas = Array.isArray(data.idea) ? data.idea : [];
 
-    const { data } = await axios.get(`/api/save/ideas/${userId}`);
-    const ideas = data?.idea ?? [];
-
+    // 2) Render into the sidebar menu
     const menu = document.querySelector('#sidebar .js-menu');
     if (!menu) {
       console.warn('No .js-menu element found');
       return;
     }
 
-    /*
     menu.innerHTML = ideas
-      .map(i => `<a href="/dashboard-idea1.html" class="menu-item">${i.ideaName}</a>`)
+      .map(i => `
+        <a 
+          href="/scoreboard-page.html" 
+          data-product-id="${i._id}" 
+          class="menu-item menu-item-ideas"
+        >
+          ${i.ideaName}
+        </a>
+      `)
       .join('');
-    */
-  } catch (err) {
-    console.error(err);
+
+    // 3) Hook up click handlers & highlight
+    document.querySelectorAll('.menu-item-ideas').forEach((link) => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        const ideaId = link.dataset.productId;
+        localStorage.setItem('ideaId', JSON.stringify(ideaId));
+        window.location.href = link.href;
+      });
+    });
+
+    highlightActiveLink();
+
+  } catch (error) {
+    if (error.response?.status === 403) {
+      const refreshToken = localStorage.getItem('refreshToken');
+      console.log(refreshToken)
+      const response = await axios.post('http://localhost:4004/token', {token: refreshToken})
+      let newToken = response.data.accessToken;
+
+      localStorage.setItem('accessToken', newToken);
+      axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
+
+      console.log(`new access token: ${newToken}`)
+      initSidebar()
+      return location.reload();
+    }
+    //console.error('populateIdeas error:', error);
+    
   }
 }
 
@@ -59,6 +107,7 @@ async function populateIdeas() {
 
 
 
+/*
 let generateIdeasSideBar = async ()=>{
   try {
 
@@ -107,6 +156,7 @@ function generateHTML(ideas) {
 }
 
 generateIdeasSideBar()
+*/
 
 function highlightActiveLink() {
   const path = location.pathname.replace(/\/+$/, '');

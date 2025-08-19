@@ -8,7 +8,7 @@ const UserIdeaSchema = new mongoose.Schema({ //this sets the specific type of da
   },
   userId: {
     type:mongoose.Schema.Types.ObjectId,
-    required:[true, 'must provide rating']
+    required:[true, 'must provide name'],
   },
   ideaName: {
     type:String,

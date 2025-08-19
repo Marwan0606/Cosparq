@@ -5,8 +5,8 @@ const { saveScoreResponse, getScore, deleteScore } = require('../controllers/sav
 
 router.post('/saveScoreResponse', saveScoreResponse);
 
-router.get('/saveScoreResponse/:userId/:ideaId', getScore);
+router.get('/saveScoreResponse/:ideaId', getScore);
 
-router.delete('/saveScoreResponse/:userId/:ideaId', deleteScore);
+router.delete('/saveScoreResponse/:ideaId', deleteScore);
 
 module.exports = router;

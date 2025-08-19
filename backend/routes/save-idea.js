@@ -5,10 +5,10 @@ const { saveIdea, getIdea, getIdeas, updateIdea } = require('../controllers/save
 
 router.post('/idea', saveIdea);
 
-router.get('/idea/:userId/:ideaId', getIdea);
+router.get('/idea/:ideaId', getIdea);
 
-router.patch('/idea/:userId/:ideaId', updateIdea);
+router.patch('/idea/:ideaId', updateIdea);
 
-router.get('/ideas/:id', getIdeas);
+router.get('/ideas', getIdeas);
 
 module.exports = router;

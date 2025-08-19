@@ -1,26 +1,34 @@
+// set-axios-defaults.js
+const token = localStorage.getItem('accessToken');
+const refreshToken = localStorage.getItem('refreshToken');
+if (!token) {
+  window.location.href = 'auth.html';
+} else {
+  axios.defaults.baseURL = 'http://localhost:5004';
+  axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+}
+
+
+
+
 function getUserInput() {
   document.querySelector('.js-analyze-button').addEventListener('click', async ()=>{
     try {
+      /*
       let user = JSON.parse(localStorage.getItem('user'))
       console.log(user)
       let userId = user.data.user._id
       console.log(userId)
-
-      /*
-      let userResponse = await axios.post(`/api/users/${userId}`) //NOTE THIS IS WAY BETTER PRACTICE GETTING THE USER FROM THE BACKEND FOR SAFETY
-      console.log(userResponse)
       */
-
-      //let newScoreGenerate = true;
-
-      //localStorage.setItem('newScoreGenerateValue', newScoreGenerate)
+     
 
       let idea = document.querySelector('.js-input').value
       let ideaName = document.querySelector('.js-idea-name').value
       console.log(ideaName)
-      let response = await axios.post('/api/save/idea', {idea, userId, ideaName})
+      let response = await axios.post('/api/save/idea', {idea, ideaName}) //saving the idea
+      console.log(response)
 
-      console.log(localStorage.setItem('ideaId', JSON.stringify(response.data.idea._id)))
+      console.log(localStorage.setItem('ideaId', JSON.stringify(response.data.ideaRes._id)))
       
       window.location.href = '/scoreboard-page.html';
 
@@ -31,7 +39,17 @@ function getUserInput() {
       
       */ 
     } catch (error) {
-      console.log(error)
+      if (error.response?.status === 403) {
+        const refreshToken = localStorage.getItem('refreshToken');
+        const response = await axios.post('http://localhost:4004/token', {token: refreshToken})
+        let newToken = response.data.accessToken;
+
+        localStorage.setItem('accessToken', newToken);
+        axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
+
+        console.log(`new access token: ${newToken}`)
+        return location.reload();
+      }
     }
 
   })

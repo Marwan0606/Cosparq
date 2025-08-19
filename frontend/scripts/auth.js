@@ -6,14 +6,17 @@ const createUser = async ()=>{
     const name = document.querySelector('.js-signup-name').value
     const email = document.querySelector('.js-signup-email').value
     const password = document.querySelector('.js-signup-password').value
-    let user = await axios.post('http://localhost:5004/api/users/register', {name, email, password})
+    let user = await axios.post('http://localhost:4004/register', {name, email, password})
 
 
+    /*
     console.log(user)
-    user = user.data.user
+    //user = user.data.user
+    user = user.data
     userId = user._id
+    */
 
-    localStorage.setItem('user', JSON.stringify(user))
+    //localStorage.setItem('user', JSON.stringify(user))
 
     if (localStorage.getItem('user')) {
       window.location.href = 'auth.html';
@@ -47,19 +50,33 @@ const login = async ()=>{
     const email = document.querySelector('.js-login-email').value
     const password = document.querySelector('.js-login-password').value
 
-    let user = await axios.post('http://localhost:5004/api/users/login', {email, password})
+    let user = await axios.post('http://localhost:4004/login', {email, password})
 
-    console.log(user)
-    //user = data.user
-    userId = user._id
+    const { accessToken, refreshToken } = user.data;
+    
 
-    localStorage.setItem('user', JSON.stringify(user))
+    //localStorage.setItem('user', JSON.stringify(user.data))
 
+    localStorage.setItem('accessToken',  accessToken);
+    localStorage.setItem('refreshToken', refreshToken);
+
+    /*
+    let localaccess = localStorage.getItem('accessToken')
+    let localrefresh = localStorage.getItem('refreshToken')
+
+    console.log(localaccess)
+    console.log(localrefresh)
+    */
+
+    /*
     if (localStorage.getItem('user')) {
       window.location.href = 'idea-page.html';
     } else {
       console.error('Failed to store user in localStorage!');
     }
+    */
+
+    window.location.href = 'idea-page.html';
     
   } catch (error) {
     const problem = error.response.data.msg

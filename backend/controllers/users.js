@@ -1,6 +1,7 @@
 const User = require('../models/Users.js')
 const { get } = require('../routes/gpt-responses.js')
 
+/*
 const createUser = async (req, res) => {
   try {
     const user = await User.create(req.body);
@@ -12,8 +13,9 @@ const createUser = async (req, res) => {
     return res.status(500).json({ msg: error.message || 'Server error' });
   }
 };
+*/
 
-
+/*
 const login = async (req,res)=>{
   try {
     const {email, password} = req.body
@@ -32,6 +34,7 @@ const login = async (req,res)=>{
     res.status(500).json({msg: error})
   }
 }
+*/
 
 
 const getUser = async (req, res) => {
@@ -61,8 +64,8 @@ const getAllUsersEmail = async (req, res) => {
 };
 
 module.exports = {
-  createUser,
-  login,
+  //createUser,
+  //login,
   getUser,
   getAllUsersEmail
 }

@@ -1,14 +1,22 @@
+// set-axios-defaults.js
+const token = localStorage.getItem('accessToken');
+if (!token) {
+  window.location.href = 'auth.html';
+} else {
+  axios.defaults.baseURL = 'http://localhost:5004';
+  axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+}
+
+
+
 const scoreBoard = async (idea)=>{
   try {
+    /*
     let user = JSON.parse(localStorage.getItem('user'))
     let userId = user.data.user._id
     console.log(userId)
-    
-    /*
-    let newScoreGenerate = localStorage.getItem('newScoreGenerateValue') //PROBLEM THIS TURNS NEWSCOREGENERATE TO TRUE AGAIN
-    console.log(newScoreGenerate)
     */
-
+  
     
     let ideaId = JSON.parse(localStorage.getItem('ideaId'))
     console.log(`IdeaId is: ${ideaId}`)
@@ -16,7 +24,7 @@ const scoreBoard = async (idea)=>{
     let ideaExists = true
     let idea;
     try {
-      idea = await axios.get(`/api/save/idea/${userId}/${ideaId}`)
+      idea = await axios.get(`/api/save/idea/${ideaId}`)
     } catch (error) {
       console.log('idea doesnt exist')
       ideaExists = false
@@ -47,7 +55,7 @@ const scoreBoard = async (idea)=>{
     let response;
     let resultData;
     try {
-      response = await axios.get(`/api/save/saveScoreResponse/${userId}/${ideaId}`);
+      response = await axios.get(`/api/save/saveScoreResponse/${ideaId}`);
       if (response.data && response.data.scoreResponse) {
         console.log('getting from database');
         let scoreboardResponse = response.data.scoreResponse.scoreboardResponse
@@ -58,17 +66,20 @@ const scoreBoard = async (idea)=>{
         console.log(response.data.result);
         let scoreboardResponse = response.data.result;
         
-        let saveScoreResponse = await axios.post('/api/save/saveScoreResponse', {scoreboardResponse, userId, ideaId})
+        let saveScoreResponse = await axios.post('/api/save/saveScoreResponse', {scoreboardResponse, ideaId})
         console.log(saveScoreResponse)
 
         resultData = JSON.parse(response.data.result);
       }
     } catch (error) {
       console.log('Error fetching from database, getting from AI');
+      console.log(error)
+      /*
       response = await axios.post('/api/responses/idea', { idea });
-      let saveScoreResponse = await axios.post('/api/save/saveScoreResponse', {scoreboardResponse, userId, ideaId})
+      let saveScoreResponse = await axios.post('/api/save/saveScoreResponse', {scoreboardResponse, ideaId})
       console.log(saveScoreResponse)
       resultData = JSON.parse(response.data.result);
+      */
     }
 
 
@@ -137,6 +148,7 @@ const scoreBoard = async (idea)=>{
 
 
   } catch(error) {
+    
     console.log(error)
   }
 };
