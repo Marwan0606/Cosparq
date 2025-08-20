@@ -1,7 +1,6 @@
 const jwt = require('jsonwebtoken')
 
 const authenticateToken = (req, res, next)=>{ 
-  console.log('middleware ran')
   const authHeader = req.headers['authorization']
   const token = authHeader && authHeader.split(' ')[1]
   if (token === null) return res.sendStatus(401)

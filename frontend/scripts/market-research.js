@@ -1,15 +1,20 @@
-const marketBoard = async (idea)=>{
+// set-axios-defaults.js
+const token = localStorage.getItem('accessToken');
+if (!token) {
+  window.location.href = 'auth.html';
+} else {
+  axios.defaults.baseURL = 'http://localhost:5004';
+  axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+}
+
+
+const marketBoard = async ()=>{
   try {
-
-    let user = JSON.parse(localStorage.getItem('user'))
-    let userId = user.data.user._id
-    console.log(userId)
-
     let ideaId = JSON.parse(localStorage.getItem('ideaId'))
     console.log(`IdeaId is: ${ideaId}`)
 
 
-    let idea = await axios.get(`/api/save/idea/${userId}/${ideaId}`)
+    let idea = await axios.get(`/api/save/idea/${ideaId}`)
     const ideaText = idea?.data?.idea?.idea;
     if (!ideaText) {
       document.querySelector('.js-grid').innerHTML = `
@@ -28,7 +33,10 @@ const marketBoard = async (idea)=>{
     let response;
     let resultData;
     try {
-      response = await axios.get(`/api/save/saveMarket/${userId}/${ideaId}`);
+      response = await axios.get(`/api/save/saveMarket/${ideaId}`);
+      console.log(response)
+      
+      
       if (response.data && response.data.marketResponse) {
         console.log('getting from database');
         let marketResponse = response.data.marketResponse.marketResearchResponse
@@ -39,17 +47,22 @@ const marketBoard = async (idea)=>{
         console.log(response.data.result);
         let marketResearchResponse = response.data.result;
         
-        let saveMarketResponse = await axios.post('/api/save/saveMarket', {marketResearchResponse, userId, ideaId})
+        let saveMarketResponse = await axios.post('/api/save/saveMarket', {marketResearchResponse, ideaId})
         console.log(saveMarketResponse)
 
         resultData = JSON.parse(response.data.result);
+        
       }
+      
     } catch (error) {
-      console.log('Error fetching from database, getting from AI');
+      console.log('Error fetching from database');
+      console.log(error)
+      /*
       response = await axios.post('/api/responses/research', { idea });
-      let saveMarketResponse = await axios.post('/api/save/saveMarket', {marketResearchResponse, userId, ideaId})
+      let saveMarketResponse = await axios.post('/api/save/saveMarket', {marketResearchResponse, userId})
       console.log(saveMarketResponse)
       resultData = JSON.parse(response.data.result);
+      */
     }
 
     /*
@@ -253,8 +266,8 @@ const marketBoard = async (idea)=>{
 };
 
 
-let idea = sessionStorage.getItem('idea');
-marketBoard(idea)
+//let idea = sessionStorage.getItem('idea');
+marketBoard()
 
 
 // Simple hover tooltip for any element with data-tip-title / data-tip-body
