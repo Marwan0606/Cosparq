@@ -54,40 +54,44 @@ app.post('/register', async (req, res) => {
     res.status(201).json(user)
   } catch (error) {
     console.log(error)
-    res.status(500).send()
+    res.status(500).json('Email already linked to an existing account')
   }
 })
 
 
 
 app.post('/login', async (req, res)=>{
-  const {email, password} = req.body
-  const user1 = await User.findOne({email: email})
+  try {
+    const {email, password} = req.body
+    const user1 = await User.findOne({email: email})
 
-  if (!user1) {
-    return res.status(400).send('Cannot find user')
+    if (!user1) {
+      return res.status(400).json({msg: 'Cannot find user'})
+    }
+
+    const match = await bcrypt.compare(password, user1.password);
+    if (!match) {
+      return res.status(403).json({ msg: 'Incorrect Password' });
+    }
+
+
+    const user = {userId: user1._id}
+    const accessToken = generateAccessToken(user)
+    const refreshToken = jwt.sign(user, process.env.REFRESH_TOKEN_SECRET)
+
+    refreshTokens.push(refreshToken);
+
+    res.json({accessToken: accessToken, refreshToken: refreshToken})
+  } catch (error) {
+    console.log(error)
   }
-
-  const match = await bcrypt.compare(password, user1.password);
-  if (!match) {
-    return res.status(403).json({ msg: 'Not allowed' });
-  }
-
-
-  const user = {userId: user1._id}
-  const accessToken = generateAccessToken(user)
-  const refreshToken = jwt.sign(user, process.env.REFRESH_TOKEN_SECRET)
-
-  refreshTokens.push(refreshToken);
-
-  res.json({accessToken: accessToken, refreshToken: refreshToken}) 
 })
 
 
 
 
 function generateAccessToken(user) {
-  return jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {expiresIn: '10m'})
+  return jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {expiresIn: '10s'})
 }
 
 const port = process.env.PORT || 4004

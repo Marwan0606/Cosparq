@@ -6,8 +6,15 @@ const createUser = async ()=>{
     const name = document.querySelector('.js-signup-name').value
     const email = document.querySelector('.js-signup-email').value
     const password = document.querySelector('.js-signup-password').value
-    let user = await axios.post('http://localhost:4004/register', {name, email, password})
-
+    
+    try {
+      let user = await axios.post('http://localhost:4004/register', {name, email, password})
+    } catch (error) {
+      let errorMessage = 'Email is already linked to an existing account'
+      document.querySelector('.js-error-message').innerHTML = errorMessage
+      return
+    }
+    
 
     /*
     console.log(user)
@@ -18,11 +25,8 @@ const createUser = async ()=>{
 
     //localStorage.setItem('user', JSON.stringify(user))
 
-    if (localStorage.getItem('user')) {
-      window.location.href = 'auth.html';
-    } else {
-      console.error('Failed to store user in localStorage!');
-    }
+ 
+    window.location.href = 'auth.html';
     
   } catch (error) {
     console.log(error)
@@ -52,6 +56,8 @@ const login = async ()=>{
 
     let user = await axios.post('http://localhost:4004/login', {email, password})
 
+    console.log(user.msg)
+
     const { accessToken, refreshToken } = user.data;
     
 
@@ -79,6 +85,7 @@ const login = async ()=>{
     window.location.href = 'idea-page.html';
     
   } catch (error) {
+
     const problem = error.response.data.msg
     console.log(problem)
     document.querySelector('.js-problem').innerHTML = problem
