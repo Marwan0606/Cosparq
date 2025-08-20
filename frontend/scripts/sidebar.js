@@ -80,25 +80,26 @@ async function populateIdeas() {
     if (error.response?.status === 403) {
       const refreshToken = localStorage.getItem('refreshToken');
       console.log(refreshToken)
-      const response = await axios.post('http://localhost:4004/token', {token: refreshToken})
-      let newToken = response.data.accessToken;
+      try {
+        const response = await axios.post('http://localhost:4004/token', {token: refreshToken})
+        let newToken = response.data.accessToken;
 
-      localStorage.setItem('accessToken', newToken);
-      axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
+        localStorage.setItem('accessToken', newToken);
+        axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
 
-      console.log(`new access token: ${newToken}`)
-      initSidebar()
-      return location.reload();
+        console.log(`new access token: ${newToken}`)
+        initSidebar()
+        return location.reload();
+      } catch (error) {
+        return window.location.href = 'auth.html';
+      }
+      
+
     }
     //console.error('populateIdeas error:', error);;
     
   }
 }
-
-
-
-
-
 
 
 

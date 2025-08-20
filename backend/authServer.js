@@ -14,11 +14,15 @@ const database = require('./db/connect.js')
 
 const User   = require('./models/Users.js');
 
+const RefreshTokenModel = require('./models/Refresh-Tokens.js')
+
 app.use(cors({ origin: 'http://localhost:5004' }));
 
 
 app.use(express.json())
 
+
+/*
 //NEED MONGODB DATABASE FOR REFRESH TOKENS
 let refreshTokens = [] //THIS JUST FOR TESTING
 
@@ -33,14 +37,35 @@ app.post('/token', (req, res)=>{
     res.json({accessToken: accessToken})
   })
 })
+*/
 
 
-/*
-app.delete('/logout', (req, res)=>{
-  refreshTokens = refreshTokens.filter(token => token !== req.body.token)
+
+app.post('/token', async (req, res)=>{
+  const refreshToken = req.body.token
+  if (refreshToken === null) return res.sendStatus(401)
+
+  const exists = await findRefreshToken(refreshToken)
+  if (!exists) return res.status(403).json('Please Log In Again');
+
+  jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, (err, user)=>{
+    if (err) return res.sendStatus(403)
+    const accessToken = generateAccessToken({userId: user.userId})
+    res.json({accessToken: accessToken})
+  });
+});
+
+async function findRefreshToken(refreshToken) {
+  const doc = await RefreshTokenModel.findOne({refreshToken})
+  return !!doc
+}
+
+
+app.delete('/logout', async (req, res)=>{
+  const deleteOldToken = await RefreshTokenModel.findOneAndDelete({refreshToken})
   res.sendStatus(204)
 })
-*/
+
 
 
 app.post('/register', async (req, res) => {
@@ -79,7 +104,8 @@ app.post('/login', async (req, res)=>{
     const accessToken = generateAccessToken(user)
     const refreshToken = jwt.sign(user, process.env.REFRESH_TOKEN_SECRET)
 
-    refreshTokens.push(refreshToken);
+    const deleteOldToken = await RefreshTokenModel.findOneAndDelete({userId: user1._id})
+    await RefreshTokenModel.create({refreshToken, userId: user1._id})
 
     res.json({accessToken: accessToken, refreshToken: refreshToken})
   } catch (error) {
