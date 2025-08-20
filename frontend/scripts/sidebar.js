@@ -90,7 +90,7 @@ async function populateIdeas() {
       initSidebar()
       return location.reload();
     }
-    //console.error('populateIdeas error:', error);
+    //console.error('populateIdeas error:', error);;
     
   }
 }
