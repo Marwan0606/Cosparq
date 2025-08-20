@@ -40,7 +40,7 @@ const updateIdea = async (req, res)=>{
 const getIdeas = async (req,res)=>{
   try {
     const userId = req.user.userId
-    console.log(userId)
+    //console.log(userId)
     const idea = await Idea.find({userId})
     res.status(200).json({idea})
   } catch (error) {

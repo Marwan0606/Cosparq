@@ -25,7 +25,8 @@ const getScore = async (req,res)=>{
 
 const deleteScore = async (req,res)=>{
   try {
-    const {userId, ideaId} = req.params
+    const userId = req.user.userId
+    const {ideaId} = req.params
     const scoreResponse = await scoreboardResponseModel.findOneAndDelete({userId, ideaId})
     res.status(200).json({scoreResponse})
   } catch (error) {

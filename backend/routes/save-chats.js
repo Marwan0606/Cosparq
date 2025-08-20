@@ -5,8 +5,8 @@ const { saveChat, getChat, getAllChats } = require('../controllers/save-chats');
 
 router.post('/chat', saveChat);
 
-router.get('/getChat/:userId/:ideaId', getChat);
+router.get('/getChat/:ideaId', getChat);
 
-router.get('/getAllChats/:userId/:ideaId', getAllChats);
+router.get('/getAllChats/:ideaId', getAllChats);
 
 module.exports = router;

@@ -197,27 +197,25 @@ function tooltip(resultData) {
 //THIS IS FOR THE CODE FOR REGENERATING SCOREBOARD
 
 document.querySelector('.js-regenerate-response-btn').addEventListener('click', async ()=>{
-  let user = JSON.parse(localStorage.getItem('user'))
-  let userId = user.data.user._id
+  
   let ideaId = JSON.parse(localStorage.getItem('ideaId'))
 
-  console.log(userId)
   console.log(ideaId)
 
-  let chatLogs = await getChatLogs(userId, ideaId)
-  let newIdea = await renewIdea(userId, ideaId, chatLogs)
+  let chatLogs = await getChatLogs(ideaId)
+  let newIdea = await renewIdea(ideaId, chatLogs)
   newIdea = await popup(newIdea)
-  await updateIdea(userId, ideaId, newIdea)
-  await deleteScoreboard(userId, ideaId)
-  window.location.reload();
+  await updateIdea(ideaId, newIdea)
+  await deleteScoreboard(ideaId)
+  //window.location.reload();
 
   let idea = sessionStorage.getItem('idea');
   scoreBoard(idea)
 })
 
-const getChatLogs = async (userId, ideaId)=>{
+const getChatLogs = async (ideaId)=>{
   try {
-    let resp = await axios.get(`/api/save/getAllChats/${userId}/${ideaId}`);
+    let resp = await axios.get(`/api/save/getAllChats/${ideaId}`);
     const chatLogs  = Array.isArray(resp.data?.savedChat) ? resp.data.savedChat : [];
     console.log(chatLogs)
     let listOfChats = ''
@@ -233,9 +231,9 @@ const getChatLogs = async (userId, ideaId)=>{
 }
 
 
-const renewIdea = async(userId, ideaId, chatLogs)=>{
+const renewIdea = async(ideaId, chatLogs)=>{
   try {
-    let oldIdea = await axios.get(`/api/save/idea/${userId}/${ideaId}`)
+    let oldIdea = await axios.get(`/api/save/idea/${ideaId}`)
     console.log(oldIdea)
     let {data} = await axios.post('/api/responses/renewIdea', { oldIdea, chatLogs });
     console.log(data)
@@ -250,18 +248,19 @@ const renewIdea = async(userId, ideaId, chatLogs)=>{
 }
 
 
-const updateIdea = async(userId, ideaId, newIdea)=>{
+const updateIdea = async(ideaId, newIdea)=>{
   try {
-    await axios.patch(`/api/save/idea/${userId}/${ideaId}`, {idea: newIdea})
+    await axios.patch(`/api/save/idea/${ideaId}`, {idea: newIdea})
     return
   } catch (error) {
     console.log(error)
   }
 }
 
-const deleteScoreboard = async (userId, ideaId, newIdea)=>{
+const deleteScoreboard = async (ideaId)=>{
   try {
-    await axios.delete(`/api/save/saveScoreResponse/${userId}/${ideaId}`)
+    const response = await axios.delete(`/api/save/saveScoreResponse/${ideaId}`)
+    console.log(`DELETE SCORE RESPONSE ${response}`)
     return
   } catch (error) {
     console.log(error)
