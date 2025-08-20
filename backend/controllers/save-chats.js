@@ -4,7 +4,7 @@ const saveChat = async (req,res)=>{
   try {
     const userId = req.user.userId
     const {userMessage, AiResponse, ideaId} = req.body
-    const savedChat = await Chat.create(userMessage, AiResponse, ideaId, userId)
+    const savedChat = await Chat.create({userMessage, AiResponse, ideaId, userId})
     res.status(200).json({savedChat})
   } catch (error) {
     res.status(500).json({msg: error})

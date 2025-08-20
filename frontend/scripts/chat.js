@@ -1,3 +1,12 @@
+// set-axios-defaults.js
+const token = localStorage.getItem('accessToken');
+if (!token) {
+  window.location.href = 'auth.html';
+} else {
+  axios.defaults.baseURL = 'http://localhost:5004';
+  axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+}
+
 const sendBtn = document.querySelector('.js-send');
 const inputEl = document.querySelector('.chat-input');
 
@@ -20,16 +29,13 @@ function setBusy(state) {
 let chatResponse = async ()=>{
   try {
 
-    let user = JSON.parse(localStorage.getItem('user'))
-    let userId = user.data.user._id
-
     let ideaId = JSON.parse(localStorage.getItem('ideaId'))
 
 
-    let scoreboard = await axios.get(`/api/save/saveScoreResponse/${userId}/${ideaId}`);
+    let scoreboard = await axios.get(`/api/save/saveScoreResponse/${ideaId}`);
     scoreboard = scoreboard.data.scoreResponse.scoreboardResponse
 
-    let idea = await axios.get(`/api/save/idea/${userId}/${ideaId}`)
+    let idea = await axios.get(`/api/save/idea/${ideaId}`)
     idea = idea.data.idea.idea
 
 
@@ -61,7 +67,7 @@ let chatResponse = async ()=>{
 
 
     //get previous responses
-    let historyResponses = await axios.get(`api/save/getChat/${userId}/${ideaId}`)
+    let historyResponses = await axios.get(`/api/save/getChat/${ideaId}`)
 
     let lastUserResponse = '';
     let lastAiResponse   = '';
@@ -104,9 +110,12 @@ let chatResponse = async ()=>{
 
     //saving responses
 
-    await axios.post('api/save/chat', {userMessage, AiResponse, ideaId, userId})
+    
+    const saveChatRes = await axios.post('/api/save/chat', {userMessage, AiResponse, ideaId})
+    console.log(saveChatRes)
 
-    await axios.post('api/save/chatRaw', {userMessage: userInput, AiResponse: reply, ideaId, userId})
+    const saveChatRawRes = await axios.post('/api/save/chatRaw', {userMessage: userInput, AiResponse: reply, ideaId})
+    console.log(saveChatRawRes)
 
     loadChatHistory()
 
@@ -137,11 +146,10 @@ inputEl.addEventListener('keydown', (e) => {
 // Load all saved chat history when page loads
 async function loadChatHistory() {
   try {
-    let user = JSON.parse(localStorage.getItem('user'));
-    let userId = user.data.user._id;
     let ideaId = JSON.parse(localStorage.getItem('ideaId'));
 
-    let history = await axios.get(`/api/save/getAllChatsRaw/${userId}/${ideaId}`);
+    let history = await axios.get(`/api/save/getAllChatsRaw/${ideaId}`);
+    console.log(history)
     let chats = history.data.savedChat || [];
 
     let HTML = '';
