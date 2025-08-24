@@ -143,7 +143,7 @@ const scoreBoard = async (idea)=>{
     HTML = generateScoreHTML()
 
     document.querySelector('.js-scoreboard').innerHTML = HTML;
-
+    console.log(resultData)
     tooltip(resultData);
 
 

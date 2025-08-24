@@ -1,0 +1,313 @@
+/* -----------------------------------------------------------------
+   CoSparq   Tasky / “Bolder + Animated Glow”   (v3)
+   ----------------------------------------------------------------- */
+
+/* ---------- Brand Palette ---------- */
+:root{
+  --bg-1:#121212;
+  --bg-2:#0f0f10;
+
+  --surface:#1f1f1f;
+  --stroke:#2c2c2c;
+  --shadow:0 26px 80px rgba(0,0,0,.65);
+
+  --text:#e8e8ea;
+  --muted:#9fa1b2;
+
+  /* shared gradient */
+  --grad:linear-gradient(100deg,#8400ff 0%, #f94016 38%, #f96d16 60%, #3b82f6 100%);
+
+  /* urgency */
+  --u-low:#00e29b;
+  --u-med:#ffda57;
+  --u-high:#ff4b2b;
+}
+
+/* ---------- Global Reset ---------- */
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+
+/* ---------- Moving-Glow Backdrop ---------- */
+body{
+  font-family:'Inter',sans-serif;
+  color:var(--text);
+  background:var(--bg-2);
+  overflow-x:hidden;
+  background:#121212;
+  /* two faint radial glows in opposite corners */
+  background-image:
+    radial-gradient(800px 600px at 20% 30%, #8400ff22  0%, transparent 70%),
+    radial-gradient(700px 500px at 80% 80%, #f940161a 0%, transparent 70%);
+  background-attachment:fixed;
+}
+body::before,
+body::after{                 /* two slow-moving blobs */
+  content:"";
+  position:fixed;
+  top:50%;left:50%;
+  width:1200px;height:1200px;
+  border-radius:50%;
+  background:var(--grad);
+  opacity:.08;
+  filter:blur(180px);
+  transform:translate(-50%,-50%) scale(1);
+  animation:blob 32s linear infinite;
+  pointer-events:none;
+  z-index:-1;
+  display:none !important;
+}
+body::after{
+  width:900px;height:900px;
+  animation:blob 38s linear reverse infinite;
+  opacity:.10;
+}
+@keyframes blob{
+  0%  {transform:translate(-60%,-55%) scale(1);}
+  50% {transform:translate(-40%,-45%) scale(1.35) rotate(120deg);}
+  100%{transform:translate(-60%,-55%) scale(1);}
+}
+
+/* ---------- Layout Container ---------- */
+.container{max-width:920px;margin:52px auto 120px;padding:0 24px;}
+
+/* ---------- Title / Hero ---------- */
+.hero{text-align:center;margin-bottom:38px}
+.title{
+  font-size:clamp(52px,6.8vw,88px);
+  font-weight:800;
+  line-height:1.04;
+  background:var(--grad);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  text-shadow:0 4px 22px #8400ff33,0 0 36px #f940161f;
+}
+.tagline{margin-top:6px;color:var(--muted);font-size:1.08rem}
+
+/* ---------- Composer ---------- */
+.composer{display:flex;flex-direction:column;align-items:center;gap:14px;}
+.composer__surface{
+  width:min(780px,100%);
+  display:flex;gap:16px;padding:18px;
+  background:var(--surface);border:1px solid var(--stroke);
+  border-radius:26px;box-shadow:var(--shadow);
+  position:relative;isolation:isolate;
+}
+.composer__surface::before{
+  content:"";position:absolute;inset:-1px;border-radius:inherit;
+  background:var(--grad);filter:blur(10px);opacity:.25;pointer-events:none;z-index:-1;
+}
+
+.input{
+  flex:1;
+  background:#0d0d11;border:none;outline:none;
+  color:var(--text);
+  font-size:1.05rem;line-height:1.3;
+  padding:15px 20px;border-radius:16px;
+}
+.input::placeholder{color:#666774;}
+.input:focus{box-shadow:0 0 0 3px #3b82f6aa;}
+
+.composer__btn{
+  min-width:118px;height:54px;
+  border:none;border-radius:16px;cursor:pointer;
+  font-weight:700;font-size:1.05rem;color:#fff;
+  background:var(--grad);filter:brightness(1);
+  box-shadow:0 12px 28px rgba(132,0,255,.4),inset 0 -7px 12px rgba(0,0,0,.28);
+  transition:filter .15s,transform .15s;
+}
+.composer__btn:hover{filter:brightness(1.07);}
+.composer__btn:active{transform:translateY(1px);}
+
+.hint{font-size:.82rem;color:var(--muted);}
+
+/* ---------- Popover ---------- */
+.popover{
+  position:absolute;top:calc(100% + 16px);right:24px;
+  width:min(540px,92vw);
+  background:var(--surface);border:1px solid var(--stroke);
+  border-radius:20px;box-shadow:var(--shadow);padding:22px;z-index:100;
+}
+.popover[hidden]{display:none;}
+.popover h3{margin-bottom:18px;font-size:1rem;font-weight:700;}
+.pop-grid{display:grid;gap:16px;grid-template-columns:1.3fr 1fr 1fr;}
+@media(max-width:560px){.pop-grid{grid-template-columns:1fr;}}
+
+.field{display:flex;flex-direction:column;gap:6px;font-size:.9rem;}
+.field span{color:var(--muted);}
+.field input,.field select,.description-text{
+  background:#0d0d11;border:1px solid var(--stroke);
+  color:var(--text);padding:12px 14px;border-radius:14px;outline:none;
+  transition:box-shadow .18s;
+}
+.description-text{min-height:100px;resize:vertical;}
+.field input:focus,.field select:focus,.description-text:focus{
+  box-shadow:0 0 0 3px rgba(249,64,22,.4);
+}
+.actions{display:flex;justify-content:flex-end;gap:12px;margin-top:22px;}
+.btn{
+  height:44px;padding:0 24px;border-radius:14px;border:none;cursor:pointer;font-weight:700;
+}
+.btn.primary{
+  background:var(--grad);color:#fff;
+  box-shadow:0 9px 24px rgba(249,64,22,.32);
+}
+.btn.ghost{
+  background:transparent;color:var(--text);border:1px solid var(--stroke);
+}
+.btn:hover{filter:brightness(1.07);}
+.caret{
+  position:absolute;top:-10px;right:38px;width:18px;height:18px;transform:rotate(45deg);
+  background:var(--surface);border-left:1px solid var(--stroke);border-top:1px solid var(--stroke);
+}
+
+/* ---------- List / Card ---------- */
+.task-list{margin-top:40px;}
+
+/* Empty card */
+.card{
+  background:var(--surface);border:1px solid var(--stroke);
+  border-radius:20px;box-shadow:var(--shadow);
+}
+.empty{text-align:center;padding:40px 28px;}
+.empty h3{font-size:1.24rem;margin-bottom:10px;}
+.empty p{color:var(--muted);}
+
+/* Task UL list (created by JS) */
+.tasks{list-style:none;padding:16px;margin:0;display:flex;flex-direction:column;gap:16px;}
+
+/* ---------- Task Row ---------- */
+.task{
+  display:grid;grid-template-columns:40px 1fr 40px;align-items:center;gap:16px;
+  background:#19191f;border:1px solid var(--stroke);border-radius:20px;padding:16px 18px;
+  transition:background .18s,transform .12s;
+}
+.task:hover{background:#24242c;transform:translateY(-1px);}
+.task__content{display:flex;flex-direction:column;gap:6px;}
+.task__title{font-weight:600;font-size:1.06rem;}
+.task__meta{display:flex;flex-wrap:wrap;gap:10px;align-items:center;font-size:.8rem;color:var(--muted);}
+.badge{
+  padding:5px 12px;border-radius:999px;font-size:.75rem;
+  background:#25252e;border:1px solid var(--stroke);position:relative;overflow:hidden;
+}
+.badge:hover::after{opacity:.25;transform:scale(2);}
+.badge::after{
+  content:"";position:absolute;inset:0;border-radius:inherit;
+  background:var(--grad);opacity:0;transition:.25s;pointer-events:none;
+}
+
+/* urgency chip colors + glow pulse on hover */
+.badge--urgency[data-u="Low"]{color:var(--u-low);}
+.badge--urgency[data-u="Medium"]{color:var(--u-med);}
+.badge--urgency[data-u="High"]{color:var(--u-high);}
+.badge--urgency[data-u]:hover{filter:brightness(1.25);}
+
+/* Checkbox */
+.task__check{
+  width:30px;height:30px;border-radius:10px;border:2px solid var(--u-med);
+  background:transparent;cursor:pointer;position:relative;transition:.18s;
+}
+.task__check[aria-pressed="true"]{
+  border-color:var(--u-high);background:var(--u-high);
+  animation:flash 600ms ease-out;
+}
+
+/* Delete button */
+.task__delete{
+  width:30px;height:30px;border-radius:10px;border:none;
+  background:transparent;color:#999;cursor:pointer;font-size:22px;display:grid;place-items:center;
+  transition:background .15s,color .15s;
+}
+.task__delete:hover{background:#26262e;color:var(--u-high);}
+
+/* Done state */
+.task--done{opacity:.6;filter:saturate(.6);}
+.task--done .task__title{text-decoration:line-through;}
+
+/* ---------- Secret Key ---------- */
+.secret-key-box{
+  position:fixed;bottom:22px;right:22px;display:flex;align-items:center;gap:12px;
+  background:rgba(0,0,0,.55);border:1px solid var(--stroke);
+  border-radius:14px;padding:10px 16px;backdrop-filter:blur(6px);
+}
+.secret-key-box span{font-family:monospace;color:var(--text);}
+.secret-key-btn{
+  background:transparent;border:1px solid var(--stroke);border-radius:8px;
+  color:var(--muted);padding:6px 12px;font-size:.8rem;cursor:pointer;
+}
+.secret-key-btn:hover{background:#1f1f1f;color:#fff;}
+
+
+/* ─────────────────────────────────────────────
+   1.  Title gradient exactly like screenshot
+   ───────────────────────────────────────────── */
+.title{
+  /* keep size / weight from earlier */
+  background: linear-gradient(
+    90deg,
+    #8400ff   27%,   /* vivid purple */   /* magenta */
+    #f94016  48%,   /* hot red-orange */
+    #f96d16  55%,   /* tangerine */  /* soft mauve bridge */
+    #3b82f6 80%    /* azure blue */
+  );
+  -webkit-background-clip:text;
+  background-clip:text;
+  color:transparent;
+  text-shadow:none;             /* screenshot has no glow */
+}
+
+
+/* 🔸 Post button — solid dark fill, gradient border */
+.composer__btn{
+  min-width: 118px;
+  height: 54px;
+  padding: 0 24px;
+  border: 2px solid transparent;          /* room for the ring */
+  border-radius: 16px;
+  font: 700 1.05rem/1 'Inter', sans-serif;
+  color: #e8e8ea;
+  cursor: pointer;
+
+  /* 2-layer background:
+     ─ padding-box  → the inner fill  (pure #0d0d11)
+     ─ border-box   → the outer ring (theme gradient) */
+  background:
+    linear-gradient(#0d0d11, #0d0d11) padding-box,
+    var(--grad)                       border-box;
+
+  transition: filter .15s, transform .15s;
+}
+.composer__btn:hover  { filter: brightness(1.07); }
+.composer__btn:active { transform: translateY(1px); }
+
+
+/* ── Re-use the composer glow on cards & tasks ───────────────────── */
+.card,
+.task{
+  position: relative;            /* creates a stacking-context */
+  background: var(--surface);    /* same dark panel */
+  border: 1px solid var(--stroke);
+  border-radius: 20px;
+  box-shadow: var(--shadow);
+  isolation: isolate;            /* so the blur doesn’t leak out */
+}
+
+.card::before,
+.task::before{
+  content: "";
+  position: absolute;
+  inset: -1px;                   /* wrap the element */
+  border-radius: inherit;
+  background: var(--grad);       /* theme gradient */
+  filter: blur(10px);            /* soft glow */
+  opacity: .25;                  /* subtle */
+  pointer-events: none;
+  z-index: -1;                   /* sit behind the content */
+}
+
+.composer__surface{
+  z-index: 200;
+}
+
+
+.popover{
+  z-index: 100;
+}

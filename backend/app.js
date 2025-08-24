@@ -12,6 +12,7 @@ const saveScoreResponse = require('./routes/save-scoreboard-response.js')
 const saveMarket = require('./routes/save-market.js')
 const saveChat = require('./routes/save-chats.js')
 const saveRawChat = require('./routes/save-raw-chats.js')
+const saveAction = require('./routes/save-action.js')
 
 const authenticateToken = require('./middleware/authenticateToken.js')
 
@@ -34,6 +35,8 @@ app.use('/api/save', saveMarket);
 app.use('/api/save', saveChat);
 
 app.use('/api/save', saveRawChat);
+
+app.use('/api/save', saveAction);
 
 const port = process.env.PORT || 5004
 

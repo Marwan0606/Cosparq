@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Team Task</title>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles/tasks-page.css"/>
+</head>
+<body>
+  <main class="container">
+    <header class="hero">
+      <h1 class="title">Team <span>Tasky</span></h1>
+      <p class="tagline js-workspace-name"></p>
+    </header>
+
+    <!-- Minimal composer -->
+    <section class="composer" aria-label="Add a new task">
+      <div class="composer__surface" id="composerSurface">
+        <input id="titleInput" class="input js-input-task" type="text"
+               placeholder="What magical task will you create today?"
+               autocomplete="off" aria-label="Task title"/>
+        <button id="postBtn" class="composer__btn"
+                aria-haspopup="dialog" aria-expanded="false" aria-controls="detailsPopover">
+          Post
+        </button>
+
+        <!-- Popover (opens under the Post button) -->
+        <form id="detailsPopover" class="popover" role="dialog" hidden>
+          <h3 id="popTitle">Add details</h3>
+          <div class="pop-grid">
+            <label class="field">
+              <span>Assignee</span>
+              <input id="assigneeInput" type="text" placeholder="e.g., Alex"/>
+            </label>
+            <label class="field">
+              <span>Urgency</span>
+              <select id="urgencySelect">
+                <option value="" disabled selected hidden>Select urgency</option>
+                <option value="Low">Low</option>
+                <option value="Medium">Medium</option>
+                <option value="High">High</option>
+              </select>
+            </label>
+            <label class="field">
+              <span>Deadline</span>
+              <input id="dueInput" type="date"/>
+            </label>
+          </div>
+          <label class="field">
+            <span>Description</span>
+            <textarea id="description-text" class="description-text"></textarea>
+          </label>
+          <div class="actions">
+            <button type="button" id="cancelBtn" class="btn ghost">Cancel</button>
+            <button type="submit" id="submitTaskBtn" class="btn primary">Add task</button>
+          </div>
+          <div class="caret"></div>
+        </form>
+
+
+        
+      </div>
+      <p id="hint" class="hint" role="status" aria-live="polite"></p>
+    </section>
+
+
+
+    <!-- Task list -->
+    <div class="js-task-list task-list">
+      <!-- Empty state -->
+      <section id="emptyCard" class="card empty" aria-hidden="false">
+        <h3>No tasks yet</h3>
+        <p>Add your first task above to get started</p>
+      </section>
+    </div>
+    
+  </main>
+
+  <!-- Task template -->
+  <template id="itemTpl">
+    <li class="task" role="listitem">
+      <button class="task__check" aria-label="Toggle complete" aria-pressed="false"></button>
+      <div class="task__content">
+        <div class="task__title"></div>
+        <div class="task__meta">
+          <span class="badge badge--urgency" data-u="M">Medium</span>
+          <span class="dot">•</span>
+          <span class="badge badge--assignee">Unassigned</span>
+          <span class="dot">•</span>
+          <span class="badge badge--due">No deadline</span>
+        </div>
+      </div>
+      <button class="task__delete" aria-label="Delete task">✕</button>
+    </li>
+  </template>
+
+  <!--
+  <div id="secret-key-box" class="secret-key-box">
+    <span id="secret-key-text" aria-label="Secret workspace key">•••••••••••••••••••</span>
+    <button id="secret-key-btn" class="secret-key-btn" aria-label="Show secret key">Show</button>
+  </div>
+  -->
+  <script
+    src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.21.1/axios.min.js"
+    integrity="sha512-bZS47S7sPOxkjU/4Bt0zrhEtWx0y0CRkhEp8IckzK+ltifIIE9EMIMTuT/mEzoIMewUINruDBIR/jJnbguonqQ=="
+    crossorigin="anonymous"
+    referrerpolicy="no-referrer"
+  ></script>
+
+  <script src="scripts/tasks-page.js" defer></script>
+</body>
+</html>

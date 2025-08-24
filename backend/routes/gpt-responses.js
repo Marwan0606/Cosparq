@@ -4,7 +4,8 @@ const router = express.Router();
 const { rateIdea } = require('../controllers/scoreboard');
 const { marketResearch } = require('../controllers/marketResearch');
 const { chat } = require('../controllers/chat')
-const { renewIdea } = require('../controllers/renewIdea')
+const { renewIdea } = require('../controllers/renewIdea');
+const { actionPlan } = require('../controllers/actionPlan');
 
 router.post('/idea', rateIdea);
 
@@ -13,5 +14,7 @@ router.post('/research', marketResearch);
 router.post('/chat', chat);
 
 router.post('/renewIdea', renewIdea);
+
+router.post('/actionPlan', actionPlan);
 
 module.exports = router;
