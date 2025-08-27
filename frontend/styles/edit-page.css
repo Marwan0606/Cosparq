@@ -1,0 +1,219 @@
+/* ==============================================================
+   CoSparq — Edit Task Page (toggle centered + boxy, 48px tall)
+   ============================================================== */
+
+/* ---------- Palette / Tokens ---------- */
+:root{
+  --bg-1:#121212;
+  --bg-2:#0f0f10;
+
+  --surface:#1f1f1f;
+  --stroke:#2c2c2c;
+  --shadow:0 26px 80px rgba(0,0,0,.65);
+
+  --text:#e8e8ea;
+  --muted:#9fa1b2;
+
+  --grad:linear-gradient(100deg,#8400ff 0%, #f94016 38%, #f96d16 60%, #3b82f6 100%);
+
+  --u-low:#00e29b;
+  --u-med:#ffda57;
+  --u-high:#ff4b2b;
+
+  --radius-lg:22px; --radius-md:16px; --radius-sm:12px;
+
+  /* uniform control sizing */
+  --control-h: 48px;
+  --control-pad-x: 14px;
+
+  /* lighter inputs */
+  --control-bg:#17181b;
+  --control-stroke:#868789;
+}
+
+/* ---------- Base ---------- */
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;
+  font-family:"Outfit", ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+  color:var(--text);
+  background:#121212;
+  background-image:
+    radial-gradient(800px 600px at 20% 30%, #8400ff22  0%, transparent 70%),
+    radial-gradient(700px 500px at 80% 80%, #f940161a 0%, transparent 70%);
+  background-attachment: fixed;
+}
+
+.container{ max-width: 980px; margin: 32px auto 96px; padding: 0 24px; }
+
+/* ---------- Topbar / Brand ---------- */
+.topbar{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:20px; }
+.brand{
+  margin:0; font-size: clamp(34px, 5vw, 56px); font-weight:800; line-height:1.05;
+  background: var(--grad);
+  -webkit-background-clip:text; background-clip:text; color:transparent;
+}
+.brand__todo,.brand__magic{ color:inherit }
+.topbar__spacer{ width:84px }
+
+/* ---------- Page intro ---------- */
+.page-title h2{ margin:0 0 6px; font-size:24px; font-weight:800; letter-spacing:.3px; }
+.page-title .muted{ margin:0; color:var(--muted); }
+
+/* ---------- Card shell ---------- */
+.card{
+  margin-top:18px; background:var(--surface); border:1px solid var(--stroke);
+  border-radius:var(--radius-lg); box-shadow:var(--shadow); backdrop-filter:blur(6px);
+  padding:20px; position:relative; isolation:isolate;
+}
+.card::before{
+  content:""; position:absolute; inset:-1px; border-radius:inherit;
+  background:var(--grad); filter:blur(10px); opacity:.18; z-index:-1;
+}
+
+/* ---------- Buttons ---------- */
+.btn{
+  height:44px; padding:0 18px; border-radius:12px; border:1px solid transparent;
+  font-weight:800; cursor:pointer; text-decoration:none; display:inline-grid; place-items:center;
+}
+.btn.primary{
+  border:2px solid transparent; color:#e8e8ea;
+  background:
+    linear-gradient(var(--control-bg),var(--control-bg)) padding-box,
+    var(--grad)                                     border-box;
+  box-shadow:0 12px 28px rgba(132,0,255,.18);
+  transition:filter .15s, transform .15s;
+}
+.btn.primary:hover{ filter:brightness(1.06) }
+.btn.primary:active{ transform:translateY(1px) }
+.btn.ghost{ color:var(--text); background:transparent; border:1px solid var(--stroke); }
+.btn.icon{ padding:0 14px }
+
+/* ---------- Form layout ---------- */
+.form{ display:flex; flex-direction:column; gap:20px; }
+.form__actions{ display:flex; gap:10px; justify-content:flex-end; }
+
+/* Align everything in one baseline row */
+.grid{
+  display:grid;
+  grid-template-columns: 2fr 1.2fr 1.6fr 1fr auto;  /* Title | Assignee | Urgency | Deadline | Completed */
+  gap:16px;
+  align-items:center; /* centers the toggle vertically */
+}
+@media (max-width: 920px){ .grid{ grid-template-columns: 1fr 1fr } }
+@media (max-width: 560px){ .grid{ grid-template-columns: 1fr } }
+
+.field{ display:grid; grid-template-rows:auto var(--control-h); gap:8px; }
+.label{ font-weight:700 }
+.req{ color:#f96d16 }
+
+/* ---------- Inputs / Selects / Date ---------- */
+.input,
+.field select,
+.field input[type="date"]{
+  height:var(--control-h);
+  padding:0 var(--control-pad-x);
+  background:var(--control-bg);
+  color:var(--text);
+  border:1px solid var(--control-stroke);
+  border-radius:var(--radius-sm);
+  outline:none;
+  transition:box-shadow .18s, border-color .18s;
+}
+.input::placeholder{ color:#7b7d88 }
+.input:focus,
+.field select:focus,
+.field input[type="date"]:focus{
+  border-color:#48506a;
+  box-shadow:0 0 0 3px rgba(59,130,246,.32);
+}
+
+/* ---------- Textarea ---------- */
+.textarea{
+  width:100%; min-height:120px; padding:12px 14px;
+  background:var(--control-bg); color:var(--text);
+  border:1px solid var(--control-stroke); border-radius:var(--radius-sm);
+  resize:vertical; transition:box-shadow .18s, border-color .18s;
+}
+.field:has(textarea){ grid-template-rows:auto auto }
+.textarea:focus{ border-color:#48506a; box-shadow:0 0 0 3px rgba(59,130,246,.32) }
+
+/* ---------- Segmented control (Urgency) ---------- */
+.seg{
+  height:var(--control-h);
+  display:inline-flex; align-items:center; gap:8px;
+  padding:6px; border-radius:999px; background:#15161b; border:1px solid var(--control-stroke);
+}
+.seg input{ position:absolute; opacity:0; pointer-events:none }
+.seg__btn{
+  height:calc(var(--control-h) - 12px);
+  display:inline-grid; place-items:center;
+  padding:0 14px; border-radius:999px; border:1px solid transparent;
+  color:#cfd1da; cursor:pointer; user-select:none;
+}
+#u-Low:checked    + label{ background:#0f1f1a; border-color:#0f3b2f; color:var(--u-low) }
+#u-Medium:checked + label{ background:#1f1b0f; border-color:#3a2e10; color:var(--u-med) }
+#u-High:checked   + label{ background:#281311; border-color:#4a1b16; color:var(--u-high) }
+
+/* ---------- Completed Switch (centered & boxy, equals 48px tall) ---------- */
+.field.switch{
+  grid-template-rows:auto var(--control-h);
+  align-items:center;   /* ensure vertical centering within the grid cell */
+}
+
+/* Boxy toggle that matches input height */
+.switch input{ position:absolute; opacity:0; pointer-events:none; }
+
+.switch__ui{
+  /* sizing & geometry */
+  --w: 84px;                  /* width of the track */
+  --h: var(--control-h);      /* exact same height as other inputs (48px) */
+  --pad: 6px;                 /* inner padding for the knob */
+  --knob: calc(var(--h) - (var(--pad) * 2)); /* knob size = height minus padding */
+
+  width: var(--w);
+  height: var(--h);
+  display: inline-block;
+  position: relative;
+  border-radius: var(--radius-sm);           /* boxy */
+  background: var(--control-bg);
+  border: 1px solid var(--control-stroke);
+  transition: background .18s, border-color .18s, box-shadow .18s;
+}
+
+/* knob */
+.switch__ui::after{
+  content:"";
+  position:absolute; top: var(--pad); left: var(--pad);
+  width: var(--knob); height: var(--knob);
+  border-radius: 8px;                       /* slightly rounded square */
+  background:#d2d6e2;
+  box-shadow: 0 3px 8px rgba(0,0,0,.25);
+  transition: left .18s ease, background .18s ease, box-shadow .18s ease;
+}
+
+/* checked state */
+.switch input:checked + .switch__ui{
+  background:
+    linear-gradient(#0d0d11,#0d0d11) padding-box,
+    var(--grad) border-box;                 /* gradient ring */
+  border: 2px solid transparent;
+  box-shadow: 0 0 0 3px rgba(249,64,22,.18);
+}
+
+/* move knob to the right when checked */
+.switch input:checked + .switch__ui::after{
+  left: calc(var(--w) - var(--knob) - var(--pad));
+  background:#ffffff;
+}
+
+/* ---------- Focus ring accessibility ---------- */
+.input:focus,
+.textarea:focus,
+.btn:focus-visible,
+.seg__btn:focus-visible,
+.switch__ui:focus-visible{
+  outline:none;
+  box-shadow:0 0 0 3px rgba(59,130,246,.35);
+}

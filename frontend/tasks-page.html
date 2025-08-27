@@ -9,9 +9,10 @@
   <link rel="stylesheet" href="styles/tasks-page.css"/>
 </head>
 <body>
+  <div id="sidebar-placeholder"></div>
   <main class="container">
     <header class="hero">
-      <h1 class="title">Team <span>Tasky</span></h1>
+      <h1 class="title">Task <span>Manager</span></h1>
       <p class="tagline js-workspace-name"></p>
     </header>
 
@@ -19,7 +20,7 @@
     <section class="composer" aria-label="Add a new task">
       <div class="composer__surface" id="composerSurface">
         <input id="titleInput" class="input js-input-task" type="text"
-               placeholder="What magical task will you create today?"
+               placeholder="Create a task here"
                autocomplete="off" aria-label="Task title"/>
         <button id="postBtn" class="composer__btn"
                 aria-haspopup="dialog" aria-expanded="false" aria-controls="detailsPopover">
@@ -108,7 +109,42 @@
     crossorigin="anonymous"
     referrerpolicy="no-referrer"
   ></script>
-
   <script src="scripts/tasks-page.js" defer></script>
+
+  <script>
+  (function () {
+    const LOGIN_URL = '/auth.html';
+
+    // If you're already on auth.html, do nothing
+    if (location.pathname.endsWith('/auth.html')) return;
+
+    const token = localStorage.getItem('accessToken');
+    if (!token) {
+      // Not logged in (no token) → redirect
+      return location.replace(LOGIN_URL);
+    }
+
+    // Optionally: verify expiry client-side with jwt-decode or
+    // ping a /token/verify endpoint. Otherwise, just let the
+    // axios interceptor handle 401s server-side.
+  })();
+
+  </script>
+
+
+  <script type="module">
+  async function loadSidebar() {
+    const res  = await fetch('sidebar.html');
+    const html = await res.text();
+    document.getElementById('sidebar-placeholder').innerHTML = html;
+
+    const { initSidebar } = await import('./scripts/sidebar.js');
+    await initSidebar();
+  }
+  loadSidebar();
+
+  </script>
+
+  
 </body>
 </html>

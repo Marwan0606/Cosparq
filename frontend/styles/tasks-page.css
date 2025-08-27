@@ -1,5 +1,6 @@
 /* -----------------------------------------------------------------
    CoSparq   Tasky / “Bolder + Animated Glow”   (v3)
+   (merged with missing task-container styles)
    ----------------------------------------------------------------- */
 
 /* ---------- Brand Palette ---------- */
@@ -106,6 +107,7 @@ body::after{
 .input::placeholder{color:#666774;}
 .input:focus{box-shadow:0 0 0 3px #3b82f6aa;}
 
+/* Post button — gradient border but dark fill */
 .composer__btn{
   min-width:118px;height:54px;
   border:none;border-radius:16px;cursor:pointer;
@@ -174,7 +176,7 @@ body::after{
 /* Task UL list (created by JS) */
 .tasks{list-style:none;padding:16px;margin:0;display:flex;flex-direction:column;gap:16px;}
 
-/* ---------- Task Row ---------- */
+/* ---------- Task Row (default project classes) ---------- */
 .task{
   display:grid;grid-template-columns:40px 1fr 40px;align-items:center;gap:16px;
   background:#19191f;border:1px solid var(--stroke);border-radius:20px;padding:16px 18px;
@@ -200,7 +202,7 @@ body::after{
 .badge--urgency[data-u="High"]{color:var(--u-high);}
 .badge--urgency[data-u]:hover{filter:brightness(1.25);}
 
-/* Checkbox */
+/* Checkbox (project classes) */
 .task__check{
   width:30px;height:30px;border-radius:10px;border:2px solid var(--u-med);
   background:transparent;cursor:pointer;position:relative;transition:.18s;
@@ -235,7 +237,6 @@ body::after{
 }
 .secret-key-btn:hover{background:#1f1f1f;color:#fff;}
 
-
 /* ─────────────────────────────────────────────
    1.  Title gradient exactly like screenshot
    ───────────────────────────────────────────── */
@@ -243,9 +244,9 @@ body::after{
   /* keep size / weight from earlier */
   background: linear-gradient(
     90deg,
-    #8400ff   27%,   /* vivid purple */   /* magenta */
+    #8400ff   27%,   /* vivid purple */
     #f94016  48%,   /* hot red-orange */
-    #f96d16  55%,   /* tangerine */  /* soft mauve bridge */
+    #f96d16  55%,   /* tangerine */
     #3b82f6 80%    /* azure blue */
   );
   -webkit-background-clip:text;
@@ -254,60 +255,344 @@ body::after{
   text-shadow:none;             /* screenshot has no glow */
 }
 
+/* -----------------------------------------------------------------
+   ADDED: tm-task styles (copied/adapted from older theme and merged
+   so that generated DOM using .tm-task, .tm-check etc renders correctly)
+   ----------------------------------------------------------------- */
 
-/* 🔸 Post button — solid dark fill, gradient border */
-.composer__btn{
+.tm-task{
+  display:grid;
+  grid-template-columns: 40px 1fr auto;
+  gap:12px;
+  align-items:center;
+  color:var(--text);
+  background: var(--surface);
+  border:1px solid var(--stroke);
+  border-radius: 14px;
+  padding: 14px;
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(8px);
+  isolation:isolate;
+}
+
+/* Checkbox (pure CSS) */
+.tm-check{ display:grid; place-items:center; position:relative; }
+.tm-check input{
+  appearance:none; -webkit-appearance:none; width:0; height:0; position:absolute; pointer-events:none;
+}
+.tm-check__box{
+  width:26px; height:26px; border-radius:9px;
+  border:2px solid #8400ff; background: transparent;
+  box-shadow: inset 0 0 0 0 transparent;
+  transition: .18s ease;
+  display:block;
+}
+.tm-check input:checked + .tm-check__box{
+  border-color:var(--u-high);
+  background: radial-gradient(circle at 50% 50%, rgba(249,64,22,0.15) 0%, var(--u-high) 100%);
+  box-shadow: inset 0 0 0 3px rgba(249,64,22,0.12);
+}
+
+/* Main content */
+.tm-task__main{ display:flex; flex-direction:column; gap:6px; }
+.tm-task__title{ margin:0; font-size:16px; font-weight:700; color:var(--text); }
+.tm-task__desc{ margin:0; color:var(--muted); font-size:13px; }
+.tm-task__meta{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; font-size:13px; color:var(--muted); }
+.tm-dot{ opacity:.55; }
+
+/* Actions (visual only here) */
+.tm-icon-btn{
+  background: transparent; color:rgba(232,232,234,0.8);
+  border:1px solid transparent;
+  border-radius: 10px; cursor:pointer;
+  width:32px; height:32px; font-size:16px;
+}
+.tm-icon-btn:hover{ background: rgba(255,255,255,.03); color:var(--text); }
+
+/* Badges */
+.tm-badge{
+  padding:4px 10px; border-radius:999px;
+  border:1px solid rgba(255,255,255,.14);
+  background: rgba(255,255,255,.03);
+  color:var(--muted);
+}
+.tm-badge--assignee{ color:var(--muted); }
+.tm-badge--due{ color:var(--muted); }
+
+/* Urgency color accents via data-urgency on the card */
+.tm-task[data-urgency="Low"] .tm-badge--urgency{
+  background: rgba(0,226,155,0.08); border-color: rgba(0,226,155,0.12); color:var(--u-low);
+}
+.tm-task[data-urgency="Medium"] .tm-badge--urgency{
+  background: rgba(255,218,87,0.08); border-color: rgba(255,218,87,0.12); color:var(--u-med);
+}
+.tm-task[data-urgency="High"] .tm-badge--urgency{
+  background: rgba(255,75,43,0.08); border-color: rgba(255,75,43,0.12); color:var(--u-high);
+}
+
+/* Deadline states */
+.tm-badge--due.is-overdue{ background: rgba(255,75,43,0.08); border-color: rgba(255,75,43,0.16); color:#ffc3c3; }
+.tm-badge--due.is-today{ background: rgba(255,218,87,0.06); border-color: rgba(255,218,87,0.14); color:#ffefc1; }
+.tm-badge--due.is-future{ background: rgba(125,224,161,0.06); border-color: rgba(125,224,161,0.14); color:#c5f2da; }
+
+/* Completed state using :has() — graceful fallback if :has unsupported */
+.tm-task:has(.tm-check input:checked),
+.tm-task[data-completed="true"]{
+  opacity:.9;
+  background: rgba(255,255,255,.02);
+}
+.tm-task:has(.tm-check input:checked) .tm-task__title,
+.tm-task[data-completed="true"] .tm-task__title{
+  text-decoration: line-through;
+  opacity:.65;
+}
+
+/* helper spacing for the list container */
+.task-list {
+  padding-bottom: 50px;
+}
+
+/* small responsive tweaks */
+@media (max-width: 640px) {
+  .composer__surface { padding: 12px; gap: 10px; border-radius:18px; }
+  .title { font-size: clamp(36px, 9vw, 56px); }
+  .task, .tm-task { padding: 12px; gap: 12px; border-radius: 14px; }
+}
+
+/* tiny animation for checked box */
+@keyframes flash{
+  0%{ transform: scale(1) }
+  40%{ transform: scale(.98) }
+  100%{ transform: scale(1) }
+}
+
+
+/* ---------- CoSparq Task List — Composer-matching styles ---------- */
+
+:root{
+  --bg-1:#121212;
+  --bg-2:#0f0f10;
+
+  --surface:#1f1f1f;
+  --stroke:#2c2c2c;
+  --shadow:0 26px 80px rgba(0,0,0,.65);
+
+  --text:#e8e8ea;
+  --muted:#9fa1b2;
+
+  --grad:linear-gradient(100deg,#8400ff 0%, #f94016 38%, #f96d16 60%, #3b82f6 100%);
+
+  --u-low:#00e29b;
+  --u-med:#ffda57;
+  --u-high:#ff4b2b;
+}
+
+/* keep global resets (if not already present) */
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+
+/* container context (match composer area) */
+.container{max-width:920px;margin:52px auto 120px;padding:0 24px;}
+
+/* Composer panel (reference look) */
+.composer__surface{
+  width:min(780px,100%);
+  display:flex;gap:16px;padding:18px;
+  background:var(--surface);
+  border:1px solid var(--stroke);
+  border-radius:26px;
+  box-shadow:var(--shadow);
+  position:relative;
+  isolation:isolate;
+}
+/* subtle gradient glow ring like composer */
+.composer__surface::before{
+  content:"";position:absolute;inset:-1px;border-radius:inherit;
+  background:var(--grad);filter:blur(10px);opacity:.20;pointer-events:none;z-index:-1;
+}
+
+/* ---------- Task list container: ensure spacing between tasks ---------- */
+/* If your JS inserts many .card (or .card.list) elements into .js-task-list,
+   this ensures even spacing identical to composer padding and rhythm. */
+.js-task-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;           /* main gap between tasks (was missing) */
+  margin-top: 28px;
+  padding-bottom: 50px;
+}
+
+/* When JS appends a task it often wraps it in .card.list — restyle it */
+.card.list,
+.js-task-card {
+  /* make each task group look like the composer panel */
+  background: var(--surface);
+  border: 1px solid var(--stroke);
+  border-radius: 20px;
+  padding: 12px 14px;
+  box-shadow: var(--shadow);
+  position: relative;
+  isolation: isolate;
+  transition: transform .12s ease, background .12s ease;
+}
+
+/* same soft gradient glow behind each card */
+.card.list::before,
+.js-task-card::before{
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  background: var(--grad);
+  filter: blur(10px);
+  opacity: .18;
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* If your markup uses .task rows inside the .card, keep a comfortable gap */
+.card.list .task,
+.js-task-card .task {
+  margin: 6px 0;
+}
+
+/* ---------- Individual Task Row — make it look consistent with composer ---------- */
+.task{
+  display:grid;
+  grid-template-columns:40px 1fr 40px;
+  gap:16px;
+  align-items:center;
+  background: #19191f;               /* slightly offset from panel to show depth */
+  border-radius: 14px;
+  padding: 14px 16px;
+  border: 1px solid rgba(255,255,255,0.02);
+  transition: background .15s ease, transform .12s ease;
+}
+.task:hover {
+  background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00));
+  transform: translateY(-2px);
+}
+
+/* Content */
+.task__content{ display:flex; flex-direction:column; gap:6px; }
+.task__title{ font-weight:600; font-size:1.06rem; color:var(--text); }
+.task__meta{ display:flex; flex-wrap:wrap; gap:10px; align-items:center; font-size:.82rem; color:var(--muted); }
+
+/* badges — follow composer look */
+.badge{
+  padding:6px 12px;
+  border-radius:999px;
+  font-size:.75rem;
+  background:#25252e;
+  border:1px solid var(--stroke);
+  position:relative;
+  overflow:hidden;
+}
+.badge::after{
+  content:""; position:absolute; inset:0; border-radius:inherit;
+  background:var(--grad); opacity:0; transition: .25s;
+}
+.badge:hover::after{ opacity:.16; transform: scale(1.4); }
+
+/* urgency colors */
+.badge--urgency[data-u="Low"]{ color:var(--u-low); }
+.badge--urgency[data-u="Medium"]{ color:var(--u-med); }
+.badge--urgency[data-u="High"]{ color:var(--u-high); }
+
+/* check box that matches composer rounded shapes */
+.task__check{
+  width:34px; height:34px; border-radius:12px;
+  border:2px solid rgba(255,255,255,0.06);
+  display:grid; place-items:center; cursor:pointer;
+  background: transparent;
+  transition: all .18s ease;
+}
+.task__check[aria-pressed="true"]{
+  background: linear-gradient(90deg, rgba(249,64,22,0.12), rgba(249,64,22,0.22));
+  border-color: var(--u-high);
+  box-shadow: 0 8px 20px rgba(249,64,22,0.08) inset;
+}
+
+/* delete button — matching composer accent and hover */
+.task__delete{
+  width:36px; height:36px; border-radius:10px; border:none;
+  background:transparent; color:#999; cursor:pointer; font-size:18px;
+  display:grid; place-items:center; transition: background .12s, color .12s;
+}
+.task__delete:hover{
+  background: rgba(255,255,255,0.03);
+  color: var(--u-high);
+}
+
+/* Completed state — slightly dim and line-through */
+.task--done {
+  opacity: 0.65;
+  filter: saturate(.6);
+}
+.task--done .task__title {
+  text-decoration: line-through;
+  opacity:.8;
+}
+
+/* tiny responsive adjustments */
+@media (max-width: 720px) {
+  .js-task-list { gap: 10px; }
+  .task { grid-template-columns: 36px 1fr 36px; padding:12px; gap:12px; }
+  .composer__surface { border-radius:20px; padding:12px; gap:10px; }
+}
+
+/* Optional: keep visual spacing when JS injects multiple .card sections without inner .tasks wrapper */
+.js-task-list > .card.list + .card.list,
+.js-task-list > .js-task-card + .js-task-card {
+  margin-top: 14px;
+}
+
+
+.composer__surface {
+  z-index: 100;
+}
+.popover {
+  z-index: 101;
+}
+
+/* Gradient border, solid inner fill */
+.composer__btn {
   min-width: 118px;
   height: 54px;
   padding: 0 24px;
-  border: 2px solid transparent;          /* room for the ring */
   border-radius: 16px;
-  font: 700 1.05rem/1 'Inter', sans-serif;
-  color: #e8e8ea;
-  cursor: pointer;
 
-  /* 2-layer background:
-     ─ padding-box  → the inner fill  (pure #0d0d11)
-     ─ border-box   → the outer ring (theme gradient) */
+  /* important: leave a transparent border so the gradient shows */
+  border: 2px solid transparent;
+
+  /* two-layer background:
+     - padding-box => inner fill (solid black)
+     - border-box  => gradient ring */
   background:
     linear-gradient(#0d0d11, #0d0d11) padding-box,
-    var(--grad)                       border-box;
+    var(--grad) border-box;
 
-  transition: filter .15s, transform .15s;
-}
-.composer__btn:hover  { filter: brightness(1.07); }
-.composer__btn:active { transform: translateY(1px); }
-
-
-/* ── Re-use the composer glow on cards & tasks ───────────────────── */
-.card,
-.task{
-  position: relative;            /* creates a stacking-context */
-  background: var(--surface);    /* same dark panel */
-  border: 1px solid var(--stroke);
-  border-radius: 20px;
-  box-shadow: var(--shadow);
-  isolation: isolate;            /* so the blur doesn’t leak out */
+  color: var(--text);
+  font-weight: 700;
+  font-size: 1.05rem;
+  cursor: pointer;
+  transition: filter .15s, transform .12s, box-shadow .12s;
+  box-shadow: 0 10px 26px rgba(0,0,0,.6), 0 6px 20px rgba(0,0,0,.45);
 }
 
-.card::before,
-.task::before{
-  content: "";
-  position: absolute;
-  inset: -1px;                   /* wrap the element */
-  border-radius: inherit;
-  background: var(--grad);       /* theme gradient */
-  filter: blur(10px);            /* soft glow */
-  opacity: .25;                  /* subtle */
-  pointer-events: none;
-  z-index: -1;                   /* sit behind the content */
+/* subtle hover / active states */
+.composer__btn:hover {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+}
+.composer__btn:active {
+  transform: translateY(1px);
 }
 
-.composer__surface{
-  z-index: 200;
-}
-
-
-.popover{
-  z-index: 100;
+/* accessible focus ring (keyboard users) */
+.composer__btn:focus {
+  outline: none;
+  box-shadow:
+    0 10px 26px rgba(0,0,0,.6),
+    0 0 0 4px rgba(132,0,255, .12);
 }

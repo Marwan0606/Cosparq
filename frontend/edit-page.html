@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Edit Task • Todo Magic</title>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles/edit-page.css"/>
+</head>
+<body>
+  <main class="container">
+    <!-- Top bar -->
+    <header class="topbar">
+      <a href="/tasks-page.html"
+         class="btn ghost icon"
+         aria-label="Back to tasks">
+        ← Back
+      </a>
+      <h1 class="brand">
+        <span class="brand__todo">Todo</span> <span class="brand__magic">Magic</span>
+      </h1>
+      <!-- spacer to balance flex -->
+      <span class="topbar__spacer" aria-hidden="true"></span>
+    </header>
+
+    <!-- Page intro -->
+    <section class="page-title">
+      <h2>Edit Task</h2>
+      <p class="muted">Update details, urgency, deadline, and completion state.</p>
+    </section>
+
+    <!-- Edit card -->
+    <section class="card">
+      <!--
+        Tip:
+        - Put the real task id into the hidden input below.
+        - Set your real action + method if you want server submit.
+      -->
+      <form class="form" action="#" method="post">
+        <input type="hidden" name="id" value="TASK_ID_HERE"/>
+
+        <div class="grid">
+          <!-- Title -->
+          <label class="field">
+            <span class="label">Title <span class="req">*</span></span>
+            <input class="js-title-input input" type="text" name="title" placeholder="Task title"
+                   value="" required>
+          </label>
+
+          <!-- Assignee -->
+          <label class="field">
+            <span class="label">Assignee</span>
+            <input class="input js-assignee" type="text" name="assignee" placeholder="e.g., Alex"
+                   value="Alex">
+          </label>
+
+          <!-- Urgency (segmented) -->
+          <div class="field" role="group" aria-labelledby="urgencyLabel">
+            <span id="urgencyLabel" class="label">Urgency</span>
+            <div class="seg">
+              <input type="radio" id="u-Low"  name="urgency" value="Low">
+              <label for="u-Low"  class="seg__btn">Low</label>
+
+              <input type="radio" id="u-Medium"  name="urgency" value="Medium">
+              <label for="u-Medium"  class="seg__btn">Medium</label>
+
+              <input type="radio" id="u-High" name="urgency" value="High">
+              <label for="u-High" class="seg__btn">High</label>
+            </div>
+          </div>
+
+
+
+          <!-- Deadline -->
+          <label class="field">
+            <span class="label">Deadline</span>
+            <input class="input js-date-input" type="date" name="deadline" value="">
+          </label>
+
+          <!-- Completed toggle -->
+          <label class="field switch">
+            <span class="label">Completed</span>
+            <input type="checkbox" name="completed" id="completed" class="js-completed">
+            <span class="switch__ui" aria-hidden="true"></span>
+          </label>
+        </div>
+
+        <!-- Description -->
+        <label class="field">
+          <span class="label">Description</span>
+          <textarea class="js-description textarea" name="description" rows="6"
+            placeholder="Add details that help someone complete this task..."></textarea>
+        </label>
+
+        <!-- Actions -->
+        <div class="form__actions">
+          <a href="/tasks-page.html" class="btn ghost">Cancel</a>
+          <button type="button" class="btn primary js-save-btn">Save changes</button>
+        </div>
+      </form>
+    </section>
+  </main>
+  <script
+    src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.21.1/axios.min.js"
+    integrity="sha512-bZS47S7sPOxkjU/4Bt0zrhEtWx0y0CRkhEp8IckzK+ltifIIE9EMIMTuT/mEzoIMewUINruDBIR/jJnbguonqQ=="
+    crossorigin="anonymous"
+    referrerpolicy="no-referrer"
+  ></script>
+  <script src="scripts/edit-tasks.js" defer></script>
+</body>
+</html>

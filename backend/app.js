@@ -13,6 +13,7 @@ const saveMarket = require('./routes/save-market.js')
 const saveChat = require('./routes/save-chats.js')
 const saveRawChat = require('./routes/save-raw-chats.js')
 const saveAction = require('./routes/save-action.js')
+const tasks = require('./routes/tasks-page.js')
 
 const authenticateToken = require('./middleware/authenticateToken.js')
 
@@ -37,6 +38,8 @@ app.use('/api/save', saveChat);
 app.use('/api/save', saveRawChat);
 
 app.use('/api/save', saveAction);
+
+app.use('/api/v1/tasks', tasks);
 
 const port = process.env.PORT || 5004
 
