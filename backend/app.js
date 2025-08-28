@@ -1,4 +1,4 @@
-express = require('express');
+const express = require('express');
 const path = require('path');
 const app = express();
 require('dotenv').config()
@@ -19,7 +19,17 @@ const authenticateToken = require('./middleware/authenticateToken.js')
 
 app.use('/', express.static(path.join(__dirname, '../frontend')));
 
+const cors = require('cors')
+const cookieParser = require('cookie-parser');
+
+// apiServer.js
+app.use(cors({
+  origin:      'http://localhost:5004',
+  credentials: true                // ← allow sending cookies back to client
+}));
 app.use(express.json());
+app.use(cookieParser());
+
 
 app.use('/api', authenticateToken);
 

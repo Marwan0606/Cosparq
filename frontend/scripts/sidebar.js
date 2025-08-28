@@ -1,12 +1,5 @@
-// set-axios-defaults.js
-const token = localStorage.getItem('accessToken');
-
-if (!token) {
-  window.location.href = 'auth.html';
-} else {
-  axios.defaults.baseURL = 'http://localhost:5004';
-  axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-}
+axios.defaults.baseURL = 'http://localhost:5004';
+axios.defaults.withCredentials = true;   // ← send & receive cookies
 
 
 
@@ -31,9 +24,6 @@ export async function initSidebar() {
   await populateIdeas();
   highlightActiveLink();
 }
-
-
-
 
 
 async function populateIdeas() {
@@ -77,24 +67,17 @@ async function populateIdeas() {
     highlightActiveLink();
 
   } catch (error) {
-    if (error.response?.status === 403) {
-      const refreshToken = localStorage.getItem('refreshToken');
-      console.log(refreshToken)
+    if (error.response.status === 401 || error.response.status === 403) {
       try {
-        const response = await axios.post('http://localhost:4004/token', {token: refreshToken})
-        let newToken = response.data.accessToken;
-
-        localStorage.setItem('accessToken', newToken);
-        axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
-
-        console.log(`new access token: ${newToken}`)
-        initSidebar()
+        // 1) Refresh via cookie (no body needed)
+        await axios.post('http://localhost:4004/token', {}, { withCredentials: true });
+        // 2) Retry original fetch
+        initSidebar();
         return location.reload();
-      } catch (error) {
+      } catch {
+        // Refresh failed → force login
         return window.location.href = 'auth.html';
       }
-      
-
     }
     //console.error('populateIdeas error:', error);;
     

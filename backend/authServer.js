@@ -3,8 +3,6 @@ require('dotenv').config()
 const express = require('express')
 const app = express()
 
-const cors = require('cors');
-
 const jwt = require('jsonwebtoken')
 
 const bcrypt = require('bcrypt');
@@ -16,33 +14,22 @@ const User   = require('./models/Users.js');
 
 const RefreshTokenModel = require('./models/Refresh-Tokens.js')
 
-app.use(cors({ origin: 'http://localhost:5004' }));
-
-
 app.use(express.json())
 
+const cors = require('cors')
+const cookieParser = require('cookie-parser');
 
-/*
-//NEED MONGODB DATABASE FOR REFRESH TOKENS
-let refreshTokens = [] //THIS JUST FOR TESTING
-
-app.post('/token', (req, res)=>{
-  const refreshToken = req.body.token
-  //console.log(`refreshToken: ${refreshToken}`)
-  if (refreshToken === null) return res.sendStatus(401)
-  if (!refreshTokens.includes(refreshToken)) return res.sendStatus(403)
-  jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, (err, user)=>{
-    if (err) return res.sendStatus(403)
-    const accessToken = generateAccessToken({userId: user.userId})
-    res.json({accessToken: accessToken})
-  })
-})
-*/
+app
+.use(cors({
+  origin: 'http://localhost:5004',
+  credentials: true
+  }))
+.use(cookieParser());
 
 
 
 app.post('/token', async (req, res)=>{
-  const refreshToken = req.body.token
+  const refreshToken = req.cookies.jid;
   if (refreshToken === null) return res.sendStatus(401)
 
   const exists = await findRefreshToken(refreshToken)
@@ -51,7 +38,15 @@ app.post('/token', async (req, res)=>{
   jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, (err, user)=>{
     if (err) return res.sendStatus(403)
     const accessToken = generateAccessToken({userId: user.userId})
-    res.json({accessToken: accessToken})
+    // Reset the HTTP-only “token” cookie
+    res
+      .cookie('token', accessToken, {
+        httpOnly: true,
+        secure:   process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge:   15 * 60 * 1000
+      })
+      .json({ ok: true });
   });
 });
 
@@ -62,8 +57,14 @@ async function findRefreshToken(refreshToken) {
 
 
 app.delete('/logout', async (req, res)=>{
-  const deleteOldToken = await RefreshTokenModel.findOneAndDelete({refreshToken})
-  res.sendStatus(204)
+  const refreshToken = req.cookies.jid;
+  if (refreshToken) {
+    await RefreshTokenModel.findOneAndDelete({ refreshToken });
+  }
+  res
+    .clearCookie('jid',   { path: '/token' })
+    .clearCookie('token')
+    .sendStatus(204);
 })
 
 
@@ -107,7 +108,21 @@ app.post('/login', async (req, res)=>{
     const deleteOldToken = await RefreshTokenModel.findOneAndDelete({userId: user1._id})
     await RefreshTokenModel.create({refreshToken, userId: user1._id})
 
-    res.json({accessToken: accessToken, refreshToken: refreshToken})
+    res
+      .cookie('token', accessToken, {           
+        httpOnly: true,
+        sameSite: 'lax',
+        secure:   false,           // set to true in prod + HTTPS 
+        maxAge:   15*60*1000
+      })
+      .cookie('jid', refreshToken, {          
+        httpOnly: true,
+        sameSite: 'lax',
+        secure:   false,
+        maxAge:   7*24*60*60*1000
+      })
+      .json({ ok: true });
+
   } catch (error) {
     console.log(error)
   }

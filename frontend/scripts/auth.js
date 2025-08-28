@@ -54,7 +54,7 @@ const login = async ()=>{
     const email = document.querySelector('.js-login-email').value
     const password = document.querySelector('.js-login-password').value
 
-    let user = await axios.post('http://localhost:4004/login', {email, password})
+    let user = await axios.post('http://localhost:4004/login', {email, password}, { withCredentials: true })
 
     console.log(user.msg)
 

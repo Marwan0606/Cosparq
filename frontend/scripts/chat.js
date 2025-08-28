@@ -1,11 +1,5 @@
-// set-axios-defaults.js
-const token = localStorage.getItem('accessToken');
-if (!token) {
-  window.location.href = 'auth.html';
-} else {
-  axios.defaults.baseURL = 'http://localhost:5004';
-  axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-}
+axios.defaults.baseURL = 'http://localhost:5004';
+axios.defaults.withCredentials = true;   // ← send & receive cookies
 
 const sendBtn = document.querySelector('.js-send');
 const inputEl = document.querySelector('.chat-input');
