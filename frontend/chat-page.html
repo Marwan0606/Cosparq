@@ -6,6 +6,15 @@
   <title>AI Cofounder Chat</title>
   <link rel="stylesheet" href="styles/chat-page.css"/>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet"/>
+
+  <script type="importmap">
+  {
+    "imports": {
+      "marked": "https://cdn.jsdelivr.net/npm/marked@4.3.0/lib/marked.esm.js"
+    }
+  }
+  </script>
+
 </head>
 <body>
   <div id="sidebar-placeholder"></div>
@@ -69,7 +78,7 @@
     crossorigin="anonymous"
     referrerpolicy="no-referrer"
   ></script>
-  <script src="./scripts/chat.js"></script>
+  <script type="module" src="./scripts/chat.js"></script>
   <script type="module">
   async function loadSidebar() {
     const res  = await fetch('sidebar.html');

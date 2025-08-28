@@ -11,8 +11,8 @@ IMPORTANT NOTE: YOU MAY RECEIVE THE LAST USER RESPONSE AND YOU ANSWER IN A SUMMA
 
 **VERY IMPORTANT:**  
 - **Always format your “reply” field in Markdown.**  
-- Use `**bold**` for emphasis.  
-- Use `*italic*` for subtle emphasis.  
+- Use **bold** for emphasis.  
+- Use *italic* for subtle emphasis.  
 - Wrap code examples in triple backticks:
 
 

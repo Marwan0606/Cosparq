@@ -1,3 +1,5 @@
+import { marked } from 'marked';
+
 axios.defaults.baseURL = 'http://localhost:5004';
 axios.defaults.withCredentials = true;   // ← send & receive cookies
 
@@ -79,7 +81,7 @@ let chatResponse = async ()=>{
     let response = await axios.post('/api/responses/chat', {scoreboard, idea, lastUserResponse, lastAiResponse, userInput})
     console.log(response)
     response = JSON.parse(response.data.result)
-    let reply = response.reply
+    let reply = marked(response.reply)
     let userMessage = response.user_summary
     let AiResponse = response.assistant_summary
 

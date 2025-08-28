@@ -286,3 +286,38 @@ body {
   animation: spin .8s linear infinite;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+
+/* Basic markdown styles inside your chat bubbles */
+.bubble h1, .bubble h2, .bubble h3 {
+  margin: 0.75em 0 0.5em;
+  font-weight: 600;
+  line-height: 1.2;
+}
+.bubble p {
+  margin: 0.5em 0;
+}
+.bubble ul, .bubble ol {
+  margin: 0.5em 0 0.5em 1.25em;
+}
+.bubble li {
+  margin: 0.25em 0;
+}
+.bubble strong {
+  font-weight: 700;
+}
+.bubble em {
+  font-style: italic;
+}
+.bubble code {
+  font-family: monospace;
+  background: #f5f5f5;
+  padding: 0.15em 0.3em;
+  border-radius: 3px;
+}
+.bubble pre {
+  background: #f5f5f5;
+  padding: 0.75em;
+  overflow-x: auto;
+  border-radius: 4px;
+}
