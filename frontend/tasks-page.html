@@ -22,6 +22,9 @@
         <input id="titleInput" class="input js-input-task" type="text"
                placeholder="Create a task here"
                autocomplete="off" aria-label="Task title"/>
+        <button id="aiTaskBtn" class="composer__btn">
+          TasksAi
+        </button>
         <button id="postBtn" class="composer__btn"
                 aria-haspopup="dialog" aria-expanded="false" aria-controls="detailsPopover">
           Post
@@ -97,12 +100,8 @@
     </li>
   </template>
 
-  <!--
-  <div id="secret-key-box" class="secret-key-box">
-    <span id="secret-key-text" aria-label="Secret workspace key">•••••••••••••••••••</span>
-    <button id="secret-key-btn" class="secret-key-btn" aria-label="Show secret key">Show</button>
-  </div>
-  -->
+
+
   <script
     src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.21.1/axios.min.js"
     integrity="sha512-bZS47S7sPOxkjU/4Bt0zrhEtWx0y0CRkhEp8IckzK+ltifIIE9EMIMTuT/mEzoIMewUINruDBIR/jJnbguonqQ=="
@@ -144,6 +143,8 @@
   loadSidebar();
 
   </script>
+
+
 
   
 </body>

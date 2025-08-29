@@ -169,39 +169,63 @@ document.getElementById('submitTaskBtn').addEventListener('click', ()=>{
   getAllTasks()
 })
 
-
-
-
-/*
-document.addEventListener('DOMContentLoaded', () => {
-  const keyBox    = document.getElementById('secret-key-box');
-  const keyText   = document.getElementById('secret-key-text');
-  const toggleBtn = document.getElementById('secret-key-btn');
-
-  // Load the actual key from localStorage (or any other source)
-  const secretKey = localStorage.getItem('key') || 'unknown-key';
-
-  let visible = false;
-
-  toggleBtn.addEventListener('click', () => {
-    visible = !visible;
-    if (visible) {
-      // show the real key
-      keyText.textContent = teamId;
-      toggleBtn.textContent = 'Hide';
-      toggleBtn.setAttribute('aria-label', 'Hide secret key');
-    } else {
-      // mask it
-      keyText.textContent = '•••••••••••••••••••';
-      toggleBtn.textContent = 'Show';
-      toggleBtn.setAttribute('aria-label', 'Show secret key');
-    }
-  });
-});
-*/
-
-
-
-
-
 getAllTasks()
+
+//THIS IS FOR THE AUTO GENERATED AI TASKS
+
+const tasksAI = async ()=>{
+
+  let ideaId = JSON.parse(localStorage.getItem('ideaId'))
+  let idea = await axios.get(`/api/save/idea/${ideaId}`)
+  idea = idea.data.idea.idea
+
+  let actionPage = await axios.get(`api/save/saveAction/${ideaId}`);
+  actionPlan = JSON.stringify(actionPage.data.actionResponse.actionPlanResponse)
+
+
+  let allTasks = await axios.get(`/api/v1/tasks/team/${ideaId}`)
+  console.log(allTasks)
+  const tasksLength = Object.keys(allTasks.data.tasks).length
+  let specificTasks = []
+  for (let i = 0; i < tasksLength; i++) {
+    specificTasks.push(`Title of task ${i}: ${allTasks.data.tasks[i].title}`)
+    if (allTasks.data.tasks[i].description) {
+      specificTasks.push(`Description of task ${i}: ${allTasks.data.tasks[i].description}`)
+    }
+    if (allTasks.data.tasks[i].completed) {
+      specificTasks.push(`The task number ${i} was marked as COMPLETED by the user`)
+    }
+  }
+  console.log(specificTasks)
+  specificTasks = JSON.stringify(specificTasks)
+  
+
+
+
+
+  let response = await axios.post('/api/responses/tasksAi', {idea, specificTasks, actionPlan})
+  console.log(response)
+
+  generateAiTasks(response)
+}
+
+
+//this is to map the response and generate the tasks
+generateAiTasks = async (response)=>{
+  let tasksAiRes = JSON.parse(response.data.result)
+  tasksAiRes = tasksAiRes.tasks
+  console.log(tasksAiRes)
+  //console.log(tasksAiRes.tasks[0].title)
+  tasksAiRes.forEach(async (task)=>{
+    let ideaId = JSON.parse(localStorage.getItem('ideaId'))
+    response = await axios.post('/api/v1/tasks', {title: task.title, description: task.description, ideaId})
+    getAllTasks()
+  })
+}
+
+
+
+
+document.getElementById('aiTaskBtn').addEventListener('click', ()=>{
+  tasksAI()
+})
