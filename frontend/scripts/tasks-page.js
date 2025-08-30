@@ -204,7 +204,7 @@ const tasksAI = async ()=>{
 
 
   let response = await axios.post('/api/responses/tasksAi', {idea, specificTasks, actionPlan})
-  console.log(response)
+  console.log('AI Response of Tasks', response)
 
   generateAiTasks(response)
 }
@@ -213,9 +213,11 @@ const tasksAI = async ()=>{
 //this is to map the response and generate the tasks
 generateAiTasks = async (response)=>{
   let tasksAiRes = JSON.parse(response.data.result)
-  tasksAiRes = tasksAiRes.tasks
-  console.log(tasksAiRes)
-  //console.log(tasksAiRes.tasks[0].title)
+  console.log('response parsed', tasksAiRes)
+  if (tasksAiRes.tasks) {
+    tasksAiRes = tasksAiRes.tasks
+  }
+  console.log('final format', tasksAiRes)
   tasksAiRes.forEach(async (task)=>{
     let ideaId = JSON.parse(localStorage.getItem('ideaId'))
     response = await axios.post('/api/v1/tasks', {title: task.title, description: task.description, ideaId})
@@ -225,7 +227,133 @@ generateAiTasks = async (response)=>{
 
 
 
+addLoading = ()=>{
+  HTML = `
+  <div class="frame">
+    <div class="brand-wrap">
+      <div class="brand">Your AI is Creating Your Daily Tasklist</div>
+      <!--<div class="new dotting"></div>-->
+    </div>
+
+    <div class="viz">
+      <svg viewBox="0 0 800 520" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <defs>
+          <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%"  stop-color="#8400ff"/>
+            <stop offset="40%" stop-color="#f94016"/>
+            <stop offset="60%" stop-color="#f96d16"/>
+            <stop offset="100%" stop-color="#3b82f6"/>
+          </linearGradient>
+        </defs>
+
+        <!-- Links -->
+        <g id="links">
+          <line class="link" data-a="n1"  data-b="n5" x1="130" y1="90"  x2="320" y2="130"/>
+          <line class="link" data-a="n5"  data-b="n6" x1="320" y1="130" x2="410" y2="90"/>
+          <line class="link" data-a="n6"  data-b="c"  x1="410" y1="90"  x2="400" y2="260"/>
+          <line class="link" data-a="n2"  data-b="n5" x1="120" y1="250" x2="320" y2="130"/>
+          <line class="link" data-a="n2"  data-b="c"  x1="120" y1="250" x2="400" y2="260"/>
+          <line class="link" data-a="n3"  data-b="c"  x1="160" y1="400" x2="400" y2="260"/>
+          <line class="link" data-a="n4"  data-b="c"  x1="300" y1="460" x2="400" y2="260"/>
+          <line class="link" data-a="n7"  data-b="c"  x1="650" y1="110" x2="400" y2="260"/>
+          <line class="link" data-a="n7"  data-b="n8" x1="650" y1="110" x2="720" y2="240"/>
+          <line class="link" data-a="n8"  data-b="n9" x1="720" y1="240" x2="620" y2="370"/>
+          <line class="link" data-a="n9"  data-b="c"  x1="620" y1="370" x2="400" y2="260"/>
+          <line class="link" data-a="n10" data-b="c"  x1="470" y1="470" x2="400" y2="260"/>
+        </g>
+
+        <!-- Nodes -->
+        <g id="nodes">
+          <circle id="n1"  class="node" cx="130" cy="90"  r="7"/>
+          <circle id="n2"  class="node" cx="120" cy="250" r="7"/>
+          <circle id="n3"  class="node" cx="160" cy="400" r="7"/>
+          <circle id="n4"  class="node" cx="300" cy="460" r="7"/>
+          <circle id="n5"  class="node" cx="320" cy="130" r="7"/>
+          <circle id="n6"  class="node" cx="410" cy="90"  r="7"/>
+          <circle id="n7"  class="node" cx="650" cy="110" r="7"/>
+          <circle id="n8"  class="node" cx="720" cy="240" r="7"/>
+          <circle id="n9"  class="node" cx="620" cy="370" r="7"/>
+          <circle id="n10" class="node" cx="470" cy="470" r="7"/>
+          <circle id="c"   class="node center" cx="400" cy="260" r="9"/>
+        </g>
+      </svg>
+    </div>
+
+    <!-- Bottom-right status -->
+    <div class="status dotting">Loading</div>
+  </div>
+  `
+  document.querySelector('.js-task-list').innerHTML = HTML
+}
+
+
+
 
 document.getElementById('aiTaskBtn').addEventListener('click', ()=>{
+  addLoading()
   tasksAI()
 })
+
+
+
+
+
+
+
+// loading.js
+
+// Per-element cooldown tracking
+const lastTime = new WeakMap();
+
+// Tunables
+const MAX_ACTIVE = 5;   // max simultaneous glows
+const COOLDOWN  = 900;  // ms before same element can glow again
+
+function canPulse(el){
+  if (!el) return false;
+  const now  = performance.now();
+  const last = lastTime.get(el) || 0;
+  // only pulse if enough time has passed and under the max concurrent
+  return (now - last) > COOLDOWN && loading.active < MAX_ACTIVE;
+}
+
+function pulse(el, cls){
+  if (!el || !canPulse(el)) return;
+  loading.active++;
+  lastTime.set(el, performance.now());
+
+  el.classList.remove(cls);
+  // force reflow to restart animation
+  // eslint-disable-next-line no-unused-expressions
+  el.offsetWidth;
+  el.classList.add(cls);
+
+  el.addEventListener('animationend', () => {
+    el.classList.remove(cls);
+    loading.active--;
+  }, { once: true });
+}
+
+function pick(list){
+  for (let i = 0; i < 6; i++){
+    const candidate = list[Math.floor(Math.random() * list.length)];
+    if (canPulse(candidate)) return candidate;
+  }
+  return null;
+}
+
+// expose an “active” counter so canPulse can see it
+const loading = { active: 0 };
+
+(function loop(){
+  // re-query nodes & links each iteration, after SVG has been injected
+  const nodes = [...document.querySelectorAll('#nodes .node')].filter(n => n.id !== 'c');
+  const links = [...document.querySelectorAll('#links .link')];
+
+  pulse(pick(links), 'glow');
+  pulse(pick(nodes), 'glow');
+  if (Math.random() > 0.4) pulse(pick(nodes), 'glow');
+
+  // schedule next glow
+  setTimeout(loop, 300 + Math.random() * 680);
+})();
