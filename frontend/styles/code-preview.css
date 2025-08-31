@@ -1,0 +1,149 @@
+:root {
+  --bg: #0f1012;
+  --panel: #14161b;
+  --text: #f3f5f7;
+  --muted: #a3adbb;
+  --ringA: #8400ff; /* purple */
+  --ringB: #f94016; /* pink   */
+  --ringC: #f96d16; /* orange */
+}
+
+* { box-sizing: border-box; }
+
+html, body { height: 100%; overflow: hidden;}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 16px/1.45 system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+}
+
+.wrap {
+  width: 100vw;
+  margin: 0 auto;
+  padding: 28px 20px 40px;
+}
+
+h1 {
+  margin: 0 0 18px;
+  text-align: center;
+  font-size: clamp(24px, 4vw, 44px);
+  font-weight: 800;
+  letter-spacing: .2px;
+}
+
+/* Preview frame with gradient border */
+.preview-shell {
+  margin: 18px auto 24px;
+  width: 90vw;
+  max-width: none;
+  border-radius: 14px;
+  padding: 2px; /* thickness of the gradient border */
+  background: linear-gradient(90deg, var(--ringA), var(--ringB), var(--ringC));
+}
+
+.preview-box {
+  border-radius: inherit;
+  background: #0d0e11;
+  min-height: min(85vh, 120rem);
+  /* inner subtle border */
+  outline: 1px solid rgba(255,255,255,0.06);
+}
+
+#sitePreview {
+  display: block;
+  width: 100%;
+  height: min(85vh, 120rem);
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+}
+
+/* Input row */
+.controls {
+  display: grid;
+  place-items: center;
+  margin-top: 16px;
+}
+
+#changeInput {
+  width: min(720px, 84vw);
+  height: 56px;
+  padding: 0 18px;
+  color: var(--text);
+  background: #1a1d23;
+  border: 1px solid #2a2e37;
+  border-radius: 28px;
+  outline: none;
+  box-shadow: inset 0 0 0 0 rgba(0,0,0,0);
+  transition: box-shadow .2s ease, border-color .2s ease, background .2s ease;
+}
+
+#changeInput::placeholder {
+  color: #80899a;
+}
+
+#changeInput:focus {
+  border-color: transparent;
+  box-shadow:
+    0 0 0 2px #1a1d23,
+    0 0 0 4px rgba(139,92,246,.45);
+}
+
+/* A11y helper */
+.sr-only {
+  position: absolute !important;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0, 0, 0, 0);
+  white-space: nowrap; border: 0;
+}
+
+/* Small screens */
+@media (max-width: 640px) {
+  #sitePreview { height: 60vh; }
+  .preview-box { min-height: 60vh; }
+}
+
+/*
+.preview-box {
+  width: 100%;
+  height: 400px;
+  overflow: hidden;
+}
+.preview-box iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  overflow: auto;
+}
+*/
+
+.container-changes {
+  display: flex;
+}
+
+.submit-btn {
+  min-width: 118px;
+  height: 54px;
+  padding: 0 24px;
+  border-radius: 16px;
+
+  /* important: leave a transparent border so the gradient shows */
+  border: 2px solid transparent;
+
+  /* two-layer background:
+     - padding-box => inner fill (solid black)
+     - border-box  => gradient ring */
+  background:
+    linear-gradient(#0d0d11, #0d0d11) padding-box,
+    var(--grad) border-box;
+
+  color: var(--text);
+  font-weight: 700;
+  font-size: 1.05rem;
+  cursor: pointer;
+  transition: filter .15s, transform .12s, box-shadow .12s;
+  box-shadow: 0 10px 26px rgba(0,0,0,.6), 0 6px 20px rgba(0,0,0,.45);
+}

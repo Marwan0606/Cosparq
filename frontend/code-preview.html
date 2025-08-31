@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Preview • Your App</title>
+  <link rel="stylesheet" href="styles/code-preview.css" />
+</head>
+<body>
+
+  <div id="sidebar-placeholder"></div>
+  <main class="wrap">
+
+    <!-- Gradient‐framed preview area -->
+    <div class="preview-shell" aria-label="Website preview area">
+      <div class="preview-box">
+        <iframe
+          id="sitePreview"
+          title="Website preview"
+          srcdoc="<!doctype html><html><head><meta charset='utf-8'><style>html,body{height:100%;margin:0;background:#111318;color:#aab2c0;display:grid;place-items:center;font:16px/1.4 system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif}</style></head><body><div>Preview will appear here</div></body></html>"
+        ></iframe>
+      </div>
+    </div>
+
+    <!-- Change input (unused in this demo) -->
+    <form class="controls" onsubmit="return false">
+      <label class="sr-only" for="changeInput">Describe your change</label>
+      
+      <div class="container-changes">
+        <input
+          id="changeInput"
+          type="text"
+          placeholder="Type your changes here"
+          autocomplete="off"
+        />
+        <button class="submit-btn">Submit</button>
+      </div>
+
+    </form>
+  </main>
+
+  <script>
+    (function () {
+      const LOGIN_URL = '/auth.html';
+
+      // If you're already on auth.html, do nothing
+      if (location.pathname.endsWith('/auth.html')) return;
+
+      const token = localStorage.getItem('accessToken');
+      if (!token) {
+        // Not logged in (no token) → redirect
+        return location.replace(LOGIN_URL);
+      }
+
+      // Optionally: verify expiry client-side with jwt-decode or
+      // ping a /token/verify endpoint. Otherwise, just let the
+      // axios interceptor handle 401s server-side.
+    })();
+  </script>
+
+  <!-- load our JS after the DOM -->
+  <script
+    src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.21.1/axios.min.js"
+    integrity="sha512-bZS47S7sPOxkjU/4Bt0zrhEtWx0y0CRkhEp8IckzK+ltifIIE9EMIMTuT/mEzoIMewUINruDBIR/jJnbguonqQ=="
+    crossorigin="anonymous"
+    referrerpolicy="no-referrer"
+  ></script>
+  <script src="scripts/codePreview.js" defer></script>
+  <script type="module" src="./scripts/loading.js"></script>
+
+  <script type="module">
+    async function loadSidebar() {
+      const res  = await fetch('sidebar.html');
+      const html = await res.text();
+      document.getElementById('sidebar-placeholder').innerHTML = html;
+
+      const { initSidebar } = await import('./scripts/sidebar.js');
+      await initSidebar();
+    }
+    loadSidebar();
+  </script>
+
+</body>
+</html>
