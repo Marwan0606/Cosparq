@@ -919,7 +919,7 @@ const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').mat
 
   try {
     const response = await openai.chat.completions.create({
-      model: "gpt-5",
+      model: "gpt-5-mini",
       messages,
       //reasoning_effort:"high"
       //temperature: 0.7

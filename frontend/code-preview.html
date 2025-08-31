@@ -24,7 +24,7 @@
 
     <!-- Change input (unused in this demo) -->
     <form class="controls" onsubmit="return false">
-      <label class="sr-only" for="changeInput">Describe your change</label>
+      <label id="changesInput" class="sr-only" for="changeInput">Describe your change</label>
       
       <div class="container-changes">
         <input
@@ -33,7 +33,7 @@
           placeholder="Type your changes here"
           autocomplete="off"
         />
-        <button class="submit-btn">Submit</button>
+        <button id="submit-btn" class="submit-btn">Submit</button>
       </div>
 
     </form>
@@ -65,6 +65,17 @@
     crossorigin="anonymous"
     referrerpolicy="no-referrer"
   ></script>
+
+    <!-- Option A: jsdiff (has a global `Diff`) -->
+  <script src="https://cdn.jsdelivr.net/npm/diff@5.2.0/dist/diff.min.js" defer></script>
+
+  <!-- Option B: Google diff-match-patch (has a global `diff_match_patch`) -->
+  <script src="https://cdn.jsdelivr.net/npm/google-diff-match-patch@1.0.0/diff_match_patch.js" defer></script>
+
+  <!--<script src="https://cdn.jsdelivr.net/npm/diff@5.2.0/dist/diff.min.js"></script>-->
+  <!--<script src="https://cdnjs.cloudflare.com/ajax/libs/diff_match_patch/20121119/diff_match_patch.min.js"></script>-->
+  <script src="/scripts/codePreview.js"></script>
+
   <script src="scripts/codePreview.js" defer></script>
   <script type="module" src="./scripts/loading.js"></script>
 

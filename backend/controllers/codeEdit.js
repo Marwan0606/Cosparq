@@ -41,7 +41,7 @@ Includes no extra commentary, markdown fences, or wrapping text—just the raw d
 
   try {
     const response = await openai.chat.completions.create({
-      model: "gpt-4o",
+      model: "gpt-5-mini",
       messages,
       //reasoning_effort:"high"
       //temperature: 0.7
