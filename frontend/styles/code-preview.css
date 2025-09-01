@@ -46,7 +46,7 @@ h1 {
 .preview-box {
   border-radius: inherit;
   background: #0d0e11;
-  min-height: min(85vh, 120rem);
+  min-height: min(85vh, 48rem);
   /* inner subtle border */
   outline: 1px solid rgba(255,255,255,0.06);
 }
@@ -54,7 +54,7 @@ h1 {
 #sitePreview {
   display: block;
   width: 100%;
-  height: min(85vh, 120rem);
+  height: min(85vh, 48rem);
   border: 0;
   border-radius: inherit;
   background: transparent;
@@ -124,7 +124,7 @@ h1 {
   display: flex;
 }
 
-.submit-btn {
+.submit-btn, .btn {
   min-width: 118px;
   height: 54px;
   padding: 0 24px;
@@ -146,4 +146,15 @@ h1 {
   cursor: pointer;
   transition: filter .15s, transform .12s, box-shadow .12s;
   box-shadow: 0 10px 26px rgba(0,0,0,.6), 0 6px 20px rgba(0,0,0,.45);
+}
+
+.container-btns {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+.btn {
+  min-width: 118px;
+  height: 40px;
 }

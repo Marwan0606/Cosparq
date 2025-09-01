@@ -203,3 +203,12 @@ ${out.join('\n')}\n`;
     }
   });
 }
+
+
+document.getElementById('raw-file').addEventListener('click', ()=>{
+  window.location = '/getRawCode.html'
+})
+
+document.getElementById('full-preview').addEventListener('click', ()=>{
+  window.location = '/fullPreview.html'
+})
