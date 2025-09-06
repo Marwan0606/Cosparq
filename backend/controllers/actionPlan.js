@@ -65,7 +65,7 @@ Return ONLY JSON per the schema below. Do not include backticks or explanations.
 
   try {
     const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: "gpt-5-nano",
       messages,
       //temperature: 0.7
     });

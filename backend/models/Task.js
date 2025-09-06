@@ -26,6 +26,10 @@ const TaskSchema = new mongoose.Schema({ //this sets the specific type of data e
     type:Boolean,
     default: false
   },
+  order: {
+    type:Number,
+    default: false
+  },
   userId: {
     type:String,
     defualt: ''

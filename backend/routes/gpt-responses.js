@@ -9,6 +9,7 @@ const { actionPlan } = require('../controllers/actionPlan');
 const { tasksAi } = require('../controllers/tasksAi')
 const { codePage } = require('../controllers/code')
 const { codeEdit } = require('../controllers/codeEdit')
+const { codeEditCheap } = require('../controllers/codeCheap')
 
 router.post('/idea', rateIdea);
 
@@ -25,5 +26,7 @@ router.post('/tasksAi', tasksAi);
 router.post('/code', codePage);
 
 router.post('/codeEdit', codeEdit);
+
+router.post('/codeEditCheap', codeEditCheap);
 
 module.exports = router;

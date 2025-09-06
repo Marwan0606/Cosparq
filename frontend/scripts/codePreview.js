@@ -117,13 +117,14 @@ ${out.join('\n')}\n`;
   }
 
   async function requestFullFile(originalFile, instructions) {
-    const resp = await axios.post('/api/responses/codeEdit', {
+    const resp = await axios.post('/api/responses/codeEditCheap', {
       originalFile,
-      instructions: `${instructions}\n\nReturn the entire updated file as plain HTML (no markdown code fences, no diff).`
+      instructions
     });
+    console.log(resp)
     const raw = resp?.data?.result || '';
     const full = extractFullFile(raw) || raw;
-    if (!/<html[\s>]/i.test(full)) throw new Error('Full-file fallback did not return an HTML document.');
+    //if (!/<html[\s>]/i.test(full)) throw new Error('Full-file fallback did not return an HTML document.');
     return normalizeForPatch(unescapeGuards(cleanMarkdownFence(full)));
   }
 

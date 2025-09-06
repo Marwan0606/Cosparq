@@ -54,10 +54,10 @@ YOU MUST return ONLY a valid JSON object with this exact shape:
 
 
   try {
-    console.log('using model:', 'gpt-4o-mini');
+    console.log('using model:', 'gpt-5-nano');
 
     const response = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
+      model: 'gpt-5-nano',
       messages,
       response_format: { type: 'json_object' },
       //temperature: 0.2

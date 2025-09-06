@@ -76,7 +76,21 @@ const updateTask = async (taskId, completed)=>{
 
 const generateTasksHTML = (tasks)=>{
 
-  tasks.sort((a, b) => (a.completed ? 1 : 0) - (b.completed ? 1 : 0));
+  tasks.sort((a, b) => {
+    const ac = a.completed ? 1 : 0;
+    const bc = b.completed ? 1 : 0;
+    if (ac !== bc) return ac - bc;
+
+    // Prefer explicit order index if present
+    const ao = (a.order ?? Number.POSITIVE_INFINITY);
+    const bo = (b.order ?? Number.POSITIVE_INFINITY);
+    if (ao !== bo) return ao - bo;
+
+    // Final fallback: createdAt ascending (requires timestamps in schema)
+    const ad = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+    const bd = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+    return ad - bd;
+  });
 
   const taskListEl = document.querySelector('.js-task-list');
   if (tasks.length === 0) {
@@ -89,7 +103,7 @@ const generateTasksHTML = (tasks)=>{
     return; // nothing else to bind
   }
 
-
+  console.log(tasks)
   let HTML='';
   tasks.forEach((task)=>{
     HTML += `
@@ -173,12 +187,13 @@ getAllTasks()
 
 //THIS IS FOR THE AUTO GENERATED AI TASKS
 
-const tasksAI = async ()=>{
+const tasksAI = async (userRequest)=>{
 
   let ideaId = JSON.parse(localStorage.getItem('ideaId'))
   let idea = await axios.get(`/api/save/idea/${ideaId}`)
   idea = idea.data.idea.idea
 
+  /*
   let actionPage = await axios.get(`api/save/saveAction/${ideaId}`);
   actionPlan = JSON.stringify(actionPage.data.actionResponse.actionPlanResponse)
 
@@ -198,12 +213,12 @@ const tasksAI = async ()=>{
   }
   console.log(specificTasks)
   specificTasks = JSON.stringify(specificTasks)
-  
+  */
 
 
 
 
-  let response = await axios.post('/api/responses/tasksAi', {idea, specificTasks, actionPlan})
+  let response = await axios.post('/api/responses/tasksAi', {idea, userRequest})
   console.log('AI Response of Tasks', response)
 
   generateAiTasks(response)
@@ -217,12 +232,17 @@ generateAiTasks = async (response)=>{
   if (tasksAiRes.tasks) {
     tasksAiRes = tasksAiRes.tasks
   }
+  if (tasksAiRes.steps) {
+    tasksAiRes = tasksAiRes.steps
+  }
   console.log('final format', tasksAiRes)
-  tasksAiRes.forEach(async (task)=>{
-    let ideaId = JSON.parse(localStorage.getItem('ideaId'))
-    response = await axios.post('/api/v1/tasks', {title: task.title, description: task.description, ideaId})
+  console.log(tasksAiRes.length)
+  let ideaId = JSON.parse(localStorage.getItem('ideaId'))
+  for (let i = 0; i < tasksAiRes.length; i++) {
+    const task = tasksAiRes[i];
+    response = await axios.post('/api/v1/tasks', {title: task.title, description: task.description, assignedToName: task.assignedToName, order: i, ideaId})
     getAllTasks()
-  })
+  }
 }
 
 
@@ -231,7 +251,7 @@ addLoading = ()=>{
   HTML = `
   <div class="frame">
     <div class="brand-wrap">
-      <div class="brand">Your AI is Creating Your Daily Tasklist</div>
+      <div class="brand">Your AI is Creating Your Step-By-Step Tasks</div>
       <!--<div class="new dotting"></div>-->
     </div>
 
@@ -289,10 +309,26 @@ addLoading = ()=>{
 
 
 
-document.getElementById('aiTaskBtn').addEventListener('click', ()=>{
+document.getElementById('aiTaskBtn').addEventListener('click', async ()=>{
+  userRequest = await popup()
   addLoading()
-  tasksAI()
+  tasksAI(userRequest)
 })
+
+function popup() {
+  return new Promise((resolve) => {
+    const popupOverlay = document.getElementById('popupOverlay2');
+    const confirmBtn = document.getElementById('confirmBtn2');
+    const popupInput = document.getElementById('popupInput2');
+
+    popupOverlay.classList.add('active');
+
+    confirmBtn.onclick = () => {
+      popupOverlay.classList.remove('active')
+      resolve(popupInput.value); // return the final input value
+    };
+  });
+}
 
 
 
@@ -357,3 +393,6 @@ const loading = { active: 0 };
   // schedule next glow
   setTimeout(loop, 300 + Math.random() * 680);
 })();
+
+
+

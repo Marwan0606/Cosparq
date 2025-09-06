@@ -29,7 +29,7 @@ Uses normal @@ -start,count +start,count @@ hunk headers
 
 Prefixes removed lines with -, added lines with +, and context lines with a single space
 
-Includes no extra commentary, markdown fences, or wrapping text—just the raw diff.
+Includes no extra commentary, markdown fences, or wrapping-text just the raw diff.
 
 
         Please output *only* a unified-diff patch (git format) that makes the user’s instruction happen:
@@ -41,7 +41,7 @@ Includes no extra commentary, markdown fences, or wrapping text—just the raw d
 
   try {
     const response = await openai.chat.completions.create({
-      model: "gpt-5-mini",
+      model: "gpt-5-nano",
       messages,
       //reasoning_effort:"high"
       //temperature: 0.7

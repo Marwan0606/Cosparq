@@ -23,13 +23,15 @@
     transform: translateX(-100%); /* start hidden */
     transition: transform .25s ease;
     z-index: 50;
+
+    overflow-y: auto;
   }
   .sidebar.open { transform: translateX(0); }
 
   .brand{
     font-weight:800; font-size:28px;
     /* add: */
-    background: linear-gradient(90deg,#a23fff 0%,#ff5832 60%,#fa7c2d 100%);
+    background: var(--grad);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
@@ -68,13 +70,17 @@
 
   </nav>
 
-  <div class="menu-section">Workflow</div>
+  <div class="menu-section">Idea Development</div>
   <nav class="menu">
     <a href="/idea-page.html" class="menu-item">New Idea</a>
     <a href="/scoreboard-page.html" class="menu-item scoreboard-button">Scoreboard</a>
     <a href="/market-research.html" class="menu-item">Market Research</a>
     <a href="/action-page.html" class="menu-item">Action Plan</a>
     <a href="/chat-page.html" class="menu-item">AI Chat</a>
+  </nav>
+
+  <div class="menu-section">Builder Tools</div>
+  <nav class="menu">
     <a href="/code-preview.html" class="menu-item">CoBuilder</a>
     <a href="/tasks-page.html" class="menu-item">Tasks</a>
   </nav>
@@ -82,11 +88,10 @@
   <div class="menu-section">Account</div>
   <nav class="menu">
     <a href="#" class="menu-item muted">Settings</a>
-    <a href="#" class="menu-item muted">Billing</a>
   </nav>
 
   <div class="sidebar-foot">
-    <div class="kbd" title="Cmd/Ctrl + K">⌘K</div> Quick Switch
+
   </div>
 </aside>
 

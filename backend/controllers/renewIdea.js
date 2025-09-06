@@ -38,12 +38,12 @@ const renewIdea = async (req, res) => {
   ];
 
   try {
-    console.log('using model:', 'gpt-4o-mini');
+    console.log('using model:', 'gpt-5-nano');
 
     const response = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
+      model: 'gpt-5-nano',
       messages,
-      temperature: 0.2
+      //temperature: 0.2
     });
 
     console.log('served by model:', response.model);

@@ -864,3 +864,116 @@ svg{ width:100%; max-width:780px; height:100%; max-height:500px }
   cursor: pointer;
   transition: background-color 0.2s ease;
 }
+
+
+
+
+
+/*POPUP FOR TASKAI CSS*/
+
+#popupOverlay2 {
+  display: flex; /* always flex */
+  align-items: center;
+  justify-content: center;
+
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 9999;
+
+  visibility: hidden;   /* hide but keep layout */
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+#popupOverlay2.active {
+  visibility: visible;
+  opacity: 1;
+}
+
+
+/* ✅ Gradient border without affecting the inner background */
+#popupBox2 {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+
+
+  width: 700px;
+  height: 400px;
+  padding: 20px;
+  border-radius: 12px;
+  text-align: center;
+
+  /* Two backgrounds: inner solid (padding-box) + outer gradient (border-box) */
+  background:
+    linear-gradient(#17181b, #17181b) padding-box,
+    linear-gradient(90deg, #8400ff, #ba0186, #f94016, #f96d16) border-box;
+
+  border: 4px solid transparent;   /* makes the gradient show in the border */
+  /* optional soft glow to match the gradient */
+  box-shadow: 0 10px 30px rgba(0,0,0,.35), 0 0 24px rgba(132,0,255,.25);
+}
+
+.popupInput2 {
+  width: 400px;
+  height: 100px;              /* Makes it multiline */
+  background-color: #2c2c2c;
+  color: white;
+  padding: 10px;               /* Space inside */
+  border-radius: 10px;
+  border: 1px solid #f94016;
+  resize: vertical;            /* Allow user to resize if they want */
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.popupInput2::placeholder {
+  color: #aaa;
+  vertical-align: top;         /* Ensure placeholder starts at top */
+}
+
+
+/* Optional small text */
+.explain-container2 {
+  display: flex;
+  justify-content: center;
+}
+
+.explain-text2 {
+  display: flex;
+  justify-content: center;
+  font-size: 16px;
+  color: #d0d0d0;
+  width: 400px;
+
+  margin-top: 20px;
+  margin-bottom: 10px;
+}
+
+.topic-text2 {
+  font-size: 40px;
+  font-weight: 800;
+  background: linear-gradient(
+    90deg,
+    #8400ff 30%,
+    #8301c9 40%,
+    #f94016 60%,
+    #ff6543 100%
+  );
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.confirm-button2 {
+  background: linear-gradient(90deg, #8400ffdc, #ba0185dc, #f94016dc, #f96d16dc);
+  color: #ffffff;
+  border: none;
+  margin-top: -20px;
+  border-radius: 10px;
+  padding: 10px 80px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}

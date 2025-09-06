@@ -43,6 +43,7 @@ async function populateIdeas() {
     }
 
     menu.innerHTML = ideas
+    
       .map(i => `
         <a 
           href="/scoreboard-page.html" 
