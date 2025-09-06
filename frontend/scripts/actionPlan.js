@@ -34,16 +34,28 @@ const actionBoard = async ()=>{
       if (response.data && response.data.actionResponse) {
         console.log('getting from database');
         let actionResponse = response.data.actionResponse.actionPlanResponse
+        while (!actionResponse) {
+          response = await axios.get(`/api/save/saveAction/${ideaId}`);
+          actionResponse = response.data.actionResponse.actionPlanResponse
+        }
+        
         resultData = JSON.parse(actionResponse);
         console.log(resultData)
       } else {
         console.log('getting from AI');
-        response = await axios.post('/api/responses/actionPlan', { idea });
+        //let saveInitialResponse = await axios.post('api/save/saveActon', {ideaId})
+        //console.log('inital response status save', saveInitialResponse)
+        response = await axios.post('/api/responses/actionPlan', { idea, ideaId });
+        /*
+        if (!response) {
+          const deleteRes = await axios.delete(`/api/save/saveAction/${ideaId}`)
+          console.log('failed, response deleted', deleteRes)
+        }
+        */
         console.log(response.data.result);
         let actionPlanResponse = response.data.result;
-        
-        let saveActionResponse = await axios.post('/api/save/saveAction', {actionPlanResponse, ideaId})
-        console.log(saveActionResponse)
+        //let saveActionResponse = await axios.put(`/api/save/saveAction/${ideaId}`, {actionPlanResponse, status:'success'})
+        //console.log(saveActionResponse)
 
         resultData = JSON.parse(response.data.result);
         console.log(resultData)

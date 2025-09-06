@@ -1,7 +1,13 @@
 const { openai } = require('../services/openaiService');
+const actionResponses = require('../models/Action-response.js')
 
 const actionPlan = async (req, res) => {
-  const { idea } = req.body;
+  //const { idea } = req.body;
+
+  const userId = req.user.userId
+  const {idea, ideaId} = req.body
+  const actionResponse = await actionResponses.create({userId, ideaId})
+  console.log(actionResponse)
 
   const messages = [
     {
@@ -71,7 +77,22 @@ Return ONLY JSON per the schema below. Do not include backticks or explanations.
     });
 
     const reply = response.choices[0].message.content;
+    // console.log(reply)
+    //const replyDB = JSON.parse(reply)
+    //console.log('replyDB:', replyDB)
+
+
+    const actionResponseUpdate = await actionResponses.findOneAndUpdate({userId, ideaId}, {actionPlanResponse:reply, status:'success'}, {
+      new: true,
+      runValidators: true,
+    })
+    console.log(actionResponseUpdate)
+
+
     res.json({ result: reply });
+
+
+
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to fetch AI response.' });
