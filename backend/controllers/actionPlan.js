@@ -73,6 +73,7 @@ Return ONLY JSON per the schema below. Do not include backticks or explanations.
     const response = await openai.chat.completions.create({
       model: "gpt-5-nano",
       messages,
+      response_format: { type: "json_object" }
       //temperature: 0.7
     });
 

@@ -5,12 +5,6 @@ axios.defaults.withCredentials = true;   // ← send & receive cookies
 
 const scoreBoard = async (idea)=>{
   try {
-    /*
-    let user = JSON.parse(localStorage.getItem('user'))
-    let userId = user.data.user._id
-    console.log(userId)
-    */
-  
     
     let ideaId = JSON.parse(localStorage.getItem('ideaId'))
     console.log(`IdeaId is: ${ideaId}`)
@@ -53,17 +47,28 @@ const scoreBoard = async (idea)=>{
       if (response.data && response.data.scoreResponse) {
         console.log('getting from database');
         let scoreboardResponse = response.data.scoreResponse.scoreboardResponse
+        while (!scoreboardResponse) {
+          response = await axios.get(`/api/save/saveScoreResponse/${ideaId}`);
+          console.log(response)
+          scoreboardResponse = response.data.scoreResponse.scoreboardResponse
+
+          if (!scoreboardResponse) {
+            await new Promise(resolve => setTimeout(resolve, 5000));
+          }
+        }
         resultData = JSON.parse(scoreboardResponse);
+        console.log('DB resultData', resultData)
       } else {
         console.log('getting from AI');
-        response = await axios.post('/api/responses/idea', { idea });
+        response = await axios.post('/api/responses/idea', { idea , ideaId});
         console.log(response.data.result);
         let scoreboardResponse = response.data.result;
         
-        let saveScoreResponse = await axios.post('/api/save/saveScoreResponse', {scoreboardResponse, ideaId})
-        console.log(saveScoreResponse)
+        //let saveScoreResponse = await axios.post('/api/save/saveScoreResponse', {scoreboardResponse, ideaId})
+        //console.log(saveScoreResponse)
 
         resultData = JSON.parse(response.data.result);
+        console.log('AI resultData', resultData)
       }
     } catch (error) {
       console.log('Error fetching from database, getting from AI');
@@ -195,7 +200,63 @@ document.querySelector('.js-regenerate-response-btn').addEventListener('click', 
   let ideaId = JSON.parse(localStorage.getItem('ideaId'))
 
   console.log(ideaId)
+  const wrap = document.querySelector('.js-scoreboard');
+  wrap.innerHTML = `
+        <div class="frame">
+        <div class="brand-wrap">
+          <div class="brand">Your AI is Making Your Scoreboard</div>
+          <!--<div class="new dotting"></div>-->
+        </div>
 
+        <div class="viz">
+          <svg viewBox="0 0 800 520" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <defs>
+              <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%"  stop-color="#8400ff"/>
+                <stop offset="40%" stop-color="#f94016"/>
+                <stop offset="60%" stop-color="#f96d16"/>
+                <stop offset="100%" stop-color="#3b82f6"/>
+              </linearGradient>
+            </defs>
+
+            <!-- Links -->
+            <g id="links">
+              <line class="link" data-a="n1"  data-b="n5" x1="130" y1="90"  x2="320" y2="130"/>
+              <line class="link" data-a="n5"  data-b="n6" x1="320" y1="130" x2="410" y2="90"/>
+              <line class="link" data-a="n6"  data-b="c"  x1="410" y1="90"  x2="400" y2="260"/>
+              <line class="link" data-a="n2"  data-b="n5" x1="120" y1="250" x2="320" y2="130"/>
+              <line class="link" data-a="n2"  data-b="c"  x1="120" y1="250" x2="400" y2="260"/>
+              <line class="link" data-a="n3"  data-b="c"  x1="160" y1="400" x2="400" y2="260"/>
+              <line class="link" data-a="n4"  data-b="c"  x1="300" y1="460" x2="400" y2="260"/>
+              <line class="link" data-a="n7"  data-b="c"  x1="650" y1="110" x2="400" y2="260"/>
+              <line class="link" data-a="n7"  data-b="n8" x1="650" y1="110" x2="720" y2="240"/>
+              <line class="link" data-a="n8"  data-b="n9" x1="720" y1="240" x2="620" y2="370"/>
+              <line class="link" data-a="n9"  data-b="c"  x1="620" y1="370" x2="400" y2="260"/>
+              <line class="link" data-a="n10" data-b="c"  x1="470" y1="470" x2="400" y2="260"/>
+            </g>
+
+            <!-- Nodes -->
+            <g id="nodes">
+              <circle id="n1"  class="node" cx="130" cy="90"  r="7"/>
+              <circle id="n2"  class="node" cx="120" cy="250" r="7"/>
+              <circle id="n3"  class="node" cx="160" cy="400" r="7"/>
+              <circle id="n4"  class="node" cx="300" cy="460" r="7"/>
+              <circle id="n5"  class="node" cx="320" cy="130" r="7"/>
+              <circle id="n6"  class="node" cx="410" cy="90"  r="7"/>
+              <circle id="n7"  class="node" cx="650" cy="110" r="7"/>
+              <circle id="n8"  class="node" cx="720" cy="240" r="7"/>
+              <circle id="n9"  class="node" cx="620" cy="370" r="7"/>
+              <circle id="n10" class="node" cx="470" cy="470" r="7"/>
+              <circle id="c"   class="node center" cx="400" cy="260" r="9"/>
+            </g>
+          </svg>
+        </div>
+
+        <!-- Bottom-right status -->
+        <div class="status dotting">Loading</div>
+  `
+  const { startLoadingAnimation } = await import('../scripts/loading.js');
+  startLoadingAnimation(wrap);
   let chatLogs = await getChatLogs(ideaId)
   let newIdea = await renewIdea(ideaId, chatLogs)
   newIdea = await popup(newIdea)
@@ -227,15 +288,38 @@ const getChatLogs = async (ideaId)=>{
 
 const renewIdea = async(ideaId, chatLogs)=>{
   try {
-    let oldIdea = await axios.get(`/api/save/idea/${ideaId}`)
-    console.log(oldIdea)
-    let {data} = await axios.post('/api/responses/renewIdea', { oldIdea, chatLogs });
-    console.log(data)
-    let newIdea = JSON.parse(data.result)
-    newIdea = newIdea.idea
-    console.log(newIdea)
-    
-    return newIdea
+    let getFromDB = await axios.get(`/api/save/saveRenewResponse/${ideaId}`)
+    if (getFromDB.data.renewResponse) {
+      console.log('getting from database');
+      console.log(getFromDB)
+      let newIdea = getFromDB.data.renewResponse.renewIdeaResponse
+      //newIdea = newIdea.idea
+      console.log('newIdea', newIdea)
+      while (!newIdea && !newIdea) {
+        let response = await axios.get(`/api/save/saveRenewResponse/${ideaId}`);
+        console.log('in while loop', response)
+        newIdea = response.data.renewResponse.renewIdeaResponse
+        console.log(newIdea)
+
+        if (!newIdea) {
+          await new Promise(resolve => setTimeout(resolve, 5000));
+        }
+      }
+      newIdea = JSON.parse(newIdea)
+      newIdea = newIdea.idea
+      console.log(newIdea)
+      return newIdea
+    } else {
+      console.log('getting from AI');
+      let oldIdea = await axios.get(`/api/save/idea/${ideaId}`)
+      console.log(oldIdea)
+      let {data} = await axios.post('/api/responses/renewIdea', { oldIdea, chatLogs, ideaId });
+      console.log(data)
+      let newIdea = JSON.parse(data.result)
+      newIdea = newIdea.idea
+      console.log(newIdea)
+      return newIdea
+    }
   } catch (error) {
     console.log(error)
   }
@@ -245,6 +329,7 @@ const renewIdea = async(ideaId, chatLogs)=>{
 const updateIdea = async(ideaId, newIdea)=>{
   try {
     await axios.patch(`/api/save/idea/${ideaId}`, {idea: newIdea})
+    await axios.delete(`/api/save/saveRenewResponse/${ideaId}`)
     return
   } catch (error) {
     console.log(error)

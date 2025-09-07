@@ -15,6 +15,7 @@ const saveRawChat = require('./routes/save-raw-chats.js')
 const saveAction = require('./routes/save-action.js')
 const tasks = require('./routes/tasks-page.js')
 const saveCode = require('./routes/save-code.js')
+const saveRenew = require('./routes/save-renew.js')
 
 const authenticateToken = require('./middleware/authenticateToken.js')
 
@@ -53,6 +54,8 @@ app.use('/api/save', saveAction);
 app.use('/api/v1/tasks', tasks);
 
 app.use('/api/save', saveCode);
+
+app.use('/api/save', saveRenew);
 
 const port = process.env.PORT || 5004
 

@@ -1,7 +1,12 @@
 const { openai } = require('../services/openaiService');
+const scoreboardResponseModel = require('../models/Scoreboard-responses.js')
 
 const rateIdea = async (req, res) => {
-  const { idea } = req.body;
+
+  const userId = req.user.userId
+  const { idea, ideaId } = req.body;
+  const scoreboardResponse = await scoreboardResponseModel.create({userId, ideaId})
+  console.log(scoreboardResponse)
 
   const messages = [
     {
@@ -50,12 +55,20 @@ Rules:
     const response = await openai.chat.completions.create({
       model: process.env.SIB_SCORER_MODEL,
       messages,
+      response_format: { type: "json_object" },
       temperature: 0.2
     });
 
     console.log('served by model:', response.model);
 
     const reply = response.choices[0].message.content;
+
+    const scoreboardUpdate = await scoreboardResponseModel.findOneAndUpdate({userId, ideaId}, {scoreboardResponse:reply, status:'success'}, {
+      new: true,
+      runValidators: true,
+    })
+    console.log(scoreboardUpdate)
+
     res.json({ result: reply });
   } catch (err) {
     console.error(err);

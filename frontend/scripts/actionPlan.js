@@ -37,6 +37,10 @@ const actionBoard = async ()=>{
         while (!actionResponse) {
           response = await axios.get(`/api/save/saveAction/${ideaId}`);
           actionResponse = response.data.actionResponse.actionPlanResponse
+
+          if (!actionResponse) {
+            await new Promise(resolve => setTimeout(resolve, 5000));
+          }
         }
         
         resultData = JSON.parse(actionResponse);

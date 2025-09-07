@@ -1,7 +1,12 @@
 const { openai } = require('../services/openaiService');
+const renewIdeaRes = require('../models/Renew-temporary-response')
 
 const renewIdea = async (req, res) => {
-  const { oldIdea, chatLogs } = req.body;
+
+  const userId = req.user.userId
+  const { oldIdea, chatLogs, ideaId } = req.body;
+  const renewResponse = await renewIdeaRes.create({userId, ideaId})
+  console.log(renewResponse)
 
   const messages = [
     {
@@ -49,6 +54,14 @@ const renewIdea = async (req, res) => {
     console.log('served by model:', response.model);
 
     const reply = response.choices[0].message.content;
+
+    const renewUpdate = await renewIdeaRes.findOneAndUpdate({userId, ideaId}, {renewIdeaResponse:reply, status:'success'}, {
+      new: true,
+      runValidators: true,
+    })
+    console.log(renewUpdate)
+  
+
     res.json({ result: reply });
   } catch (err) {
     console.error(err);
