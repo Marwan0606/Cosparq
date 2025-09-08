@@ -7,7 +7,7 @@ const codePage = async (req, res) => {
     {
       role: "system",
       content: `
-      recreate this website https://cluely.com/ in html css and javascript
+      recreate this website https://cluely.com/ and also this website https://sintra.ai/?gad_source=1&gad_campaignid=22386630672&gbraid=0AAAAA_NXEDOtqQhqSR4nxL-dK8Frp-88X&gclid=CjwKCAjwt-_FBhBzEiwA7QEqyHcMjWPenzQK1gFRvRbhcmVTjKJ30_LFe0RVWhTOouo1-kQnGcIZvRoC1ggQAvD_BwE in html css and javascript
       You must create all the pages necessary for the website
 
       also here is code for a powerful website in that has a bunch of amazing animations, you can use some of these animations by taking it from this code file and adding it to the website you are creating. Use a minimum of 3 aniimations from this website code. Here is the code:
@@ -919,7 +919,7 @@ const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').mat
 
   try {
     const response = await openai.chat.completions.create({
-      model: "gpt-5-mini",
+      model: "gpt-5",
       messages,
       //reasoning_effort:"high"
       //temperature: 0.7
