@@ -6,7 +6,7 @@
   box-sizing: border-box;
 }
 html, body {
-  height: 100%;
+  min-height: 100%;
   font-family: 'Inter', sans-serif;
   background-color: #121212;
   color: #e0e0e0;
@@ -15,13 +15,16 @@ html, body {
 /* Center container horizontally & give some top breathing room */
 body {
   display: flex;
-  justify-content: center;
-  padding-top: 150px;
+  flex-direction: column;  /* stack children */
+  align-items: center;     /* keep content centered horizontally */
+
 }
+
 .container {
   width: 100%;
   max-width: 1140px;
   padding: 0 24px;
+  padding-top: 110px;
 }
 
 /* Hero Section */
@@ -95,7 +98,9 @@ body {
 
 /* Feature Card */
 .feature-card {
-  background-color: #1f1f1f;
+  background-color: #191919;
+  backdrop-filter: saturate(1.2) blur(10px);
+  background: linear-gradient(to bottom, rgba(18, 18, 18, 0.8), rgba(18, 18, 18, 0.8));
   border: 1px solid #2c2c2c;
   border-radius: 16px;
   padding: 2.5rem 2rem;
@@ -105,6 +110,8 @@ body {
 .feature-card:hover {
   transform: translateY(-6px);
   border-color: #444444;
+  backdrop-filter: saturate(1.2) blur(10px);
+  background: linear-gradient(to bottom, rgba(18, 18, 18, 0.8), rgba(18, 18, 18, 0.8));
   
 }
 .feature-icon {
@@ -174,6 +181,7 @@ body {
 
 
 
+
 /* Gradient glow behind the CTA (matches button gradient) */
 .cta-button {
   position: relative;          /* needed for the pseudo-element */
@@ -203,5 +211,250 @@ body {
 .cta-button:focus-visible::before {
   opacity: 0.9;
   filter: blur(26px);
+}
+
+
+:root {
+  --bg: #121212;
+  --text: #e0e0e0;
+  --card-border: #2c2c2c;
+  --g1: #8400ff;
+  --g2: #ba0186;
+  --g3: #f94016;
+  --g4: #f96d16;
+}
+
+/* Top nav */
+.nav {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  backdrop-filter: saturate(1.2) blur(10px);
+  background: linear-gradient(to bottom, rgba(18,18,18,.1), rgba(18,18,18,.1));
+  border-bottom: 1px solid var(--card-border);
+  width: 100%
+}
+
+.blur {
+  backdrop-filter: saturate(1.2) blur(10px);
+  background: linear-gradient(to bottom, rgba(18,18,18,.9), rgba(18,18,18,.9));
+}
+
+.nav-inner {
+  max-width: 1140px;
+  margin: 0 auto;
+  padding: .75rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  text-decoration: none;
+  color: var(--text);
+}
+
+.brand-mark {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: conic-gradient(from 180deg, var(--g1), var(--g2), var(--g3), var(--g4), var(--g1));
+  box-shadow: 0 0 24px rgba(132,0,255,.35);
+}
+
+.brand span {
+  font-weight: 800;
+  letter-spacing: .2px;
+}
+
+.nav-actions {
+  display: flex;
+  gap: .5rem;
+  align-items: center;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .5rem;
+  padding: .65rem 1rem;
+  border-radius: 9999px;
+  border: 1px solid var(--card-border);
+  color: var(--text);
+  text-decoration: none;
+  font-weight: 600;
+  transition: transform .2s ease, opacity .2s ease;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+  opacity: .95;
+}
+
+.btn-ghost {
+  background: transparent;
+}
+
+.btn-primary {
+  position: relative;
+  border-color: transparent;
+  background: linear-gradient(90deg, var(--g1), var(--g2), var(--g3), var(--g4));
+}
+
+.btn-primary::before {
+  content: "";
+  position: absolute;
+  inset: -6px;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, var(--g1), var(--g2), var(--g3), var(--g4));
+  filter: blur(18px);
+  opacity: .55;
+  z-index: -1;
+  transition: filter .2s, opacity .2s, transform .2s;
+}
+
+.btn-primary:hover::before {
+  opacity: .85;
+  filter: blur(24px);
+  transform: scale(1.05);
+}
+
+
+/* Uses your theme vars if present, falls back to CoSparq palette */
+:root{
+  --g1: var(--g1, #8400ff);
+  --g2: var(--g2, #ba0186);
+  --g3: var(--g3, #f94016);
+  --g4: var(--g4, #f96d16);
+  --g5: var(--g5, #3b82f6);
+}
+
+/* Background container sits behind everything */
+.cosparq-bg{
+  position: fixed;
+  inset: 0;
+  z-index: 0;              /* behind page content */
+  pointer-events: none;     /* never blocks clicks */
+}
+
+/* 1) Animated gradient mesh */
+.cosparq-bg__mesh{
+  position: absolute;
+  inset: -20vh -10vw -10vh -10vw; /* bleed for smooth edges */
+  filter: saturate(1.2) contrast(1.05);
+}
+.cosparq-bg__mesh::before{
+  content: "";
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(60% 60% at 15% 20%, rgba(132,0,255,.18), transparent 60%),
+    radial-gradient(50% 50% at 85% 30%, rgba(249,64,22,.14), transparent 60%),
+    radial-gradient(40% 40% at 40% 80%, rgba(59,130,246,.14), transparent 60%);
+  animation: cos-float 18s ease-in-out infinite alternate;
+}
+@keyframes cos-float{
+  0%   { transform: translateY(-2%) scale(1); }
+  100% { transform: translateY( 2%) scale(1.03); }
+}
+
+/* 2) Ultra-subtle film grain */
+.cosparq-bg__noise{
+  position: absolute; inset: 0;
+  mix-blend-mode: soft-light;
+  background-image: url("data:image/svg+xml;utf8,\
+<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140' viewBox='0 0 140 140'>\
+<filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter>\
+<rect width='100%' height='100%' filter='url(%23n)' opacity='0.025'/>\
+</svg>");
+}
+
+/* 3) Cursor spotlight (uses --mx/--my set by tiny JS) */
+.cosparq-spotlight{
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(400px 400px at var(--mx,50%) var(--my,50%),
+      rgba(132,0,255,.12), transparent 40%),
+    radial-gradient(500px 500px at calc(var(--mx,50%) + 12%) calc(var(--my,50%) + 8%),
+      rgba(59,130,246,.10), transparent 55%);
+}
+
+/* Respect users who prefer less motion or on touch */
+@media (prefers-reduced-motion: reduce){
+  .cosparq-bg__mesh::before{ animation: none; }
+}
+@media (pointer: coarse){
+  .cosparq-spotlight{ display: none; }
+}
+
+
+
+/* SCROLL SIGN — refined */
+.scroll-sign {
+  display: flex;
+  margin-top: -40px;
+  justify-content: center;
+
+  /* match the title */
+  font-family: inherit;   /* uses 'Inter' like your headline */
+  font-weight: 800;       /* same as .headline */
+  letter-spacing: .015em;
+  color: #e0e0e0;
+
+  /* motion + glow (more restrained) */
+  --bounce-duration: 2s;         /* slower, calmer */
+  --glow-duration: 2s;           /* slower than bounce for sophistication */
+  --amp-min: 2px;                  /* smaller amplitude = less "gimmicky" */
+  --amp-max: 8px;
+  --glow-rgb: 132 0 255;           /* brand purple (#8400ff) as RGB */
+
+  font-size: clamp(10px, 1vw, 15px);
+  line-height: 1;
+
+  animation:
+    scroll-bounce var(--bounce-duration) cubic-bezier(.22,.61,.36,1) infinite,
+    scroll-glow   var(--glow-duration)   ease-in-out infinite;
+
+  will-change: transform, filter, text-shadow;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* if the sign contains a child (icon/SVG/span), inherit the animations */
+.scroll-sign > * { animation: inherit; }
+
+/* smoother, smaller vertical drift */
+@keyframes scroll-bounce {
+  0%   { transform: translateY(calc(var(--amp-min) * -1)); }
+  50%  { transform: translateY(var(--amp-max)); }
+  100% { transform: translateY(calc(var(--amp-min) * -1)); }
+}
+
+/* ultra-subtle glow (no neon blast) */
+@keyframes scroll-glow {
+  0% {
+    text-shadow: 0 0 0 rgb(var(--glow-rgb) / 0);
+    filter: drop-shadow(0 0 0 rgb(var(--glow-rgb) / 0));
+    opacity: .9;
+  }
+  50% {
+    text-shadow:
+      0 0 6px  rgb(var(--glow-rgb) / .18),
+      0 0 12px rgb(var(--glow-rgb) / .10);
+    filter: drop-shadow(0 0 8px rgb(var(--glow-rgb) / .18));
+    opacity: 1;
+  }
+  100% {
+    text-shadow: 0 0 0 rgb(var(--glow-rgb) / 0);
+    filter: drop-shadow(0 0 0 rgb(var(--glow-rgb) / 0));
+    opacity: .9;
+  }
+}
+
+/* accessibility: stop motion for folks who prefer reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .scroll-sign, .scroll-sign > * { animation: none; }
 }
 

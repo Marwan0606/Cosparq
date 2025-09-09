@@ -5,9 +5,35 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Your AI Cofounder</title>
   <link rel="stylesheet" href="styles/start-page.css"/>
+  <link rel="stylesheet" href="styles/scrolltelling.css"/>
+  <link rel="stylesheet" href="styles/preview-starter-page.css"/>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
 </head>
 <body>
+  <!-- CoSparq Background — drop-in -->
+  <div class="cosparq-bg" aria-hidden="true">
+    <div class="cosparq-bg__mesh"></div>
+    <div class="cosparq-bg__noise"></div>
+    <div class="cosparq-spotlight"></div>
+  </div>
+
+
+  <!-- NAV -->
+  <nav class="nav" aria-label="Primary">
+    <div class="nav-inner">
+      <a class="brand" href="#" aria-label="CoSparq home">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span>CoSparq</span>
+      </a>
+      <div class="nav-actions">
+        <a class="btn btn-ghost" href="#how">How it works</a>
+        <a class="btn btn-ghost" href="#pricing">Pricing</a>
+        <a class="btn btn-ghost" href="#faq">FAQ</a>
+        <a class="cta-button" href="/auth.html">Start Building →</a>
+      </div>
+    </div>
+  </nav>
+
   <div class="container">
     <header class="hero">
       <h1 class="headline">
@@ -54,7 +80,231 @@
         <p>Generate structured roadmaps with MVP features and launch strategies</p>
       </div>
     </section>
+
+    <p class="scroll-sign">Scroll ↓</p>
+    
   </div>
+
+
+  <!--Scrolltelling HTML-->
+  <div class="grain" aria-hidden="true"></div>
+  <a class="skip" href="#main">Skip to content</a>
+
+  <main id="main">
+    <!-- Intro / Hero -->
+    <section class="scrolly intro" data-height="160">
+      <div class="pin">
+        <h1 class="title">What better way to show <span class="accent">CoSparq</span> than with an example?</h1>
+        <p class="kicker">Scroll ↓</p>
+      </div>
+    </section>
+
+    <!-- Scale-up sentence -->
+    <section class="scrolly scale" data-height="180">
+      <div class="pin">
+        <p class="line scale-up">Imagine This...</p>
+        <p class="hint">Keep going</p>
+      </div>
+    </section>
+
+
+    <!-- Focus Paragraph panel (chunk-by-chunk highlight) -->
+    <section class="panel para-panel" aria-labelledby="para-label">
+      <div class="p-sticky container">
+        <h2 id="para-label" class="sr-only">Paragraph highlights as you scroll</h2>
+        <p class="para">
+          <span class="chunk">You are looking to make your startup idea, a digital wardrobe app, </span>
+          <span class="chunk">an app you upload your wardrobe on digitally and have an AI create and plan outfits for you, </span>
+          <span class="chunk">but you are not sure if your idea is worth doing.</span>
+          <span class="chunk">What if someone else already did it?</span>
+          <span class="chunk">What if no one would use this app?</span>
+          <span class="chunk">HOW DO I EVEN START?</span>
+        </p>
+      </div>
+    </section>
+
+    <section class="scrolly intro" data-height="160">
+      <div class="pin">
+        <h1 class="title">We know that feeling too. See how <span class="accent">CoSparq</span> helps</h1>
+        <p class="kicker">Scroll ↓</p>
+      </div>
+    </section>
+
+    <!--
+    <section class="scrolly big" data-height="260" aria-labelledby="big-label">
+      <div class="pin">
+        <h2 id="big-label" class="sr-only">Travel across a biiiiiiiiiiiiiiiiiiiiiiiiiiiiiig word</h2>
+        <div class="big-viewport" aria-hidden="true">
+          <div class="big-track gradient-text">biiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiig</div>
+        </div>
+        <p class="hint under">You're moving along the word →</p>
+      </div>
+    </section>
+
+    <section class="scrolly reveal" data-height="180">
+      <div class="pin">
+        <p class="line fade-in">The next idea fades in as the last one fades out.</p>
+      </div>
+    </section>
+
+    <section class="panel focus">
+      <div class="lines container">
+        <div class="line" data-index="0">Validate <span class="trail gradient">faster</span>.</div>
+        <div class="line" data-index="1">Ship a <span class="trail gradient">clear MVP</span>.</div>
+        <div class="line" data-index="2">Iterate with <span class="trail gradient">evidence</span>.</div>
+        <div class="line" data-index="3">Grow something <span class="trail gradient">bigger</span>.</div>
+      </div>
+    </section>
+
+    <section class="scrolly reveal" data-height="180">
+      <div class="pin">
+        <p class="line fade-in gradient-text">Now lets see CoSparq in Action</p>
+      </div>
+    </section>
+    -->
+    
+  </main>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  <section class="preview-section">
+    <div class="first-preview">
+      <div class="text-area">Scoreboard</div>
+      <div class="image-area">Scoreboard of the wardrobe app</div>
+    </div>
+
+    <div class="first-preview">
+      <div class="image-area"></div>
+      <div class="text-area">Market Research</div>
+    </div>
+
+    <div class="first-preview">
+      <div class="text-area">Action Plan</div>
+      <div class="image-area"></div>
+    </div>
+
+    <div class="first-preview">
+      <div class="image-area"></div>
+      <div class="text-area">Marketing Strategy</div>
+    </div>
+    
+  </section>
+
+  <main class="id">
+    <!--
+    <section class="scrolly intro" data-height="160">
+      <div class="pin">
+        <h1 class="title">To <span class="accent">Recap</span>, CoSparq lets you</h1>
+        <p class="kicker">Scroll ↓</p>
+      </div>
+    </section>
+    -->
+
+    <section class="panel focus">
+      <div class="lines container">
+        <div class="line" data-index="0">Get initial <span class="trail gradient">validation</span>.</div>
+        <div class="line" data-index="1">Get real insightful <span class="trail gradient">market research</span>.</div>
+        <div class="line" data-index="2">Get an <span class="trail gradient">actionable plan</span>.</div>
+         <div class="line" data-index="3">Get a complete <span class="trail gradient">marketing & validation plan</span>.</div>
+      </div>
+    </section>
+
+    <section class="scrolly scale" data-height="180">
+      <div class="pin">
+        <h1 class="title line scale-up">But that's just the start <span class="accent">CoSparq</span> also does this:</h1>
+        <p class="hint">Keep going</p>
+      </div>
+    </section>
+  </main>
+
+  <section class="preview-section">
+    <div class="first-preview">
+      <div class="text-area">Chatbot</div>
+      <div class="image-area"></div>
+    </div>
+
+    <div class="first-preview">
+      <div class="image-area">CoBuilder</div>
+      <div class="text-area"></div>
+    </div>
+
+    <div class="first-preview">
+      <div class="text-area">AI powered Tasks</div>
+      <div class="image-area">Great a gif or repeating mini video showing off the page i think no longer than 10 sec</div>
+    </div>
+
+    <div class="first-preview">
+      <div class="image-area">This page should be of an AI that you can ask to create a prompt to make your idea, and its specific to the AI you are using (eg lovable, cursor...)</div>
+      <div class="text-area">AI Prompts based of the AI you will use</div>
+    </div>
+
+    <div class="first-preview">
+      <div class="text-area">This page is for an AI that auto markets your full app, generating social media posts, tiktok viral video generator, email writer...</div>
+      <div class="image-area"></div>
+    </div>
+  </section>
+
+  <main class="id">
+    <!--
+    <section class="scrolly intro" data-height="160">
+      <div class="pin">
+        <h1 class="title">SO <span class="accent">COSPARQ</span>, LETS YOUUUU</h1>
+        <p class="kicker">Scroll ↓</p>
+      </div>
+    </section>
+    -->
+
+    <section class="panel focus">
+      <div class="lines container">
+        <div class="line" data-index="0">Talk to your own AI Cofounder that knows everything about <span class="trail gradient">your idea</span>.</div>
+        <div class="line" data-index="1">Get a ready to deploy landing page you can share for <span class="trail gradient">real user validation</span>.</div>
+        <div class="line" data-index="2">Get a personalized AI powered  <span class="trail gradient">task manager</span>.</div>
+        <div class="line" data-index="3">Get an AI that streamlines the process of using <span class="trail gradient">other AI app builders</span>.</div>
+        <div class="line" data-index="4">Get an AI bot that handles all promotion  <span class="trail gradient">making your app viral in days</span>.</div>
+      </div>
+    </section>
+
+    <section class="scrolly scrolly2 big big2" data-height="260" aria-labelledby="big-label">
+      <div class="pin">
+        <h2 id="big-label" class="sr-only">Travel across a biiiiiiiiiiiiiiiiiiiiiiiiiiiiiig word</h2>
+        <div class="big-viewport" aria-hidden="true">
+          <div class="big-track big-track2 gradient-text">And that's still just the staaaaaaaaaaaaaaaaaart</div>
+        </div>
+        <p class="hint under">You're moving along the word →</p>
+      </div>
+    </section>
+
+
+    <section class="scrolly intro" data-height="160">
+      <div class="pin">
+        <h1 class="title">We are already developing and testing many <span class="accent">more</span> features that will <span class="accent">streamline</span> your <span class="accent">startup founding journey</span></h1>
+        <p class="kicker">Scroll ↓</p>
+      </div>
+    </section>
+  </main>
+
+
+
+
+
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       const el = document.querySelector('.gradient-text');
@@ -106,7 +356,26 @@
         el.classList.remove('typing');
       })();
     });
+
   </script>
+  <script>
+    (() => {
+      const root = document.documentElement;
+      const finePointer = matchMedia('(pointer:fine)').matches;
+      if (!finePointer) return;  // skip on touch devices
+
+      let raf = null;
+      addEventListener('pointermove', (e) => {
+        if (raf) cancelAnimationFrame(raf);
+        raf = requestAnimationFrame(() => {
+          root.style.setProperty('--mx', e.clientX + 'px');
+          root.style.setProperty('--my', e.clientY + 'px');
+        });
+      }, { passive: true });
+    })();
+</script>
+
+  <script type="module" src="./scripts/start-page.js"></script>
 
 </body>
 </html>
