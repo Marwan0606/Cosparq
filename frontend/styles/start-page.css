@@ -458,3 +458,40 @@ body {
   .scroll-sign, .scroll-sign > * { animation: none; }
 }
 
+/* 1) Let the two columns actually shrink inside the flex row */
+.first-preview > .text-area,
+.first-preview > .image-area {
+  min-width: 0;            /* critical: prevents horizontal overflow */
+}
+
+/* 2) Center the scoreboard in its half and clip any accidental spill */
+.image-area {
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  overflow: hidden;        /* safety net */
+}
+
+/* 3) Keep the scoreboard from exceeding its column */
+.sbx { width: 100%; }                          /* wrapper we added */
+.sbx .scoreboard { width: 100%; max-width: 100%; }
+.sbx .tile { min-width: 0; }
+
+/* 4) Avoid long labels forcing a wider min-content width */
+.sbx .label {
+  word-break: break-word;
+  hyphens: auto;
+}
+
+/* 5) On narrower screens, stack the preview columns (optional) */
+@media (max-width: 900px) {
+  .first-preview {
+    flex-direction: column;
+    height: auto;         /* let content decide height when stacked */
+  }
+  .text-area,
+  .image-area {
+    width: 100%;
+  }
+}
+

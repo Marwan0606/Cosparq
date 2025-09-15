@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Create Account — CoSparq</title>
+  <link rel="stylesheet" href="styles/auth.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet"/>
+</head>
+<body>
+  <div class="auth-container">
+    <!-- Brand Panel -->
+    <div class="brand-side" aria-hidden="true">
+      <h1>Welcome to CoSparq</h1>
+      <p>Create your account to start building with your AI cofounder.</p>
+    </div>
+
+    <!-- Form Panel -->
+    <div class="form-side">
+      <h2 class="form-title">Create Account</h2>
+
+      <!-- SIGN UP FORM -->
+      <form id="signup-form" action="https://sheetdb.io/api/v1/eh9op3ecl2tbp" method="POST">
+        <div class="field">
+          <label for="signup-name">Full Name</label>
+          <input name="data[Full Name]" class="js-signup-name" id="signup-name" type="text" placeholder="Jane Doe" required/>
+        </div>
+        <div class="field">
+          <label for="signup-email">Email</label>
+          <input name="data[Email]" class="js-signup-email" id="signup-email" type="email" placeholder="you@example.com" required/>
+        </div>
+        <div class="field">
+          <label for="signup-password">Password</label>
+          <input name="data[Password]" class="js-signup-password" id="signup-password" type="password" placeholder="••••••••" required minlength="6"/>
+        </div>
+
+        <div class="js-error-message" style="color: rgb(248, 78, 11); margin-top: 8px; margin-bottom: 10px; font-weight: 700;"></div>
+
+        <button type="submit" class="btn btn-primary js-create-account">Create Account</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById("signup-form").addEventListener("submit", function(e){
+      e.preventDefault();
+      fetch(this.action, {
+        method: "POST",
+        body: new FormData(this),
+      }).then(response => response.json())
+        .then(() => {
+          alert("✅ You are signed up!");
+          window.history.back(); // send them back to previous page
+        })
+        .catch(() => {
+          document.querySelector('.js-error-message').innerText = "Something went wrong. Please try again.";
+        });
+    });
+  </script>
+
+  <script src="scripts/auth-animations.js"></script>
+</body>
+</html>

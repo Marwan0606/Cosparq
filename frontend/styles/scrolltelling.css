@@ -20,6 +20,11 @@ body {
 .skip { position:absolute; left:-9999px; top:auto; width:1px; height:1px; overflow:hidden; }
 .skip:focus { position:fixed; left:1rem; top:1rem; width:auto; height:auto; background:#111; color:#fff; padding:.5rem .75rem; border-radius:.5rem; z-index: 9999; }
 
+/* was: width: 100vw;  → causes overflow when parents have padding/scrollbar */
+.big-viewport { width: 100%; overflow: hidden; }
+
+html { overflow-x: clip; }   /* or use overflow-x: hidden; if clip isn’t supported */
+
 /* --- Utilities & Containers --- */
 .container{ max-width: var(--maxw); margin: 0 auto; padding: 0 24px; margin-top: 120px;}
 .gradient{
@@ -67,8 +72,8 @@ body {
   letter-spacing: calc(var(--p, 0) * .03em);
 }
 
-/* Big traveling word */
-.big-viewport { width: 100vw; overflow: hidden; }
+html { overflow-x: hidden; }
+
 .big-track {
   display: inline-block; white-space: nowrap; font-weight: 900; letter-spacing: .02em; line-height: 1; padding: 0 6vw;
   font-size: clamp(7rem, 24vw, 28rem); transform: translateX(0px); will-change: transform; user-select: none;

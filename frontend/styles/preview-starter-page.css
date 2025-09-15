@@ -1,26 +1,225 @@
+/* PREVIEW — full-bleed width + near full-screen height */
 .preview-section {
-  display: flex;
-  flex-direction: column;
-  gap: 50px;
-  width: 100%
-}
-
-.first-preview {
-  display: flex;
-  justify-content: center;
-  align-items: center;
   width: 100%;
-  height: 1200px;
-  margin-top: 100px;
+  display: grid;
+  gap: 96px;                 /* space between rows */
+  padding: 0;                /* edge-to-edge */
 }
 
+/* Each row fills most of the viewport */
+.first-preview {
+  display: grid;
+  grid-template-columns: minmax(0,1fr) minmax(0,1fr);
+  gap: 32px;
+  align-items: center;
+  min-height: clamp(600px, 90vh, 1100px); /* <- fills the page */
+  padding: 0 clamp(16px, 4vw, 56px);      /* responsive side gutters */
+}
+
+/* Let columns actually shrink (prevents overflow) */
+.first-preview > .text-area,
+.first-preview > .image-area { min-width: 0; }
+
+/* Text column */
 .text-area {
-  height: 100%;
-  width: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: clamp(1.1rem, 2.2vw, 1.6rem);
+  line-height: 1.4;
 }
 
+/* Visual column (card) */
 .image-area {
+  background: #1f1f1f;
+  border: 1px solid #2c2c2c;
+  border-radius: 12px;
+  padding: clamp(12px, 2vw, 24px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;           /* safety net */
+}
+
+/* Media scales to fill its half but never overflow */
+.image-area img,
+.image-area video,
+.image-area canvas {
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;               /* object-fit: contain behavior */
+}
+
+/* Stack on phones */
+@media (max-width: 900px) {
+  .first-preview {
+    grid-template-columns: 1fr;
+    min-height: auto;         /* let content size on small screens */
+  }
+}
+
+
+/* ===== PREVIEW TEXT TEMPLATE (scoped) ===== */
+.preview-text {
+  /* keep it tidy and left-aligned inside the text-area */
+  width: min(56ch, 100%);
+  display: grid;
+  gap: clamp(12px, 2.4vw, 18px);
+  text-align: left;
+}
+
+.preview-text__title {
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.015em;
+  font-size: clamp(1.6rem, 4vw, 2.4rem);
+  /* optional subtle gradient accent on the title text */
+  background: linear-gradient(90deg, var(--g1), var(--g3) 40%, var(--g4) 60%, var(--g5));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.preview-text__points {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: clamp(10px, 1.6vw, 14px);
+  font-size: clamp(1rem, 2vw, 1.1rem);
+  color: #cfcfcf;
+}
+
+/* gradient bullets */
+.preview-text__points li {
+  position: relative;
+  padding-left: 28px;
+  line-height: 1.5;
+}
+
+.preview-text__points li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.6em;
+  width: 10px;
+  height: 10px;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, var(--g1), var(--g3) 40%, var(--g4) 60%, var(--g5));
+  box-shadow: 0 0 10px rgba(132, 0, 255, 0.25);
+}
+
+/* Match the scrollytelling .panel height (which is 260vh) */
+.sticky-preview {
+  min-height: 260vh;            /* critical: same scroll window as the bullets */
+  align-items: flex-start;       /* so sticky items pin to the top nicely */
+}
+
+/* Pin the image like the bullets */
+.sticky-preview .preview-pin {
+  position: -webkit-sticky;
+  position: sticky;
+  top: 0;                        /* adjust if you want it below the nav */
+  height: 100vh;                 /* fill the viewport while pinned */
+  display: grid;
+  place-items: center;
+}
+
+/* Keep it contained and responsive */
+.sticky-preview .image-area {
+  /* optional background; remove if you don’t want it */
   background-color: #1f1f1f;
-  height: 100%;
-  width: 50%;
+  /* no overflow rules on parents of sticky elements */
+}
+
+.sticky-preview .image-area img {
+  max-width: min(92%, 780px);
+  max-height: 86vh;
+  height: auto;
+  width: auto;
+  object-fit: contain;
+}
+
+/* Safety: prevent flex children from forcing horizontal overflow */
+.first-preview > .text-area,
+.first-preview > .image-area {
+  min-width: 0;
+}
+
+/* If you had a fixed height on all preview rows, remove/override it: */
+.first-preview { height: auto; }           /* was: height: 1200px */
+
+
+/* Optional: set your nav height so sticky clears it cleanly */
+:root { --nav-h: 0px; } /* or 64px if your nav is ~64px tall */
+
+/* Make this preview row the SAME scroll scene height as the bullets */
+.sticky-preview {
+  /* the scrollytelling .panel is 260vh; match it */
+  min-height: 260vh;
+  align-items: stretch;       /* both columns same full height */
+}
+
+/* Remove any fixed row height for this one */
+.sticky-preview.first-preview { height: auto; }
+
+/* Ensure flex kids can actually stretch */
+.sticky-preview > .panel,
+.sticky-preview > .image-area {
+  flex: 1 1 50%;
+  min-width: 0;
+}
+
+/* IMPORTANT: don’t clip the sticky with overflow on the parent */
+.sticky-preview .image-area {
+  overflow: visible;          /* was hidden somewhere earlier */
+  position: relative;
+  display: block;
+}
+
+/* Pin the image for the entire scene, same as the left bullets */
+.sticky-preview .preview-pin {
+  position: -webkit-sticky;
+  position: sticky;
+  top: var(--nav-h);
+  height: calc(100vh - var(--nav-h));
+  display: grid;
+  place-items: center;
+}
+
+/* Keep the image contained and responsive while pinned */
+.sticky-preview .preview-pin img {
+  max-width: min(92%, 780px);
+  max-height: calc(90vh - var(--nav-h));
+  width: auto;
+  height: auto;
+  object-fit: contain;
+}
+
+/* If your generic preview rows have a fixed height, don't apply it here */
+.first-preview { /* global rule */ }
+.first-preview.sticky-preview { height: auto; }  /* override */
+
+
+/* keep the same sticky frame you already use */
+.sticky-preview .preview-pin {
+  position: -webkit-sticky;
+  position: sticky;
+  top: var(--nav-h, 0px);
+  height: calc(100vh - var(--nav-h, 0px));
+  display: grid;
+  place-items: center;
+}
+
+/* video scales like your image did */
+.preview-video {
+  display: block;
+  width: 100%;
+  max-width: min(92%, 780px);
+  height: auto;
+  max-height: calc(90vh - var(--nav-h, 0px));
+  object-fit: contain;      /* no cropping */
+  background: #0f0f10;      /* nice placeholder while loading */
+  border-radius: 12px;      /* optional: match your card radius */
 }
