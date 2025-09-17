@@ -1,7 +1,11 @@
 const { openai } = require('../services/openaiService');
+const codeResponseModel = require('../models/Code-response')
 
 const codePage = async (req, res) => {
-  const { idea } = req.body;
+  const userId = req.user.userId
+  const { idea, ideaId } = req.body;
+  const codeResponse = await codeResponseModel.create({userId, ideaId})
+  console.log(codeResponse)
 
   const messages = [
     {
@@ -919,13 +923,20 @@ const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').mat
 
   try {
     const response = await openai.chat.completions.create({
-      model: "gpt-5",
+      model: "gpt-5-nano",
       messages,
       //reasoning_effort:"high"
       //temperature: 0.7
     });
 
     const reply = response.choices[0].message.content;
+
+    const codeUpdate = await codeResponseModel.findOneAndUpdate({userId, ideaId}, {codeFileResponse:reply, status:'success'}, {
+      new: true,
+      runValidators: true,
+    })
+    console.log(codeUpdate)
+    
     res.json({ result: reply });
   } catch (err) {
     console.error(err);

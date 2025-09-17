@@ -16,19 +16,26 @@ if (window.__cpv_init) {
   document.addEventListener('DOMContentLoaded', async () => {
     try {
       ideaId = JSON.parse(localStorage.getItem('ideaId'));
+      console.log(ideaId)
+      let db = await axios.get(`/api/save/saveCode/${ideaId}`);
+      let rec = db.data.codeResponse;
+      if (db.data && db.data.codeResponse){
+        console.log('getting from DB')
+        rec = db.data.codeResponse;
+        while (!rec) {
+          db = await axios.get(`/api/save/saveCode/${ideaId}`);
+          rec = db.data.codeResponse;
 
-      // Try to load existing saved code
-      const db = await axios.get(`/api/save/saveCode/${ideaId}`);
-      const rec = db.data.codeResponse;
-      console.log(rec);
-
-      if (!rec) {
-        // No saved code → generate once and persist
+          if (!rec) {
+            await new Promise(resolve => setTimeout(resolve, 5000))
+          }
+        }
+        generatedHtml = normalizeForPatch(unescapeGuards(cleanMarkdownFence(rec.codeFileResponse)));
+      } else {
         const ideaResp = await axios.get(`/api/save/idea/${ideaId}`);
         const idea = ideaResp?.data?.idea?.idea;
-
         console.log('getting from AI')
-        const gen = await axios.post('/api/responses/code', { idea });
+        const gen = await axios.post('/api/responses/code', { idea, ideaId });
         const raw = gen?.data?.result || '';
         console.log(gen)
 
@@ -36,9 +43,6 @@ if (window.__cpv_init) {
 
         // save for next time (overwrite-or-create)
         await saveToDB(ideaId, generatedHtml);
-      } else {
-        // Use saved code
-        generatedHtml = normalizeForPatch(unescapeGuards(cleanMarkdownFence(rec.codeFileResponse)));
       }
 
       previewEl = document.getElementById('sitePreview');
