@@ -1,7 +1,17 @@
 const { openai } = require('../services/openaiService');
+const ChatResponseModel = require('../models/Chat-response')
+const RawChatResponseModel = require('../models/RawChat-responses')
+
+const { marked } = require('marked');
 
 const chat = async (req, res) => {
-  const { userInput, lastUserResponse, lastAiResponse, scoreboard, idea } = req.body;
+
+  const { userInput, lastUserResponse, lastAiResponse, scoreboard, idea, ideaId } = req.body;
+  const userId = req.user.userId
+  const chatResponse = await ChatResponseModel.create({userId, ideaId})
+  //const RawChatResponse = await RawChatResponseModel.create({userId, ideaId})
+  //console.log(chatResponse)
+  //console.log(RawChatResponse)
 
   const messages = [
     {
@@ -66,6 +76,35 @@ YOU MUST return ONLY a valid JSON object with this exact shape:
     console.log('served by model:', response.model);
 
     const reply = response.choices[0].message.content;
+    //console.log(reply)
+
+    let replyParsed = JSON.parse(reply)
+    //console.log(replyParsed)
+
+    /*
+    console.log('AI response', replyParsed.reply)
+    console.log('user Summary', replyParsed.user_summary)
+    console.log('Ai Summary', replyParsed.user_summary)
+    */
+
+    console.log(userId)
+    console.log(ideaId)
+    const chatUpdate = await ChatResponseModel.findOneAndUpdate({userId, ideaId}, {userMessage:replyParsed.user_summary, AiResponse:replyParsed.assistant_summary, status:'success'}, {
+      new: true,
+      runValidators: true,
+      sort: { createdAt: -1 }
+    })
+    //console.log(chatUpdate)
+
+    const RawChatUpdate = await RawChatResponseModel.findOneAndUpdate({userId, ideaId}, {AiResponse:marked(replyParsed.reply), status:'success'}, {
+      new: true,
+      runValidators: true,
+      sort: { createdAt: -1 }
+    })
+    //console.log(RawChatUpdate)
+
+
+
     res.json({ result: reply });
   } catch (err) {
     console.error(err);

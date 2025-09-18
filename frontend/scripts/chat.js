@@ -8,6 +8,12 @@ const inputEl = document.querySelector('.chat-input');
 
 let isBusy = false;
 
+
+function sleep(ms) {
+  return new Promise(res => setTimeout(res, ms));
+}
+
+
 function setBusy(state) {
   isBusy = state;
 
@@ -40,6 +46,9 @@ let chatResponse = async ()=>{
 
     let userInput = document.querySelector('.chat-input').value
     setBusy(true);
+
+    //saving userInput response before doing anything
+    await axios.post('/api/save/chatRaw', {userMessage: userInput, ideaId})
 
     const chatWindow = document.querySelector('.js-chat-window');
     chatWindow.innerHTML += `
@@ -78,7 +87,7 @@ let chatResponse = async ()=>{
 
 
 
-    let response = await axios.post('/api/responses/chat', {scoreboard, idea, lastUserResponse, lastAiResponse, userInput})
+    let response = await axios.post('/api/responses/chat', {scoreboard, idea, lastUserResponse, lastAiResponse, userInput, ideaId})
     console.log(response)
     response = JSON.parse(response.data.result)
     let reply = marked(response.reply)
@@ -106,13 +115,13 @@ let chatResponse = async ()=>{
 
     //saving responses
 
-    
+    /*
     const saveChatRes = await axios.post('/api/save/chat', {userMessage, AiResponse, ideaId})
     console.log(saveChatRes)
 
     const saveChatRawRes = await axios.post('/api/save/chatRaw', {userMessage: userInput, AiResponse: reply, ideaId})
     console.log(saveChatRawRes)
-
+    */
     loadChatHistory()
 
   } catch (error) {
@@ -137,20 +146,38 @@ inputEl.addEventListener('keydown', (e) => {
   }
 });
 
-
+let isPolling = false;
 
 // Load all saved chat history when page loads
 async function loadChatHistory() {
   try {
     let ideaId = JSON.parse(localStorage.getItem('ideaId'));
-
     let history = await axios.get(`/api/save/getAllChatsRaw/${ideaId}`);
     console.log(history)
     let chats = history.data.savedChat || [];
 
+    const last = chats[chats.length - 1]; //only check the newest message
+    const isLastPending = !!last && (!last.AiResponse || !last.AiResponse.trim());
+
+
     let HTML = '';
     chats.forEach(chat => {
-      HTML += `
+      if (chat.AiResponse && chat.AiResponse.trim().length > 0) {
+        HTML += `
+          <div class="message user">
+            <div class="bubble">
+              ${chat.userMessage}
+            </div>
+          </div>
+          <div class="message bot">
+            <div class="avatar">🤖</div>
+            <div class="bubble">
+              ${chat.AiResponse}
+            </div>
+          </div>
+        `;
+      } else {
+        HTML += `
         <div class="message user">
           <div class="bubble">
             ${chat.userMessage}
@@ -158,17 +185,32 @@ async function loadChatHistory() {
         </div>
         <div class="message bot">
           <div class="avatar">🤖</div>
-          <div class="bubble">
-            ${chat.AiResponse}
+            <div class="bubble typing" data-pending="1">
+              <span class="typing-dot"></span>
+              <span class="typing-dot"></span>
+              <span class="typing-dot"></span>
+            </div>
           </div>
-        </div>
-      `;
+        `;
+      }
     });
+
 
     document.querySelector('.js-chat-window').innerHTML = HTML;
 
     // Scroll to bottom so user sees latest
     document.querySelector('.js-chat-window').scrollTop = document.querySelector('.js-chat-window').scrollHeight;
+
+    if (isLastPending) {
+      if (isPolling) return;     // don’t double-start
+      isPolling = true;
+      setTimeout(() => {
+        isPolling = false;
+        loadChatHistory();        // re-fetch once
+      }, 5000);
+    }
+    
+    
 
   } catch (error) {
     console.log(error);
