@@ -27,7 +27,7 @@ assignedToName: Use the same short project label (1–4 words) for all tasks in 
 
 VERY IMPORTANT DO NOT DO THIS, DO NOT CREATE ONE TASK AND HAVE ALL THE STEPS IN THE DESCRIPTION. INSTEAD EACH STEP SHOULD BE IN ITS OWN TASK
 
-YOU MUST return ONLY a valid JSON object with this exact shape, NOTE YOU WILL PROVIDE THIS MULTIPLE TIMES DEPENDING ON HOW MANY TASKS YOU ARE MAKING:
+YOU MUST return ONLY a valid JSON object with this exact shape, NOTE YOU WILL PROVIDE THIS MULTIPLE TIMES DEPENDING ON HOW MANY TASKS YOU ARE MAKING, YOU MUST MAKE AT LEAST 2 OF THESE:
 {
 "title": "<First write Step Number then The title of the task (in Markdown)>",
 "description": "<details of the task what exactly should the user do (max 3 lines)>",
