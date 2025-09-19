@@ -1,7 +1,12 @@
 const { openai } = require('../services/openaiService');
+const marketResearchResponseModel = require('../models/Market-responses')
 
 const marketResearch = async (req, res) => {
-  const { idea } = req.body;
+
+  const userId = req.user.userId
+  const { idea, ideaId } = req.body;
+  const marketResearchResponse = await marketResearchResponseModel.create({userId, ideaId})
+  console.log(marketResearchResponse)
 
   const messages = [
     {
@@ -165,6 +170,13 @@ const marketResearch = async (req, res) => {
     });
 
     const reply = response.choices[0].message.content;
+
+    const marketUpdate = await marketResearchResponseModel.findOneAndUpdate({userId, ideaId}, {marketResearchResponse:reply, status:'success'}, {
+      new: true,
+      runValidators: true,
+    })
+    console.log(marketUpdate)
+
     res.json({ result: reply });
   } catch (err) {
     console.error(err);

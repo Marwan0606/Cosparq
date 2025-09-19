@@ -27,26 +27,34 @@ const marketBoard = async ()=>{
     let resultData;
     try {
       response = await axios.get(`/api/save/saveMarket/${ideaId}`);
-      console.log(response)
-      
-      
+
       if (response.data && response.data.marketResponse) {
         console.log('getting from database');
         let marketResponse = response.data.marketResponse.marketResearchResponse
+        while (!marketResponse) {
+          response = await axios.get(`/api/save/saveMarket/${ideaId}`)
+          console.log(response)
+          marketResponse = response.data.marketResponse.marketResearchResponse
+
+          if (!marketResponse) {
+            await new Promise(resolve => setTimeout(resolve, 5000));
+          }
+        }
         resultData = JSON.parse(marketResponse);
       } else {
         console.log('getting from AI');
-        response = await axios.post('/api/responses/research', { idea });
+        response = await axios.post('/api/responses/research', { idea, ideaId });
+        console.log(response)
         console.log(response.data.result);
         let marketResearchResponse = response.data.result;
         
-        let saveMarketResponse = await axios.post('/api/save/saveMarket', {marketResearchResponse, ideaId})
-        console.log(saveMarketResponse)
+        //let saveMarketResponse = await axios.post('/api/save/saveMarket', {marketResearchResponse, ideaId})
+        //console.log(saveMarketResponse)
 
         resultData = JSON.parse(response.data.result);
         
       }
-      
+      console.log('result data', resultData)
     } catch (error) {
       console.log('Error fetching from database');
       console.log(error)
