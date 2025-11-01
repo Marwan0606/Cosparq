@@ -2,6 +2,15 @@ axios.defaults.baseURL = 'http://localhost:5004';
 axios.defaults.withCredentials = true;   // ← send & receive cookies
 
 
+checkPending = async ()=>{
+  let ideaId = JSON.parse(localStorage.getItem('ideaId'))
+  let response = await axios.get(`/api/v1/tasks/pending/${ideaId}`)
+  console.log('raw response', response.data.tasks[0].title)
+  if (response.data.tasks[0].title){
+    generateAiTasks(response.data.tasks[0].title)
+  }
+}
+checkPending()
 
 
 document.getElementById('postBtn').addEventListener('click', ()=>{
@@ -218,7 +227,7 @@ const tasksAI = async (userRequest)=>{
 
 
 
-  let response = await axios.post('/api/responses/tasksAi', {idea, userRequest})
+  let response = await axios.post('/api/responses/tasksAi', {idea, userRequest, ideaId})
   console.log('AI Response of Tasks', response)
 
   generateAiTasks(response)
@@ -227,7 +236,15 @@ const tasksAI = async (userRequest)=>{
 
 //this is to map the response and generate the tasks
 generateAiTasks = async (response)=>{
-  let tasksAiRes = JSON.parse(response.data.result)
+  let tasksAiRes;
+  tasksAiRes = JSON.parse(response)
+  console.log(response)
+  /*
+  if (response.data.result) {
+    tasksAiRes = JSON.parse(response.data.result)
+  }
+    */
+  
   console.log('response parsed', tasksAiRes)
   if (tasksAiRes.tasks) {
     tasksAiRes = tasksAiRes.tasks
@@ -238,9 +255,11 @@ generateAiTasks = async (response)=>{
   console.log('final format', tasksAiRes)
   console.log(tasksAiRes.length)
   let ideaId = JSON.parse(localStorage.getItem('ideaId'))
+  let deletePendingResponse = await axios.delete(`/api/v1/tasks/pending/${ideaId}`)
+  console.log('delete', deletePendingResponse)
   for (let i = 0; i < tasksAiRes.length; i++) {
     const task = tasksAiRes[i];
-    response = await axios.post('/api/v1/tasks', {title: task.title, description: task.description, assignedToName: task.assignedToName, order: i, ideaId})
+    response = await axios.post('/api/v1/tasks', {title: task.title, description: task.description, assignedToName: task.assignedToName, order: i, ideaId, status: "success"})
     getAllTasks()
   }
 }

@@ -3,7 +3,6 @@ const mongoose = require('mongoose')
 const TaskSchema = new mongoose.Schema({ //this sets the specific type of data each document has within the collection
   title: {
     type:String,
-    required:[true, 'must provide name'], //these are validators that control what the user can input
     trim:true, //removes extra spaces
   },
   description: {
@@ -29,6 +28,10 @@ const TaskSchema = new mongoose.Schema({ //this sets the specific type of data e
   order: {
     type:Number,
     default: false
+  },
+  status: {
+    type:String,
+    default:'pending'
   },
   userId: {
     type:String,

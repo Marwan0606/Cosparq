@@ -1,7 +1,12 @@
 const { openai } = require('../services/openaiService');
+const taskAiResponseModel = require('../models/Task')
 
 const tasksAi = async (req, res) => {
-  const { idea, userRequest } = req.body;
+
+  const userId = req.user.userId
+  const { idea, userRequest, ideaId } = req.body;
+  const taskAiResponse = await taskAiResponseModel.create({userId, ideaId})
+  console.log(taskAiResponse)
 
   const messages = [
     {
@@ -60,6 +65,25 @@ THIS SHOULD REPEAT FOR EACH STEP, VERY IMPORTANT THAT YOU DO THAT
     console.log('served by model:', response.model);
 
     const reply = response.choices[0].message.content;
+
+    /*
+    let replyFormatted = JSON.parse(reply.data)
+
+    if (replyFormatted.tasks) {
+      replyFormatted = replyFormatted.tasks
+    }
+    if (replyFormatted.steps) {
+      replyFormatted = replyFormatted.steps
+    }
+    */
+    
+    const taskAiUpdate = await taskAiResponseModel.findOneAndUpdate({userId, ideaId}, {title:reply, status:'pending'}, {
+      new: true,
+      runValidators: true,
+    })
+    console.log(taskAiUpdate)
+    
+
     res.json({ result: reply });
   } catch (err) {
     console.error(err);
