@@ -3,7 +3,7 @@ const codeResponseModel = require('../models/Code-response')
 
 const codePage = async (req, res) => {
   const userId = req.user.userId
-  const { idea, ideaId } = req.body;
+  const { idea, userTextInput, ideaId } = req.body;
   const codeResponse = await codeResponseModel.create({userId, ideaId})
   console.log(codeResponse)
 
@@ -14,6 +14,7 @@ const codePage = async (req, res) => {
       recreate this website https://cluely.com/ and also this website https://sintra.ai/?gad_source=1&gad_campaignid=22386630672&gbraid=0AAAAA_NXEDOtqQhqSR4nxL-dK8Frp-88X&gclid=CjwKCAjwt-_FBhBzEiwA7QEqyHcMjWPenzQK1gFRvRbhcmVTjKJ30_LFe0RVWhTOouo1-kQnGcIZvRoC1ggQAvD_BwE in html css and javascript
       
       YOU ARE CREATING A LANDING PAGE FOR THE USER'S IDEA. THE LANDING PAGE SHOULD ALWAYS HAVE A JOIN THE WAITLIST BUTTON.
+      Additionally the user may add extra comments or requests in the input field, you should follow these instructions too.
 
       Formatting instructions:
       - Return only the fully self-contained HTML file.
@@ -24,12 +25,16 @@ const codePage = async (req, res) => {
     {
       role: "user",
       content: idea
+    },
+    {
+      role: "user",
+      content: userTextInput
     }
   ];
 
   try {
     const response = await openai.chat.completions.create({
-      model: "gpt-5",
+      model: "gpt-5-nano",
       messages,
       //reasoning_effort:"high"
       //temperature: 0.7

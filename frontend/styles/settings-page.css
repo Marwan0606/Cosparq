@@ -1,0 +1,296 @@
+/* ---------- THEME TOKENS ---------- */
+:root {
+  --bg: #121212;
+  --panel: #1f1f1f;
+  --panel-border: #2a2a2a;
+  --text: #e0e0e0;
+  --muted: #9fa1b2;
+  --danger: #ff4a4a;
+
+  --radius-lg: 14px;
+  --radius-md: 10px;
+
+  --brand-grad: linear-gradient(
+    90deg,
+    #8400ff 0%,
+    #f94016 40%,
+    #f96d16 60%,
+    #3b82f6 100%
+  );
+}
+
+/* ---------- RESET / BASE ---------- */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+html,
+body {
+  height: 100%;
+}
+body {
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 40px;
+}
+
+/* ---------- PAGE WRAPPER ---------- */
+.page {
+  width: 100%;
+  max-width: 900px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* centers panels and header block */
+  text-align: center;
+
+  padding: 0 24px 80px;
+  gap: 24px;
+}
+
+/* ---------- HEADER TEXT ---------- */
+.title {
+  font-size: clamp(3rem, 3.5vw, 4rem); /* bigger gradient Settings */
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  line-height: 1.05;
+  margin-bottom: 8px;
+}
+
+.accent {
+  background: var(--brand-grad);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.subtitle {
+  color: var(--muted);
+  font-size: 0.95rem;
+  line-height: 1.4;
+  margin: 0 auto 8px;
+  max-width: 480px;
+}
+
+/* ---------- PANEL (CARD) ---------- */
+.panel {
+  background: var(--panel);
+  border-radius: var(--radius-lg);
+  width: 100%;
+  max-width: 900px;
+  padding: 22px;
+
+  border: 2px solid transparent;
+  background-image: linear-gradient(var(--panel), var(--panel)),
+    var(--brand-grad);
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.55);
+
+  text-align: center; /* everything in panel centered now */
+}
+
+.panel h2 {
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  color: var(--muted);
+  letter-spacing: 0.06em;
+  margin-bottom: 16px;
+  font-weight: 600;
+}
+
+/* ---------- ROWS INSIDE PANEL ---------- */
+.row {
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* center row contents horizontally */
+  text-align: center;
+  gap: 12px;
+  padding: 12px 0;
+  max-width: 100%;
+}
+
+.row + .row {
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  width: 100%;
+}
+
+.label {
+  font-weight: 700;
+  font-size: 0.95rem;
+  line-height: 1.25;
+  color: var(--text);
+}
+
+.desc {
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin-top: 6px;
+  line-height: 1.4;
+  max-width: 560px;
+}
+
+/* ---------- FIELD COLUMN ---------- */
+.fieldcol {
+  width: 100%;
+  max-width: 420px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* center the input stack */
+}
+
+.fieldcol-inner {
+  display: grid;
+  gap: 10px;
+  width: 100%;
+}
+
+/* ---------- INPUTS ---------- */
+.input {
+  width: 100%;
+  background: #1a1a1a;
+  border: 2px solid #2f2f2f;
+  border-radius: 10px;
+  color: var(--text);
+
+  font-size: 0.95rem;
+  font-weight: 500;
+  line-height: 1.3;
+
+  padding: 12px 14px;
+  outline: none;
+
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.6),
+    0 20px 60px rgba(0, 0, 0, 0.8);
+}
+
+.input::placeholder {
+  color: #7a7a7a;
+}
+
+.input:focus {
+  border-color: transparent;
+  background:
+    linear-gradient(#1a1a1a, #1a1a1a) padding-box,
+    var(--brand-grad) border-box;
+  border: 2px solid transparent;
+  box-shadow: 0 0 24px rgba(132, 0, 255, 0.25),
+    0 0 60px rgba(249, 64, 22, 0.2);
+  color: #fff;
+}
+
+/* ---------- BUTTONS ---------- */
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center; /* center the buttons under inputs */
+  gap: 10px;
+  margin-top: 12px;
+  width: 100%;
+}
+
+.btn {
+  appearance: none;
+  border: 0;
+  cursor: pointer;
+  border-radius: 10px;
+  padding: 12px 16px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  line-height: 1.1;
+  transition: transform 0.12s ease, filter 0.12s ease,
+    box-shadow 0.12s ease;
+}
+
+.btn:active {
+  transform: translateY(1px);
+}
+
+.btn-primary {
+  background: var(--brand-grad);
+  color: #fff;
+  box-shadow: 0 10px 28px rgba(249, 64, 22, 0.18);
+}
+.btn-primary:hover {
+  filter: brightness(1.04);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid #343434;
+}
+.btn-ghost:hover {
+  filter: brightness(1.06);
+}
+
+.btn-danger {
+  background: var(--danger);
+  color: #fff;
+  box-shadow: 0 12px 32px rgba(255, 0, 0, 0.35);
+}
+.btn-danger:hover {
+  filter: brightness(1.05);
+}
+
+/* ---------- DANGER ZONE CARD ---------- */
+.danger-panel {
+  background: #1a1111;
+  border-radius: var(--radius-lg);
+  width: 100%;
+  max-width: 900px;
+  padding: 22px;
+
+  border: 2px solid rgba(255, 74, 74, 0.4);
+  box-shadow: 0 16px 46px rgba(0, 0, 0, 0.55),
+    0 0 22px rgba(255, 74, 74, 0.28);
+
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.danger-head {
+  color: var(--danger);
+  text-transform: uppercase;
+  font-weight: 700;
+  font-size: 0.85rem;
+  letter-spacing: 0.06em;
+  margin-bottom: 12px;
+}
+
+.danger-text {
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.4;
+  margin-bottom: 16px;
+  max-width: 560px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.actions-danger {
+  justify-content: center;
+}
+
+/* ---------- RESPONSIVE ---------- */
+@media (max-width: 600px) {
+  .subtitle {
+    font-size: 0.9rem;
+    max-width: 90%;
+  }
+  .fieldcol {
+    max-width: 100%;
+  }
+  .page {
+    padding: 0 16px 64px;
+  }
+}

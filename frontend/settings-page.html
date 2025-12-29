@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>Settings • CoSparq</title>
+
+  <link rel="preconnect" href="https://fonts.gstatic.com" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet"
+  />
+
+  <link rel="stylesheet" href="styles/settings-page.css" />
+</head>
+
+<body>
+  <!-- Sidebar placeholder (hidden in centered layout but kept for consistency with the rest of the app) -->
+  <div id="sidebar-placeholder"></div>
+
+  <main class="page">
+
+    <!-- Header -->
+    <header>
+      <h1 class="title">
+        <span class="accent">Settings</span>
+      </h1>
+      <p class="subtitle">Manage your account preferences and security.</p>
+    </header>
+
+    <!-- Update Email -->
+    <section class="panel" aria-labelledby="email-head">
+      <h2 id="email-head">Update email</h2>
+
+      <div class="row">
+        <div class="label">Email address</div>
+        <div class="desc">
+          Change the email used for login & notifications.
+        </div>
+
+        <div class="fieldcol">
+          <div class="fieldcol-inner">
+            <input
+              id="currentEmail"
+              type="email"
+              class="input"
+              placeholder="Current email"
+              autocomplete="email"
+            />
+            <input
+              id="newEmail"
+              type="email"
+              class="input"
+              placeholder="New email"
+              autocomplete="email"
+            />
+
+            <div class="actions">
+              <button class="btn btn-primary" id="saveEmailBtn">Save email</button>
+              <button class="btn btn-ghost" id="cancelEmailBtn">Cancel</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Change Password -->
+    <section class="panel" aria-labelledby="pw-head">
+      <h2 id="pw-head">Change password</h2>
+
+      <div class="row">
+        <div class="label">Password</div>
+        <div class="desc">
+          Use at least 8 characters, including numbers & symbols.
+        </div>
+
+        <div class="fieldcol">
+          <div class="fieldcol-inner">
+            <input
+              id="currentPw"
+              type="password"
+              class="input"
+              placeholder="Current password"
+              autocomplete="current-password"
+            />
+            <input
+              id="newPw"
+              type="password"
+              class="input"
+              placeholder="New password"
+              autocomplete="new-password"
+            />
+            <input
+              id="confirmPw"
+              type="password"
+              class="input"
+              placeholder="Confirm new password"
+              autocomplete="new-password"
+            />
+
+            <div class="actions">
+              <button class="btn btn-primary" id="savePwBtn">Save password</button>
+              <button class="btn btn-ghost" id="cancelPwBtn">Cancel</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Log out -->
+    <section class="panel" aria-labelledby="logout-head">
+      <h2 id="logout-head">Log out</h2>
+
+      <div class="row">
+        <div class="label">End session</div>
+        <div class="desc">Sign out from this device.</div>
+
+        <div class="fieldcol">
+          <div class="actions">
+            <button class="btn btn-ghost" id="logoutBtn">Log out</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Danger Zone (bottom) -->
+    <section class="danger-panel" aria-labelledby="danger-head">
+      <div class="danger-head" id="danger-head">Danger zone</div>
+
+      <p class="danger-text">
+        Permanently delete your account and all associated data.
+        This action cannot be undone.
+      </p>
+
+      <div class="actions actions-danger">
+        <button class="btn btn-danger" id="deleteAccountBtn">
+          Delete account
+        </button>
+      </div>
+    </section>
+
+  </main>
+
+
+
+  <script
+    src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.21.1/axios.min.js"
+    integrity="sha512-bZS47S7sPOxkjU/4Bt0zrhEtWx0y0CRkhEp8IckzK+ltifIIE9EMIMTuT/mEzoIMewUINruDBIR/jJnbguonqQ=="
+    crossorigin="anonymous"
+    referrerpolicy="no-referrer"
+  ></script>
+
+  <script>
+    (function () {
+      const LOGIN_URL = '/auth.html';
+  
+      // If you're already on auth.html, do nothing
+      if (location.pathname.endsWith('/auth.html')) return;
+  
+      const token = localStorage.getItem('accessToken');
+      if (!token) {
+        // Not logged in (no token) → redirect
+        return location.replace(LOGIN_URL);
+      }
+  
+      // Optionally: verify expiry client-side with jwt-decode or
+      // ping a /token/verify endpoint. Otherwise, just let the
+      // axios interceptor handle 401s server-side.
+    })();
+  
+    </script>
+  
+  
+    <script type="module">
+    async function loadSidebar() {
+      const res  = await fetch('sidebar.html');
+      const html = await res.text();
+      document.getElementById('sidebar-placeholder').innerHTML = html;
+  
+      const { initSidebar } = await import('./scripts/sidebar.js');
+      await initSidebar();
+    }
+    loadSidebar();
+  
+    </script>
+
+</body>
+</html>

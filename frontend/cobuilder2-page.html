@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CoBuilder • CoSparq</title>
+  <link rel="stylesheet" href="styles/cobuilder2-page.css" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet"
+  />
+</head>
+<body>
+  <div id="sidebar-placeholder"></div>
+  <main class="cobuilder-wrapper">
+    <!-- Brand / Heading -->
+    <div class="hero-block">
+      <h1 class="app-name">
+        <span class="gradient-brand">CoBuilder</span>
+      </h1>
+
+      <p class="tagline">
+        Build any page of your app, simply name it and its purpose and CoSparq
+        already knows and fills the rest
+      </p>
+    </div>
+
+    <!-- Input pill -->
+    <div class="prompt-shell">
+      <input
+        class="prompt-input js-user-text-inp"
+        placeholder="Type here"
+        spellcheck="false"
+      />
+      <button class="js-enter-btn">Enter</button>
+    </div>
+  </main>
+  
+
+
+  <script
+    src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.21.1/axios.min.js"
+    integrity="sha512-bZS47S7sPOxkjU/4Bt0zrhEtWx0y0CRkhEp8IckzK+ltifIIE9EMIMTuT/mEzoIMewUINruDBIR/jJnbguonqQ=="
+    crossorigin="anonymous"
+    referrerpolicy="no-referrer"
+  ></script>
+  <script type="module" src="scripts/cobuilder2.js"></script>
+
+  <script>
+    (function () {
+      const LOGIN_URL = '/auth.html';
+  
+      // If you're already on auth.html, do nothing
+      if (location.pathname.endsWith('/auth.html')) return;
+  
+      const token = localStorage.getItem('accessToken');
+      if (!token) {
+        // Not logged in (no token) → redirect
+        return location.replace(LOGIN_URL);
+      }
+  
+      // Optionally: verify expiry client-side with jwt-decode or
+      // ping a /token/verify endpoint. Otherwise, just let the
+      // axios interceptor handle 401s server-side.
+    })();
+  
+    </script>
+  
+  
+    <script type="module">
+    async function loadSidebar() {
+      const res  = await fetch('sidebar.html');
+      const html = await res.text();
+      document.getElementById('sidebar-placeholder').innerHTML = html;
+  
+      const { initSidebar } = await import('./scripts/sidebar.js');
+      await initSidebar();
+    }
+    loadSidebar();
+  
+    </script>
+
+</body>
+</html>

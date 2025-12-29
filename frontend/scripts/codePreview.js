@@ -1,5 +1,3 @@
-// /scripts/codePreview.js — minimal, robust
-
 // Prevent double-execution (“Identifier 'generatedHtml' has already been declared”)
 if (window.__cpv_init) {
   console.warn('codePreview already initialized');
@@ -141,7 +139,8 @@ ${out.join('\n')}\n`;
 
       const responseEdit = await axios.post('/api/responses/codeEdit', {
         originalFile: generatedHtml, // always patch from current
-        instructions
+        instructions,
+        ideaId
       });
 
       const aiResult = responseEdit?.data?.result || '';

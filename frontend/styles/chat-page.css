@@ -204,7 +204,7 @@ html::before {
   background: #2a2a2a;
   border:1px solid rgba(255,255,255,0.02);
   box-shadow: 0 8px 30px rgba(0,0,0,0.55);
-  max-width: min(74%, 720px);
+  max-width: min(100%, 720px);
   word-break: break-word;
   /* <-- use normal wrapping (not pre-wrap) to avoid odd spacing */
   white-space: normal;
@@ -319,4 +319,15 @@ html::before {
   .bubble{ max-width:92%; padding:10px 12px; font-size:0.96rem }
   .send-btn{ width:48px;height:48px }
   .avatar{ width:30px;height:30px }
+}
+
+.bubble pre {
+  white-space: pre;
+  overflow-x: auto;
+  max-width: 100%;
+}
+
+.bubble code {
+  white-space: pre-wrap;
+  word-break: break-word;
 }

@@ -1,0 +1,175 @@
+/* ---------- THEME TOKENS ---------- */
+:root {
+  --bg-main: #121212;
+  --panel: #1f1f1f;
+  --text-primary: #e0e0e0;
+  --text-dim: #bbbbbb;
+  --border-surface: #2a2a2a;
+  --input-bg: #1a1a1a;
+
+  --radius-lg: 14px;
+  --radius-pill: 999px;
+
+  /* same gradient direction + stops as other pages */
+  --brand-grad: linear-gradient(
+    90deg,
+    #8400ff 0%,
+    #f94016 40%,
+    #f96d16 60%,
+    #3b82f6 100%
+  );
+}
+
+/* ---------- BASE RESET ---------- */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+  background-color: var(--bg-main);
+  color: var(--text-primary);
+}
+
+/* ---------- PAGE WRAPPER LAYOUT ---------- */
+body {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.cobuilder-wrapper {
+  width: 100%;
+  max-width: 900px;
+  padding: 40px 24px;
+  text-align: center;
+  margin-top: 250px; /* pushes block down like screenshot */
+}
+
+/* ---------- HERO / BRAND ---------- */
+.hero-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 780px;
+  margin: 0 auto 32px auto;
+}
+
+.app-name {
+  font-size: clamp(3.5rem, 3.5vw, 4rem);
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  padding: 0 18px 8px;
+  border-radius: 8px;
+  display: inline-block;
+  /* removed background-color box, so it just sits on the page bg */
+}
+
+.gradient-brand {
+  background-image: var(--brand-grad);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* tagline below CoBuilder */
+.tagline {
+  margin-top: 16px;
+  max-width: 700px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--text-primary);
+  opacity: 0.9;
+
+  /* removed the dark rectangle background here too */
+  padding: 0;
+  border-radius: 0;
+  text-align: center;
+  font-weight: 500;
+}
+
+/* ---------- INPUT PILL ---------- */
+/* Outer shell recreates the thick rounded container in the screenshot */
+.prompt-shell {
+  margin: 36px auto 0 auto;
+  width: min(900px, 90vw);
+
+  /* This is the big rounded border container */
+  background-color: rgba(0, 0, 0, 0.25);
+  border-radius: var(--radius-pill);
+
+  border: 2px solid #2f2f2f;
+
+  padding: 24px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Inner actual text field */
+.prompt-input {
+  width: 100%;
+  background-color: var(--bg-main);
+  border: 2px solid #2f2f2f;
+  border-radius: var(--radius-pill);
+
+  height: 48px;
+  padding: 0 20px;
+
+  color: var(--text-primary);
+  font-size: 1rem;
+  font-weight: 500;
+  line-height: 1;
+
+  outline: none;
+  box-shadow:
+    0 0 20px rgba(0, 0, 0, 0.6),
+    0 20px 60px rgba(0, 0, 0, 0.8);
+}
+
+.prompt-input::placeholder {
+  color: #6f6f6f;
+  font-weight: 400;
+  opacity: 0.9;
+}
+
+/* Focus state: apply your brand gradient ring */
+.prompt-input:focus {
+  border-color: transparent;
+  background:
+    /* inner fill */ linear-gradient(#121212, #121212) padding-box,
+    /* gradient ring */ var(--brand-grad) border-box;
+  border: 2px solid transparent;
+  box-shadow:
+    0 0 24px rgba(132, 0, 255, 0.25),
+    0 0 60px rgba(249, 64, 22, 0.2);
+  color: #fff;
+}
+
+/* ---------- RESPONSIVE ---------- */
+@media (max-width: 500px) {
+  .app-name {
+    font-size: 2rem;
+    padding: 0 14px 6px;
+  }
+
+  .tagline {
+    font-size: 0.8rem;
+  }
+
+  .prompt-shell {
+    padding: 18px;
+  }
+
+  .prompt-input {
+    height: 46px;
+    font-size: 0.95rem;
+  }
+}
