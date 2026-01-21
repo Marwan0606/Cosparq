@@ -1,4 +1,5 @@
 const { openai } = require('../services/openaiService');
+const { trackApiUsage } = require('../services/apiUsageTracker');
 const marketResearchResponseModel = require('../models/Market-responses')
 
 const marketResearch = async (req, res) => {
@@ -170,6 +171,9 @@ const marketResearch = async (req, res) => {
     });
 
     const reply = response.choices[0].message.content;
+
+    // Track API usage
+    await trackApiUsage(userId, response, 'marketResearch');
 
     const marketUpdate = await marketResearchResponseModel.findOneAndUpdate({userId, ideaId}, {marketResearchResponse:reply, status:'success'}, {
       new: true,

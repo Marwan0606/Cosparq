@@ -1,5 +1,6 @@
 const User = require('../models/Users.js')
 const { get } = require('../routes/gpt-responses.js')
+const { getUserApiStats } = require('../services/apiUsageTracker')
 
 /*
 const createUser = async (req, res) => {
@@ -63,9 +64,62 @@ const getAllUsersEmail = async (req, res) => {
   }
 };
 
+/**
+ * Get API usage statistics for the current user
+ */
+const getApiUsage = async (req, res) => {
+  try {
+    const userId = req.user?.userId;
+    
+    if (!userId) {
+      return res.status(401).json({ msg: 'Unauthorized' });
+    }
+    
+    const stats = await getUserApiStats(userId);
+    
+    if (!stats) {
+      return res.status(404).json({ msg: 'User not found' });
+    }
+    
+    res.status(200).json({ stats });
+  } catch (error) {
+    console.error('Error getting API usage:', error);
+    res.status(500).json({ msg: error.message || error });
+  }
+};
+
+/**
+ * Get API usage summary (just totals) for the current user
+ */
+const getApiUsageSummary = async (req, res) => {
+  try {
+    const userId = req.user?.userId;
+    
+    if (!userId) {
+      return res.status(401).json({ msg: 'Unauthorized' });
+    }
+    
+    const user = await User.findById(userId).select('totalApiRequests totalApiCost');
+    
+    if (!user) {
+      return res.status(404).json({ msg: 'User not found' });
+    }
+    
+    res.status(200).json({ 
+      totalRequests: user.totalApiRequests || 0,
+      totalCost: user.totalApiCost || 0
+    });
+  } catch (error) {
+    console.error('Error getting API usage summary:', error);
+    res.status(500).json({ msg: error.message || error });
+  }
+};
+
 module.exports = {
   //createUser,
   //login,
   getUser,
-  getAllUsersEmail
+  getAllUsersEmail,
+  getApiUsage,
+  getApiUsageSummary
 }

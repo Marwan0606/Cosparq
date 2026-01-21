@@ -1,4 +1,5 @@
 const { openai } = require('../services/openaiService');
+const { trackApiUsage } = require('../services/apiUsageTracker');
 const renewIdeaRes = require('../models/Renew-temporary-response')
 
 const renewIdea = async (req, res) => {
@@ -52,6 +53,9 @@ const renewIdea = async (req, res) => {
     });
 
     console.log('served by model:', response.model);
+
+    // Track API usage
+    await trackApiUsage(userId, response, 'renewIdea');
 
     const reply = response.choices[0].message.content;
 

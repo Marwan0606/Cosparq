@@ -1,4 +1,5 @@
 const { openai } = require('../services/openaiService');
+const { trackApiUsage } = require('../services/apiUsageTracker');
 const codeResponseModel = require('../models/Code-response')
 
 const codePage = async (req, res) => {
@@ -41,6 +42,9 @@ const codePage = async (req, res) => {
     });
 
     const reply = response.choices[0].message.content;
+
+    // Track API usage
+    await trackApiUsage(userId, response, 'codePage');
 
     const codeUpdate = await codeResponseModel.findOneAndUpdate({userId, ideaId}, {codeFileResponse:reply, status:'success'}, {
       new: true,

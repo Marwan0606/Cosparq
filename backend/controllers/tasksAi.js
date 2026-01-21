@@ -1,4 +1,5 @@
 const { openai } = require('../services/openaiService');
+const { trackApiUsage } = require('../services/apiUsageTracker');
 const taskAiResponseModel = require('../models/Task')
 
 const tasksAi = async (req, res) => {
@@ -84,6 +85,9 @@ for example if you want to create 3 tasks then you need to answer like this:
     });
 
     console.log('served by model:', response.model);
+
+    // Track API usage
+    await trackApiUsage(userId, response, 'tasksAi');
 
     const reply = response.choices[0].message.content;
 

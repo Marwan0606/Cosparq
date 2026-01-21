@@ -1,4 +1,5 @@
 const { openai } = require('../services/openaiService');
+const { trackApiUsage } = require('../services/apiUsageTracker');
 const scoreboardResponseModel = require('../models/Scoreboard-responses.js')
 
 const rateIdea = async (req, res) => {
@@ -60,6 +61,9 @@ Rules:
     });
 
     console.log('served by model:', response.model);
+
+    // Track API usage
+    await trackApiUsage(userId, response, 'scoreboard');
 
     const reply = response.choices[0].message.content;
 

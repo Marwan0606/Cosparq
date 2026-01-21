@@ -1,4 +1,5 @@
 const { openai } = require('../services/openaiService');
+const { trackApiUsage } = require('../services/apiUsageTracker');
 const actionResponses = require('../models/Action-response.js')
 
 const actionPlan = async (req, res) => {
@@ -78,6 +79,10 @@ Return ONLY JSON per the schema below. Do not include backticks or explanations.
     });
 
     const reply = response.choices[0].message.content;
+
+    // Track API usage
+    await trackApiUsage(userId, response, 'actionPlan');
+
     // console.log(reply)
     //const replyDB = JSON.parse(reply)
     //console.log('replyDB:', replyDB)

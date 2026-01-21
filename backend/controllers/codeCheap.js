@@ -1,7 +1,9 @@
 const { openai } = require('../services/openaiService');
+const { trackApiUsage } = require('../services/apiUsageTracker');
 
 const codeEditCheap = async (req, res) => {
   const { instructions, originalFile } = req.body;
+  const userId = req.user?.userId; // Get userId if available
 
   const messages = [
     {
@@ -34,6 +36,12 @@ Here are the user's instructions
     });
 
     const reply = response.choices[0].message.content;
+
+    // Track API usage
+    if (userId) {
+      await trackApiUsage(userId, response, 'codeEditCheap');
+    }
+
     res.json({ result: reply });
   } catch (err) {
     console.error(err);

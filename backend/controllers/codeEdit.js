@@ -1,9 +1,11 @@
 const { openai } = require('../services/openaiService');
+const { trackApiUsage } = require('../services/apiUsageTracker');
 const codeResponseModel = require('../models/Code-response');
 const Diff = require('diff');
 
 const codeEdit = async (req, res) => {
   const { instructions, originalFile, ideaId } = req.body;
+  const userId = req.user?.userId; // Get userId if available
 
   // Set status to pending at the start
   if (ideaId) {
@@ -61,6 +63,11 @@ Includes no extra commentary, markdown fences, or wrapping-text just the raw dif
       messages,
     });
 
+    // Track API usage for first call
+    if (userId) {
+      await trackApiUsage(userId, response, 'codeEdit');
+    }
+
     const aiResult = response.choices[0].message.content;
     let finalFile = originalFile; // Default to original
     let patchApplied = false;
@@ -110,6 +117,11 @@ Return only the full HTML file with no markdown fences or explanations.`
             }
           ],
         });
+
+        // Track API usage for fallback call
+        if (userId) {
+          await trackApiUsage(userId, fullFileResponse, 'codeEdit-fallback');
+        }
 
         const fullFileResult = fullFileResponse.choices[0].message.content;
         const extractedFile = extractFullFile(fullFileResult) || fullFileResult;

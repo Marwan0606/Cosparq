@@ -1,4 +1,5 @@
 const { openai } = require('../services/openaiService');
+const { trackApiUsage } = require('../services/apiUsageTracker');
 const ChatResponseModel = require('../models/Chat-response')
 const RawChatResponseModel = require('../models/RawChat-responses')
 
@@ -74,6 +75,9 @@ YOU MUST return ONLY a valid JSON object with this exact shape:
     });
 
     console.log('served by model:', response.model);
+
+    // Track API usage
+    await trackApiUsage(userId, response, 'chat');
 
     const reply = response.choices[0].message.content;
     //console.log(reply)
