@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 
+const { checkApiLimit } = require('../middleware/checkApiLimit');
+
 const { rateIdea } = require('../controllers/scoreboard');
 const { marketResearch } = require('../controllers/marketResearch');
 const { chat } = require('../controllers/chat')
@@ -11,22 +13,25 @@ const { codePage } = require('../controllers/code')
 const { codeEdit } = require('../controllers/codeEdit')
 const { codeEditCheap } = require('../controllers/codeCheap')
 
-router.post('/idea', rateIdea);
+// Apply checkApiLimit middleware to ALL routes that make OpenAI calls
+// This ensures no AI request can be made if user exceeds their cost limit
 
-router.post('/research', marketResearch);
+router.post('/idea', checkApiLimit, rateIdea);
 
-router.post('/chat', chat);
+router.post('/research', checkApiLimit, marketResearch);
 
-router.post('/renewIdea', renewIdea);
+router.post('/chat', checkApiLimit, chat);
 
-router.post('/actionPlan', actionPlan);
+router.post('/renewIdea', checkApiLimit, renewIdea);
 
-router.post('/tasksAi', tasksAi);
+router.post('/actionPlan', checkApiLimit, actionPlan);
 
-router.post('/code', codePage);
+router.post('/tasksAi', checkApiLimit, tasksAi);
 
-router.post('/codeEdit', codeEdit);
+router.post('/code', checkApiLimit, codePage);
 
-router.post('/codeEditCheap', codeEditCheap);
+router.post('/codeEdit', checkApiLimit, codeEdit);
+
+router.post('/codeEditCheap', checkApiLimit, codeEditCheap);
 
 module.exports = router;
