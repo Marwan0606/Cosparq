@@ -205,6 +205,9 @@
     referrerpolicy="no-referrer"
   ></script>
 
+  <!-- Stripe Checkout Integration -->
+  <script src="./scripts/pricing.js"></script>
+
   <script type="module">
     async function loadSidebar() {
       const res = await fetch('sidebar.html');
@@ -215,28 +218,6 @@
       await initSidebar();
     }
     loadSidebar();
-  </script>
-
-  <script>
-    // Placeholder for upgrade button clicks - will be connected to Stripe later
-    document.addEventListener('DOMContentLoaded', () => {
-      const proBtn = document.querySelector('.js-upgrade-pro');
-      const businessBtn = document.querySelector('.js-upgrade-business');
-
-      if (proBtn) {
-        proBtn.addEventListener('click', () => {
-          // TODO: Connect to Stripe checkout
-          alert('Pro upgrade coming soon! Stripe integration will be added.');
-        });
-      }
-
-      if (businessBtn) {
-        businessBtn.addEventListener('click', () => {
-          // TODO: Connect to Stripe checkout
-          alert('Business upgrade coming soon! Stripe integration will be added.');
-        });
-      }
-    });
   </script>
 
 </body>

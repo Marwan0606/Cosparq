@@ -26,6 +26,35 @@ const UserSchema = new mongoose.Schema({ //this sets the specific type of data e
     enum: ['free', 'pro', 'business'],
     default: 'free',
   },
+  // Stripe Integration
+  stripeCustomerId: {
+    type: String,
+    sparse: true, // Allows null/undefined while still being indexable
+  },
+  stripeSubscriptionId: {
+    type: String,
+    sparse: true,
+  },
+  subscriptionStatus: {
+    type: String,
+    enum: ['active', 'canceled', 'past_due', 'trialing', 'incomplete', 'incomplete_expired', 'unpaid', null],
+    default: null,
+  },
+  subscriptionPeriodEnd: {
+    type: Date,
+    default: null,
+  },
+  // Audit trail for subscription changes (security)
+  subscriptionHistory: [{
+    timestamp: {
+      type: Date,
+      default: Date.now,
+    },
+    action: String, // 'created', 'upgraded', 'downgraded', 'canceled', 'renewed'
+    fromPlan: String,
+    toPlan: String,
+    stripeEventId: String, // For idempotency and audit
+  }],
   // API Usage Tracking
   totalApiRequests: {
     type: Number,
