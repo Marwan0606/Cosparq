@@ -122,6 +122,56 @@
     display: none;
   }
 
+  /* Subscription Badge Styles */
+  .subscription-badge {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 10px 14px;
+    margin: 8px 0 16px 0;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 13px;
+    text-decoration: none;
+    cursor: default;
+    border: 2px solid transparent;
+    background-origin: border-box;
+    background-clip: padding-box, border-box;
+  }
+
+  .subscription-badge.visible {
+    display: flex;
+  }
+
+  .subscription-badge.pro {
+    background-image: linear-gradient(#0b0b0c, #0b0b0c), 
+                      linear-gradient(135deg, #8400ff 0%, #a855f7 100%);
+    color: #c084fc;
+    box-shadow: 0 0 12px rgba(132, 0, 255, 0.25);
+  }
+
+  .subscription-badge.business {
+    background-image: linear-gradient(#0b0b0c, #0b0b0c), 
+                      linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);
+    color: #fbbf24;
+    box-shadow: 0 0 12px rgba(251, 191, 36, 0.25);
+  }
+
+  .badge-icon {
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .badge-icon svg {
+    width: 14px;
+    height: 14px;
+    fill: currentColor;
+  }
+
 
 </style>
 
@@ -129,11 +179,17 @@
 <aside class="sidebar js-sidebar" id="sidebar">
   <div class="brand">CoSparq</div>
 
-  <!-- Upgrade Plan Button -->
+  <!-- Upgrade Plan Button (shown for free users) -->
   <a href="/pricing-page.html" class="upgrade-btn js-upgrade-btn">
     <span class="upgrade-icon"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg></span>
     <span class="upgrade-text">Upgrade</span>
   </a>
+
+  <!-- Subscription Badge (shown for Pro/Business users) -->
+  <div class="subscription-badge js-subscription-badge">
+    <span class="badge-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2L15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2z"/></svg></span>
+    <span class="badge-text">Pro</span>
+  </div>
 
   <div class="menu-section">Ideas</div>
   <nav class="menu js-menu">

@@ -12,7 +12,7 @@
 const express = require('express');
 const router = express.Router();
 
-const { authenticateToken } = require('../middleware/authenticateToken');
+const authenticateToken = require('../middleware/authenticateToken');
 const { captureRawBody, verifyStripeSignature } = require('../middleware/stripeWebhook');
 const {
   createCheckoutSession,
@@ -49,22 +49,11 @@ router.post('/create-portal-session', authenticateToken, createPortalSession);
 router.get('/subscription-status', authenticateToken, getSubscriptionStatus);
 
 // ============================================
-// WEBHOOK ROUTE (Stripe signature verified)
+// WEBHOOK ROUTE - Registered in app.js BEFORE auth middleware
 // ============================================
-
-/**
- * @route   POST /api/payments/webhook
- * @desc    Handle Stripe webhook events
- * @access  Public (but cryptographically verified)
- * 
- * IMPORTANT: This route must use raw body parsing for signature verification.
- * The route is registered in app.js BEFORE the global JSON parser.
- */
-router.post(
-  '/webhook',
-  captureRawBody,
-  verifyStripeSignature(stripe, process.env.STRIPE_WEBHOOK_SECRET),
-  handleWebhook
-);
+// The webhook route is now registered directly in app.js to:
+// 1. Bypass JWT authentication (Stripe doesn't send JWT)
+// 2. Use raw body parsing before express.json() is applied
+// See app.js for the webhook route registration
 
 module.exports = router;

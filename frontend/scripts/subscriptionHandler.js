@@ -266,14 +266,148 @@
     console.log('Subscription Handler initialized');
   };
 
+  /**
+   * Fetch subscription status and update sidebar UI
+   */
+  const updateSubscriptionUI = async () => {
+    try {
+      // Configure axios if needed
+      if (!axios.defaults.baseURL) {
+        axios.defaults.baseURL = 'http://localhost:5004';
+      }
+      axios.defaults.withCredentials = true;
+
+      const token = localStorage.getItem('accessToken');
+      if (!token) return; // Not logged in
+
+      const response = await axios.get('/api/payments/subscription-status', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      if (response.data.success) {
+        const subscription = response.data.subscription;
+        const plan = subscription.plan;
+        const isActive = ['active', 'trialing'].includes(subscription.status);
+
+        console.log('Subscription status:', { plan, status: subscription.status, isActive });
+
+        // Store in localStorage for quick access
+        localStorage.setItem('subscriptionPlan', plan);
+        localStorage.setItem('subscriptionStatus', subscription.status || 'none');
+
+        updateSidebarUI(plan, isActive);
+      }
+    } catch (error) {
+      console.error('Failed to load subscription status:', error);
+      // Default to free if can't fetch status
+      updateSidebarUI('free', false);
+    }
+  };
+
+  /**
+   * Update sidebar upgrade button and badge
+   */
+  const updateSidebarUI = (plan, isActive) => {
+    const upgradeBtn = document.querySelector('.js-upgrade-btn');
+    const subscriptionBadge = document.querySelector('.js-subscription-badge');
+
+    if (!upgradeBtn || !subscriptionBadge) {
+      // Sidebar might not be loaded yet, try again with increasing delays
+      retryUpdateSidebar(plan, isActive, 0);
+      return;
+    }
+
+    applySubscriptionUI(upgradeBtn, subscriptionBadge, plan, isActive);
+  };
+
+  /**
+   * Retry updating sidebar UI with increasing delays
+   */
+  let retryCount = 0;
+  const maxRetries = 10;
+  const retryUpdateSidebar = (plan, isActive, attempt) => {
+    if (attempt >= maxRetries) {
+      console.warn('Subscription: Could not find sidebar elements after max retries');
+      return;
+    }
+
+    const delay = 200 + (attempt * 200); // 200ms, 400ms, 600ms, etc.
+    
+    setTimeout(() => {
+      const btn = document.querySelector('.js-upgrade-btn');
+      const badge = document.querySelector('.js-subscription-badge');
+      
+      if (btn && badge) {
+        applySubscriptionUI(btn, badge, plan, isActive);
+        console.log(`Subscription UI updated on attempt ${attempt + 1}`);
+      } else {
+        retryUpdateSidebar(plan, isActive, attempt + 1);
+      }
+    }, delay);
+  };
+
+  /**
+   * Apply subscription UI changes
+   */
+  const applySubscriptionUI = (upgradeBtn, subscriptionBadge, plan, isActive) => {
+    const badgeText = subscriptionBadge.querySelector('.badge-text');
+
+    if (isActive && (plan === 'pro' || plan === 'business')) {
+      // Hide upgrade button, show badge
+      upgradeBtn.classList.add('hidden');
+      subscriptionBadge.classList.add('visible');
+      
+      // Set badge style and text based on plan
+      subscriptionBadge.classList.remove('pro', 'business');
+      subscriptionBadge.classList.add(plan);
+      
+      if (badgeText) {
+        badgeText.textContent = plan.charAt(0).toUpperCase() + plan.slice(1);
+      }
+    } else {
+      // Show upgrade button, hide badge
+      upgradeBtn.classList.remove('hidden');
+      subscriptionBadge.classList.remove('visible', 'pro', 'business');
+    }
+  };
+
+  /**
+   * Check if user has paid subscription (for feature gating)
+   */
+  const hasPaidSubscription = () => {
+    const plan = localStorage.getItem('subscriptionPlan');
+    const status = localStorage.getItem('subscriptionStatus');
+    const isActive = ['active', 'trialing'].includes(status);
+    return isActive && (plan === 'pro' || plan === 'business');
+  };
+
+  /**
+   * Get current subscription plan
+   */
+  const getSubscriptionPlan = () => {
+    const plan = localStorage.getItem('subscriptionPlan');
+    const status = localStorage.getItem('subscriptionStatus');
+    const isActive = ['active', 'trialing'].includes(status);
+    return isActive ? (plan || 'free') : 'free';
+  };
+
   // Initialize when DOM is ready
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', setupAxiosInterceptor);
+    document.addEventListener('DOMContentLoaded', () => {
+      setupAxiosInterceptor();
+      updateSubscriptionUI();
+    });
   } else {
     setupAxiosInterceptor();
+    updateSubscriptionUI();
   }
 
-  // Expose function globally for manual triggering if needed
+  // Expose functions globally
   window.showSubscriptionRequiredPopup = showSubscriptionRequiredPopup;
+  window.SubscriptionHandler = {
+    update: updateSubscriptionUI,
+    hasPaid: hasPaidSubscription,
+    getPlan: getSubscriptionPlan
+  };
 
 })();

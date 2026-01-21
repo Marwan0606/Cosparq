@@ -3,8 +3,12 @@
 
 const User = require('../models/Users');
 
-// Cost limit in USD - users cannot exceed this amount
-const API_COST_LIMIT = 0.50; // $0.50
+// Cost limits in USD based on subscription tier
+const API_COST_LIMITS = {
+  free: 0.50,      // Free tier: $0.50
+  pro: 10.00,      // Pro tier: $10.00
+  business: 35.00  // Business tier: $35.00
+};
 
 const checkApiLimit = async (req, res, next) => {
   try {
@@ -18,8 +22,8 @@ const checkApiLimit = async (req, res, next) => {
       });
     }
 
-    // Fetch the user's current total cost
-    const user = await User.findById(userId).select('totalApiCost email');
+    // Fetch the user's current total cost and subscription info
+    const user = await User.findById(userId).select('totalApiCost email subscriptionStatus subscriptionPlan');
 
     if (!user) {
       console.error('❌ checkApiLimit: User not found:', userId);
@@ -29,23 +33,31 @@ const checkApiLimit = async (req, res, next) => {
       });
     }
 
+    // Determine user's plan and corresponding limit
+    const isActiveSubscription = ['active', 'trialing'].includes(user.subscriptionStatus);
+    const plan = isActiveSubscription ? (user.subscriptionPlan || 'free') : 'free';
+    const costLimit = API_COST_LIMITS[plan] || API_COST_LIMITS.free;
+    
     const currentCost = user.totalApiCost || 0;
 
     // Check if user has exceeded the limit
-    if (currentCost >= API_COST_LIMIT) {
-      console.warn(`🚫 API LIMIT EXCEEDED for user ${user.email}: $${currentCost.toFixed(4)} >= $${API_COST_LIMIT}`);
+    if (currentCost >= costLimit) {
+      console.warn(`🚫 API LIMIT EXCEEDED for user ${user.email} (${plan} plan): $${currentCost.toFixed(4)} >= $${costLimit}`);
       
       return res.status(429).json({
         error: 'API_LIMIT_EXCEEDED',
         limitExceeded: true,
-        message: 'You have reached your token limit. Please upgrade to continue using AI features.',
+        message: plan === 'free' 
+          ? 'You have reached your free tier limit. Please upgrade to continue using AI features.'
+          : `You have reached your ${plan} plan limit ($${costLimit}). Please upgrade your plan or wait for the next billing cycle.`,
         currentCost: currentCost,
-        limit: API_COST_LIMIT
+        limit: costLimit,
+        plan: plan
       });
     }
 
     // User is within limit, allow the request to proceed
-    console.log(`✅ API limit check passed for user ${user.email}: $${currentCost.toFixed(4)} / $${API_COST_LIMIT}`);
+    console.log(`✅ API limit check passed for user ${user.email} (${plan} plan): $${currentCost.toFixed(4)} / $${costLimit}`);
     next();
 
   } catch (error) {
@@ -58,8 +70,8 @@ const checkApiLimit = async (req, res, next) => {
   }
 };
 
-// Export both the middleware and the limit constant for use elsewhere
+// Export both the middleware and the limits for use elsewhere
 module.exports = {
   checkApiLimit,
-  API_COST_LIMIT
+  API_COST_LIMITS
 };

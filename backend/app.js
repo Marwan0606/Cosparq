@@ -19,6 +19,8 @@ const saveRenew = require('./routes/save-renew.js')
 const payments = require('./routes/payments.js')
 
 const authenticateToken = require('./middleware/authenticateToken.js')
+const { captureRawBody, verifyStripeSignature } = require('./middleware/stripeWebhook.js');
+const { handleWebhook, stripe } = require('./controllers/payments.js');
 
 app.use('/', express.static(path.join(__dirname, '../frontend')));
 
@@ -30,6 +32,16 @@ app.use(cors({
   origin:      'http://localhost:5004',
   credentials: true                // ← allow sending cookies back to client
 }));
+
+// IMPORTANT: Stripe webhook must be registered BEFORE express.json() and authenticateToken
+// because it needs raw body for signature verification and doesn't use JWT
+app.post(
+  '/api/payments/webhook',
+  captureRawBody,
+  verifyStripeSignature(stripe, process.env.STRIPE_WEBHOOK_SECRET),
+  handleWebhook
+);
+
 app.use(express.json());
 app.use(cookieParser());
 

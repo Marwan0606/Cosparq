@@ -18,7 +18,7 @@ const checkPaidSubscription = async (req, res, next) => {
     }
 
     // Fetch user from database to get subscription status
-    const user = await User.findById(userId).select('subscriptionPlan');
+    const user = await User.findById(userId).select('subscriptionPlan subscriptionStatus');
 
     if (!user) {
       return res.status(404).json({
@@ -27,19 +27,23 @@ const checkPaidSubscription = async (req, res, next) => {
       });
     }
 
-    // Check if user has a paid subscription (pro or business)
+    // Check if user has a paid subscription (pro or business) AND subscription is active
     const paidPlans = ['pro', 'business'];
+    const activeStatuses = ['active', 'trialing'];
+    const isActive = activeStatuses.includes(user.subscriptionStatus);
+    const hasPaidPlan = paidPlans.includes(user.subscriptionPlan);
     
-    if (!paidPlans.includes(user.subscriptionPlan)) {
+    if (!hasPaidPlan || !isActive) {
       return res.status(403).json({
         success: false,
         subscriptionRequired: true,
         currentPlan: user.subscriptionPlan || 'free',
+        subscriptionStatus: user.subscriptionStatus,
         message: 'This feature requires a Pro or Business subscription. Please upgrade your plan to access CoBuilder.',
       });
     }
 
-    // User has paid subscription, continue to next middleware/controller
+    // User has active paid subscription, continue to next middleware/controller
     next();
   } catch (error) {
     console.error('Subscription check error:', error);

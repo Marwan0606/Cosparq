@@ -297,32 +297,71 @@ const handleWebhook = async (req, res) => {
 
 /**
  * Handle checkout.session.completed event
- * User has successfully completed checkout
+ * User has successfully completed checkout - THIS IS THE PRIMARY HANDLER
  */
 async function handleCheckoutCompleted(event) {
   const session = event.data.object;
+  
+  console.log('=== CHECKOUT SESSION COMPLETED ===');
+  console.log('Session ID:', session.id);
+  console.log('Session metadata:', JSON.stringify(session.metadata));
+  console.log('Customer:', session.customer);
+  console.log('Subscription:', session.subscription);
+  
   const userId = session.metadata?.userId;
+  const plan = session.metadata?.plan;
 
   if (!userId) {
-    console.error('No userId in checkout session metadata');
+    console.error('❌ No userId in checkout session metadata');
     return;
   }
 
   const user = await User.findById(userId);
   if (!user) {
-    console.error(`User not found: ${userId}`);
+    console.error(`❌ User not found: ${userId}`);
     return;
   }
 
-  // Update Stripe customer ID if not set
-  if (!user.stripeCustomerId && session.customer) {
+  console.log('✅ User found:', user.email);
+
+  // Update Stripe customer ID
+  if (session.customer) {
     user.stripeCustomerId = session.customer;
   }
 
-  // Subscription details will be set by subscription.created event
-  await user.save();
+  // If there's a subscription, fetch it and update the user
+  if (session.subscription) {
+    try {
+      const subscription = await stripe.subscriptions.retrieve(session.subscription);
+      console.log('Subscription retrieved:', subscription.id, 'Status:', subscription.status);
+      
+      user.stripeSubscriptionId = subscription.id;
+      user.subscriptionStatus = subscription.status;
+      user.subscriptionPeriodEnd = new Date(subscription.current_period_end * 1000);
+      
+      // Use the plan from session metadata (more reliable than price ID lookup)
+      if (plan && ['active', 'trialing'].includes(subscription.status)) {
+        const previousPlan = user.subscriptionPlan;
+        user.subscriptionPlan = plan;
+        
+        // Add to audit trail
+        user.subscriptionHistory.push({
+          timestamp: new Date(),
+          action: 'checkout_completed',
+          fromPlan: previousPlan,
+          toPlan: plan,
+          stripeEventId: event.id,
+        });
+        
+        console.log(`✅ User ${user.email} upgraded: ${previousPlan} -> ${plan}`);
+      }
+    } catch (err) {
+      console.error('Error retrieving subscription:', err.message);
+    }
+  }
 
-  console.log(`Checkout completed for user ${userId}`);
+  await user.save();
+  console.log(`✅ Checkout completed and user saved for ${userId}`);
 }
 
 /**
@@ -406,40 +445,63 @@ async function handlePaymentFailed(event) {
  * @param {string} action - Action type for audit trail
  */
 async function updateUserSubscription(subscription, eventId, action) {
+  console.log('=== UPDATE USER SUBSCRIPTION ===');
+  console.log('Subscription ID:', subscription.id);
+  console.log('Customer ID:', subscription.customer);
+  console.log('Subscription metadata:', JSON.stringify(subscription.metadata));
+  console.log('Action:', action);
+  
   // Find user by Stripe customer ID or metadata
   const userId = subscription.metadata?.userId;
   let user;
 
+  console.log('Looking for user with ID from metadata:', userId);
+  
   if (userId) {
     user = await User.findById(userId);
+    console.log('User found by metadata userId:', !!user);
   }
   
   if (!user) {
+    console.log('Looking for user with stripeCustomerId:', subscription.customer);
     user = await User.findOne({ stripeCustomerId: subscription.customer });
+    console.log('User found by stripeCustomerId:', !!user);
   }
 
   if (!user) {
-    console.error(`User not found for subscription: ${subscription.id}`);
+    console.error(`❌ User not found for subscription: ${subscription.id}`);
+    console.error('  - Tried metadata userId:', userId);
+    console.error('  - Tried stripeCustomerId:', subscription.customer);
     return;
   }
+
+  console.log('✅ User found:', user.email, 'ID:', user._id);
 
   const previousPlan = user.subscriptionPlan;
 
   // Determine plan from price ID
   const priceId = subscription.items?.data?.[0]?.price?.id;
+  console.log('Price ID from subscription:', priceId);
+  console.log('PRICE_TO_PLAN mapping:', JSON.stringify(PRICE_TO_PLAN));
+  
   const newPlan = PRICE_TO_PLAN[priceId] || 'free';
+  console.log('Determined new plan:', newPlan);
 
   // Update user subscription data
   user.stripeSubscriptionId = subscription.id;
   user.subscriptionStatus = subscription.status;
   user.subscriptionPeriodEnd = new Date(subscription.current_period_end * 1000);
 
+  console.log('Subscription status:', subscription.status);
+
   // Only update plan if subscription is active or trialing
   if (['active', 'trialing'].includes(subscription.status)) {
     user.subscriptionPlan = newPlan;
+    console.log('Setting plan to:', newPlan);
   } else if (subscription.status === 'canceled' || action === 'canceled') {
     // On cancellation, downgrade to free
     user.subscriptionPlan = 'free';
+    console.log('Setting plan to free (canceled)');
   }
 
   // Add to subscription history for audit trail
