@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 
 const { checkApiLimit } = require('../middleware/checkApiLimit');
+const { checkPaidSubscription } = require('../middleware/checkSubscription');
 
 const { rateIdea } = require('../controllers/scoreboard');
 const { marketResearch } = require('../controllers/marketResearch');
@@ -28,10 +29,11 @@ router.post('/actionPlan', checkApiLimit, actionPlan);
 
 router.post('/tasksAi', checkApiLimit, tasksAi);
 
-router.post('/code', checkApiLimit, codePage);
+// CoBuilder routes require paid subscription (Pro or Business)
+router.post('/code', checkPaidSubscription, checkApiLimit, codePage);
 
-router.post('/codeEdit', checkApiLimit, codeEdit);
+router.post('/codeEdit', checkPaidSubscription, checkApiLimit, codeEdit);
 
-router.post('/codeEditCheap', checkApiLimit, codeEditCheap);
+router.post('/codeEditCheap', checkPaidSubscription, checkApiLimit, codeEditCheap);
 
 module.exports = router;

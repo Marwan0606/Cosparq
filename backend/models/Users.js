@@ -20,6 +20,12 @@ const UserSchema = new mongoose.Schema({ //this sets the specific type of data e
     type:String,
     default: 0,
   },
+  // Subscription Plan
+  subscriptionPlan: {
+    type: String,
+    enum: ['free', 'pro', 'business'],
+    default: 'free',
+  },
   // API Usage Tracking
   totalApiRequests: {
     type: Number,

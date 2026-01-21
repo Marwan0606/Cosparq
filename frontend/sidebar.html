@@ -70,12 +70,70 @@
     z-index: 9999;
   }
 
+  /* Upgrade Button */
+  .upgrade-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 14px;
+    margin: 8px 0 16px 0;
+    border-radius: 10px;
+    background: #0b0b0c;
+    color: #e8e8ea;
+    font-weight: 600;
+    font-size: 13px;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    border: 2px solid transparent;
+    background-image: linear-gradient(#0b0b0c, #0b0b0c), 
+                      linear-gradient(90deg, #8400ff 0%, #f94016 40%, #f96d16 60%, #3b82f6 100%);
+    background-origin: border-box;
+    background-clip: padding-box, border-box;
+    box-shadow: 0 0 12px rgba(132, 0, 255, 0.2), 
+                0 0 24px rgba(249, 64, 22, 0.1);
+  }
+
+  .upgrade-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 0 16px rgba(132, 0, 255, 0.35), 
+                0 0 32px rgba(249, 64, 22, 0.2),
+                0 2px 12px rgba(0, 0, 0, 0.3);
+  }
+
+  .upgrade-icon {
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .upgrade-icon svg {
+    width: 14px;
+    height: 14px;
+    stroke: currentColor;
+    stroke-width: 2;
+  }
+
+  /* Hide upgrade button for paid users */
+  .upgrade-btn.hidden {
+    display: none;
+  }
+
 
 </style>
 
 
 <aside class="sidebar js-sidebar" id="sidebar">
   <div class="brand">CoSparq</div>
+
+  <!-- Upgrade Plan Button -->
+  <a href="/pricing-page.html" class="upgrade-btn js-upgrade-btn">
+    <span class="upgrade-icon"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg></span>
+    <span class="upgrade-text">Upgrade</span>
+  </a>
 
   <div class="menu-section">Ideas</div>
   <nav class="menu js-menu">

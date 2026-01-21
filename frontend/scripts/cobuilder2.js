@@ -40,10 +40,10 @@ if (window.__cpv_init) {
         const ideaResp = await axios.get(`/api/save/idea/${ideaId}`);
         const idea = ideaResp?.data?.idea?.idea;
         console.log('getting from AI')
-        window.location.href = '/code-preview.html';
 
         const userTextInput = document.querySelector('.js-user-text-inp').value
 
+        // Make the API call FIRST to check subscription before navigating
         const gen = await axios.post('/api/responses/code', { idea, userTextInput, ideaId });
         const raw = gen?.data?.result || '';
         console.log(gen)
@@ -52,10 +52,14 @@ if (window.__cpv_init) {
 
         // save for next time (overwrite-or-create)
         await saveToDB(ideaId, generatedHtml);
+
+        // Only navigate AFTER successful API call
+        window.location.href = '/code-preview.html';
       }
 
     } catch (err) {
       console.error(err);
+      // Don't navigate if there was an error (subscription popup will show)
     }
   });
 
