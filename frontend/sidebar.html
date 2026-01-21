@@ -59,6 +59,18 @@
   .menu-button { z-index:49; background: transparent; border: 0; padding: 6px; }
   .menu-icon { background: transparent; display: block; width: 40px; height: 40px; }
 
+  /* Sidebar should sit above overlays */
+  .sidebar,
+  #sidebar,              /* adjust to your real selector */
+  .sidebar-container {   /* adjust */
+    position: fixed;     /* important if it slides over content */
+    top: 0;
+    left: 0;
+    height: 100vh;
+    z-index: 9999;
+  }
+
+
 </style>
 
 

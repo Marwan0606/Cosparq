@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Preview • Your App</title>
   <link rel="stylesheet" href="styles/code-preview.css" />
+  <link rel="stylesheet" href="styles/scoreboard-page.css" />
+
 </head>
 <body>
 
@@ -16,7 +18,9 @@
     </div>
 
     <!-- Gradient‐framed preview area -->
-    <div class="preview-shell" aria-label="Website preview area">
+    <div class="preview-shell js-website-prev" aria-label="Website preview area">
+      <div id="loaderOverlay" class="loader-overlay hidden"></div>
+
       <div class="preview-box">
         <iframe
           id="sitePreview"
@@ -79,8 +83,6 @@
   <!--<script src="https://cdn.jsdelivr.net/npm/diff@5.2.0/dist/diff.min.js"></script>-->
   <!--<script src="https://cdnjs.cloudflare.com/ajax/libs/diff_match_patch/20121119/diff_match_patch.min.js"></script>-->
   <script src="/scripts/codePreview.js"></script>
-
-  <script src="scripts/codePreview.js" defer></script>
   <script type="module" src="./scripts/loading.js"></script>
 
   <script type="module">

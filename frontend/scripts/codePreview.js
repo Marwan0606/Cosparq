@@ -17,14 +17,20 @@ if (window.__cpv_init) {
       console.log(ideaId)
       let db = await axios.get(`/api/save/saveCode/${ideaId}`);
       let rec = db.data.codeResponse;
+      if (db.data.codeResponse.status == "pending"){
+        await loadingAnimation(true);
+      }
       if (db.data && db.data.codeResponse){
         console.log('getting from DB')
         rec = db.data.codeResponse;
-        while (!rec) {
+        let status = db.data.codeResponse.status
+        while (status=="pending") {
+          console.log(status)
           db = await axios.get(`/api/save/saveCode/${ideaId}`);
           rec = db.data.codeResponse;
+          status = db.data.codeResponse.status
 
-          if (!rec) {
+          if (status=="pending") {
             await new Promise(resolve => setTimeout(resolve, 5000))
           }
         }
@@ -48,6 +54,7 @@ if (window.__cpv_init) {
         console.error('⚠️ iframe#sitePreview not found');
         return;
       }
+      await loadingAnimation(false);
       previewEl.srcdoc = generatedHtml;
     } catch (err) {
       console.error(err);
@@ -137,6 +144,7 @@ ${out.join('\n')}\n`;
       const instructions = document.getElementById('changeInput').value;
       console.log(instructions);
 
+      await loadingAnimation(true);
       const responseEdit = await axios.post('/api/responses/codeEdit', {
         originalFile: generatedHtml, // always patch from current
         instructions,
@@ -152,7 +160,7 @@ ${out.join('\n')}\n`;
         if (maybeFile) {
           generatedHtml = normalizeForPatch(unescapeGuards(cleanMarkdownFence(maybeFile)));
           previewEl.srcdoc = generatedHtml;
-          await saveToDB(ideaId, generatedHtml);
+          //await saveToDB(ideaId, generatedHtml);
           console.log('✅ Applied full file (no diff).');
           return;
         }
@@ -166,7 +174,7 @@ ${out.join('\n')}\n`;
           if (patched !== false) {
             generatedHtml = normalizeForPatch(patched);
             previewEl.srcdoc = generatedHtml;
-            await saveToDB(ideaId, generatedHtml);
+            //await saveToDB(ideaId, generatedHtml);
             console.log('✅ Patched with jsdiff');
             return;
           }
@@ -184,7 +192,7 @@ ${out.join('\n')}\n`;
           const [patchedHtml, results] = dmp.patch_apply(patches, generatedHtml);
           generatedHtml = normalizeForPatch(patchedHtml);
           previewEl.srcdoc = generatedHtml;
-          await saveToDB(ideaId, generatedHtml);
+          //await saveToDB(ideaId, generatedHtml);
           if (!results.every(Boolean)) {
             console.warn('⚠️ Some hunks failed with DMP.');
           } else {
@@ -200,7 +208,7 @@ ${out.join('\n')}\n`;
       console.warn('No patch library or patch failed; requesting full updated file…');
       generatedHtml = await requestFullFile(generatedHtml, instructions);
       previewEl.srcdoc = generatedHtml;
-      await saveToDB(ideaId, generatedHtml);
+      //await saveToDB(ideaId, generatedHtml);
       console.log('✅ Applied full-file fallback');
     } catch (err) {
       console.error(err);
@@ -216,3 +224,82 @@ document.getElementById('raw-file').addEventListener('click', ()=>{
 document.getElementById('full-preview').addEventListener('click', ()=>{
   window.location = '/fullPreview.html'
 })
+
+
+
+
+
+
+
+//To load the loading animation
+
+async function loadingAnimation(show = true) {
+  const overlay = document.getElementById('loaderOverlay');
+  if (!overlay) return;
+
+  if (!show) {
+    overlay.classList.add('hidden');
+    overlay.innerHTML = '';
+    return;
+  }
+
+  overlay.classList.remove('hidden');
+  overlay.innerHTML = `
+        <div class="frame">
+        <div class="brand-wrap">
+          <div class="brand">Your AI is Making Your Website</div>
+          <!--<div class="new dotting"></div>-->
+        </div>
+
+        <div class="viz">
+          <svg viewBox="0 0 800 520" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <defs>
+              <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%"  stop-color="#8400ff"/>
+                <stop offset="40%" stop-color="#f94016"/>
+                <stop offset="60%" stop-color="#f96d16"/>
+                <stop offset="100%" stop-color="#3b82f6"/>
+              </linearGradient>
+            </defs>
+
+            <!-- Links -->
+            <g id="links">
+              <line class="link" data-a="n1"  data-b="n5" x1="130" y1="90"  x2="320" y2="130"/>
+              <line class="link" data-a="n5"  data-b="n6" x1="320" y1="130" x2="410" y2="90"/>
+              <line class="link" data-a="n6"  data-b="c"  x1="410" y1="90"  x2="400" y2="260"/>
+              <line class="link" data-a="n2"  data-b="n5" x1="120" y1="250" x2="320" y2="130"/>
+              <line class="link" data-a="n2"  data-b="c"  x1="120" y1="250" x2="400" y2="260"/>
+              <line class="link" data-a="n3"  data-b="c"  x1="160" y1="400" x2="400" y2="260"/>
+              <line class="link" data-a="n4"  data-b="c"  x1="300" y1="460" x2="400" y2="260"/>
+              <line class="link" data-a="n7"  data-b="c"  x1="650" y1="110" x2="400" y2="260"/>
+              <line class="link" data-a="n7"  data-b="n8" x1="650" y1="110" x2="720" y2="240"/>
+              <line class="link" data-a="n8"  data-b="n9" x1="720" y1="240" x2="620" y2="370"/>
+              <line class="link" data-a="n9"  data-b="c"  x1="620" y1="370" x2="400" y2="260"/>
+              <line class="link" data-a="n10" data-b="c"  x1="470" y1="470" x2="400" y2="260"/>
+            </g>
+
+            <!-- Nodes -->
+            <g id="nodes">
+              <circle id="n1"  class="node" cx="130" cy="90"  r="7"/>
+              <circle id="n2"  class="node" cx="120" cy="250" r="7"/>
+              <circle id="n3"  class="node" cx="160" cy="400" r="7"/>
+              <circle id="n4"  class="node" cx="300" cy="460" r="7"/>
+              <circle id="n5"  class="node" cx="320" cy="130" r="7"/>
+              <circle id="n6"  class="node" cx="410" cy="90"  r="7"/>
+              <circle id="n7"  class="node" cx="650" cy="110" r="7"/>
+              <circle id="n8"  class="node" cx="720" cy="240" r="7"/>
+              <circle id="n9"  class="node" cx="620" cy="370" r="7"/>
+              <circle id="n10" class="node" cx="470" cy="470" r="7"/>
+              <circle id="c"   class="node center" cx="400" cy="260" r="9"/>
+            </g>
+          </svg>
+        </div>
+
+        <!-- Bottom-right status -->
+        <div class="status dotting">Loading</div>
+  `;
+
+  const { startLoadingAnimation } = await import('../scripts/loading.js'); 
+
+  startLoadingAnimation(overlay);
+}

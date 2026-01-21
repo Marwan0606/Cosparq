@@ -33,6 +33,10 @@ const TaskSchema = new mongoose.Schema({ //this sets the specific type of data e
     type:String,
     default:'pending'
   },
+  statusBatch: {
+    type:String,
+    index: true
+  },
   userId: {
     type:String,
     defualt: ''

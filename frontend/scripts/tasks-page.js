@@ -2,15 +2,28 @@ axios.defaults.baseURL = 'http://localhost:5004';
 axios.defaults.withCredentials = true;   // ← send & receive cookies
 
 
-checkPending = async ()=>{
-  let ideaId = JSON.parse(localStorage.getItem('ideaId'))
-  let response = await axios.get(`/api/v1/tasks/pending/${ideaId}`)
-  console.log('raw response', response.data.tasks[0].title)
-  if (response.data.tasks[0].title){
-    generateAiTasks(response.data.tasks[0].title)
+async function checkPending() {
+  const ideaId = JSON.parse(localStorage.getItem('ideaId'));
+  const res = await axios.get(`/api/v1/tasks/pending/${ideaId}`);
+
+  const pending = res?.data?.tasks?.[0];
+  if (!pending) return false;
+
+  // ONLY act if AI response is ready
+  if (pending.title) {
+    await generateAiTasks(pending.title);
+    return true;
   }
+
+  // Otherwise do NOTHING (no loader, no polling)
+  return false;
 }
-checkPending()
+
+checkPending().then((hasPending) => {
+  if (!hasPending) getAllTasks();
+});
+
+
 
 
 document.getElementById('postBtn').addEventListener('click', ()=>{
@@ -84,7 +97,7 @@ const updateTask = async (taskId, completed)=>{
 }
 
 const generateTasksHTML = (tasks)=>{
-
+/*
   tasks.sort((a, b) => {
     const ac = a.completed ? 1 : 0;
     const bc = b.completed ? 1 : 0;
@@ -100,6 +113,30 @@ const generateTasksHTML = (tasks)=>{
     const bd = b.createdAt ? new Date(b.createdAt).getTime() : 0;
     return ad - bd;
   });
+*/
+  tasks.sort((a, b) => {
+    // incomplete first
+    const ac = a.completed ? 1 : 0;
+    const bc = b.completed ? 1 : 0;
+    if (ac !== bc) return ac - bc;
+
+    // batch newest first (ai-<timestamp>)
+    const aba = String(a.statusBatch || "");
+    const bba = String(b.statusBatch || "");
+    if (aba !== bba) return bba.localeCompare(aba);
+
+    // within same batch: order ascending (1..N)
+    const ao = a.order ?? 0;
+    const bo = b.order ?? 0;
+    if (ao !== bo) return ao - bo;
+
+    // final tie-break
+    return (a._id || "").localeCompare(b._id || "");
+  });
+
+
+
+
 
   const taskListEl = document.querySelector('.js-task-list');
   if (tasks.length === 0) {
@@ -192,7 +229,7 @@ document.getElementById('submitTaskBtn').addEventListener('click', ()=>{
   getAllTasks()
 })
 
-getAllTasks()
+//getAllTasks()
 
 //THIS IS FOR THE AUTO GENERATED AI TASKS
 
@@ -230,14 +267,14 @@ const tasksAI = async (userRequest)=>{
   let response = await axios.post('/api/responses/tasksAi', {idea, userRequest, ideaId})
   console.log('AI Response of Tasks', response)
 
-  generateAiTasks(response)
+  generateAiTasks(response.data.result ?? response.data)
 }
 
 
 //this is to map the response and generate the tasks
 generateAiTasks = async (response)=>{
-  let tasksAiRes;
-  tasksAiRes = JSON.parse(response)
+  let tasksAiRes = (typeof response === 'string') ? JSON.parse(response) : response;
+  //tasksAiRes = JSON.parse(response)
   console.log(response)
   /*
   if (response.data.result) {
@@ -255,13 +292,16 @@ generateAiTasks = async (response)=>{
   console.log('final format', tasksAiRes)
   console.log(tasksAiRes.length)
   let ideaId = JSON.parse(localStorage.getItem('ideaId'))
+
+  const batchKey = `ai-${Date.now()}`
+
   let deletePendingResponse = await axios.delete(`/api/v1/tasks/pending/${ideaId}`)
   console.log('delete', deletePendingResponse)
   for (let i = 0; i < tasksAiRes.length; i++) {
     const task = tasksAiRes[i];
-    response = await axios.post('/api/v1/tasks', {title: task.title, description: task.description, assignedToName: task.assignedToName, order: i, ideaId, status: "success"})
-    getAllTasks()
+    response = await axios.post('/api/v1/tasks', {title: task.title, description: task.description, assignedToName: task.assignedToName, order: i, ideaId, status: "success", statusBatch: batchKey})
   }
+  await getAllTasks()
 }
 
 

@@ -39,6 +39,27 @@ YOU MUST return ONLY a valid JSON object with this exact shape, NOTE YOU WILL PR
 "assignedToName": "<name of this task set>",
 } 
 THIS SHOULD REPEAT FOR EACH STEP, VERY IMPORTANT THAT YOU DO THAT
+
+for example if you want to create 3 tasks then you need to answer like this:
+{
+  "tasks": [
+    {
+      "title": "1) Define target investor types for SafetyApp funding",
+      "description": "List 5–10 target investors (VCs, angels, accelerators) whose focus matches safety tech, emergency response, or consumer apps; note fund size, typical check, and past investments; save results in investors-target.csv.",
+      "assignedToName": "Investor Outreach"
+    },
+    {
+      "title": "2) Create a one-page executive summary",
+      "description": "Draft a 600–800 word executive summary covering the problem, solution, market, traction, and ask; include funding amount and contact; export as PDF to the shared drive.",
+      "assignedToName": "Investor Outreach"
+    },
+    {
+      "title": "3) Build a 10–12 slide investor pitch deck outline",
+      "description": "Create a deck outline with problem, solution, market, product demo, traction, business model, go-to-market, competitive landscape, roadmap, team, and ask; use Google Slides/PowerPoint and add speaker notes.",
+      "assignedToName": "Investor Outreach"
+    }
+  ]
+}
 `
     },
     {
