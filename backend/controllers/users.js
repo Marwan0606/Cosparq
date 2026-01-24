@@ -1,6 +1,7 @@
 const User = require('../models/Users.js')
 const { get } = require('../routes/gpt-responses.js')
 const { getUserApiStats } = require('../services/apiUsageTracker')
+const bcrypt = require('bcrypt')
 
 /*
 const createUser = async (req, res) => {
@@ -115,11 +116,328 @@ const getApiUsageSummary = async (req, res) => {
   }
 };
 
+/**
+ * Get current user's profile
+ */
+const getProfile = async (req, res) => {
+  try {
+    const userId = req.user?.userId;
+    
+    if (!userId) {
+      return res.status(401).json({ msg: 'Unauthorized' });
+    }
+    
+    const user = await User.findById(userId).select('-password');
+    
+    if (!user) {
+      return res.status(404).json({ msg: 'User not found' });
+    }
+    
+    res.status(200).json({ 
+      user: {
+        id: user._id,
+        email: user.email,
+        displayName: user.displayName || user.name,
+        createdAt: user.createdAt,
+        subscriptionPlan: user.subscriptionPlan || 'free',
+        subscriptionStatus: user.subscriptionStatus,
+        apiUsage: {
+          totalCost: user.totalApiCost || 0,
+          totalRequests: user.totalApiRequests || 0
+        },
+        projectCount: user.projectCount || 0
+      }
+    });
+  } catch (error) {
+    console.error('Error getting profile:', error);
+    res.status(500).json({ msg: error.message || error });
+  }
+};
+
+/**
+ * Update user profile
+ */
+const updateProfile = async (req, res) => {
+  try {
+    const userId = req.user?.userId;
+    const { displayName } = req.body;
+    
+    if (!userId) {
+      return res.status(401).json({ msg: 'Unauthorized' });
+    }
+    
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { displayName },
+      { new: true, runValidators: true }
+    ).select('-password');
+    
+    if (!user) {
+      return res.status(404).json({ msg: 'User not found' });
+    }
+    
+    res.status(200).json({ msg: 'Profile updated', user });
+  } catch (error) {
+    console.error('Error updating profile:', error);
+    res.status(500).json({ msg: error.message || error });
+  }
+};
+
+/**
+ * Change user password
+ */
+const changePassword = async (req, res) => {
+  try {
+    const userId = req.user?.userId;
+    const { currentPassword, newPassword } = req.body;
+    
+    if (!userId) {
+      return res.status(401).json({ msg: 'Unauthorized' });
+    }
+    
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ msg: 'Current and new password required' });
+    }
+    
+    if (newPassword.length < 8) {
+      return res.status(400).json({ msg: 'Password must be at least 8 characters' });
+    }
+    
+    const user = await User.findById(userId);
+    
+    if (!user) {
+      return res.status(404).json({ msg: 'User not found' });
+    }
+    
+    // Verify current password
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ msg: 'Current password is incorrect' });
+    }
+    
+    // Hash new password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+    
+    user.password = hashedPassword;
+    await user.save();
+    
+    res.status(200).json({ msg: 'Password updated successfully' });
+  } catch (error) {
+    console.error('Error changing password:', error);
+    res.status(500).json({ msg: error.message || error });
+  }
+};
+
+/**
+ * Get subscription status
+ */
+const getSubscriptionStatus = async (req, res) => {
+  try {
+    const userId = req.user?.userId;
+    
+    if (!userId) {
+      return res.status(401).json({ msg: 'Unauthorized' });
+    }
+    
+    const user = await User.findById(userId).select(
+      'subscriptionPlan subscriptionStatus subscriptionPeriodEnd stripeSubscriptionId'
+    );
+    
+    if (!user) {
+      return res.status(404).json({ msg: 'User not found' });
+    }
+    
+    res.status(200).json({
+      plan: user.subscriptionPlan || 'free',
+      status: user.subscriptionStatus,
+      periodEnd: user.subscriptionPeriodEnd,
+      hasActiveSubscription: ['active', 'trialing'].includes(user.subscriptionStatus)
+    });
+  } catch (error) {
+    console.error('Error getting subscription status:', error);
+    res.status(500).json({ msg: error.message || error });
+  }
+};
+
+/**
+ * Export user data (GDPR compliance)
+ */
+const exportData = async (req, res) => {
+  try {
+    const userId = req.user?.userId;
+    
+    if (!userId) {
+      return res.status(401).json({ msg: 'Unauthorized' });
+    }
+    
+    const user = await User.findById(userId).select('-password');
+    
+    if (!user) {
+      return res.status(404).json({ msg: 'User not found' });
+    }
+    
+    // Collect all user data from various collections
+    const IdeaResponse = require('../models/Idea-pitch-responses');
+    const ChatResponse = require('../models/Chat-response');
+    const CodeResponse = require('../models/Code-response');
+    const MarketResponse = require('../models/Market-responses');
+    const ScoreboardResponse = require('../models/Scoreboard-responses');
+    
+    const [ideas, chats, code, market, scoreboard] = await Promise.all([
+      IdeaResponse.find({ userId }).lean(),
+      ChatResponse.find({ userId }).lean(),
+      CodeResponse.find({ userId }).lean(),
+      MarketResponse.find({ userId }).lean(),
+      ScoreboardResponse.find({ userId }).lean()
+    ]);
+    
+    const exportData = {
+      user: user.toObject(),
+      ideas,
+      chats,
+      code,
+      market,
+      scoreboard,
+      exportedAt: new Date().toISOString()
+    };
+    
+    res.status(200).json(exportData);
+  } catch (error) {
+    console.error('Error exporting data:', error);
+    res.status(500).json({ msg: error.message || error });
+  }
+};
+
+/**
+ * Delete all user projects
+ */
+const deleteProjects = async (req, res) => {
+  try {
+    const userId = req.user?.userId;
+    
+    if (!userId) {
+      return res.status(401).json({ msg: 'Unauthorized' });
+    }
+    
+    const IdeaResponse = require('../models/Idea-pitch-responses');
+    const ChatResponse = require('../models/Chat-response');
+    const CodeResponse = require('../models/Code-response');
+    const MarketResponse = require('../models/Market-responses');
+    const ScoreboardResponse = require('../models/Scoreboard-responses');
+    const ActionResponse = require('../models/Action-response');
+    
+    await Promise.all([
+      IdeaResponse.deleteMany({ userId }),
+      ChatResponse.deleteMany({ userId }),
+      CodeResponse.deleteMany({ userId }),
+      MarketResponse.deleteMany({ userId }),
+      ScoreboardResponse.deleteMany({ userId }),
+      ActionResponse.deleteMany({ userId })
+    ]);
+    
+    // Reset project count
+    await User.findByIdAndUpdate(userId, { projectCount: 0 });
+    
+    res.status(200).json({ msg: 'All projects deleted' });
+  } catch (error) {
+    console.error('Error deleting projects:', error);
+    res.status(500).json({ msg: error.message || error });
+  }
+};
+
+/**
+ * Delete user account
+ */
+const deleteAccount = async (req, res) => {
+  try {
+    const userId = req.user?.userId;
+    
+    if (!userId) {
+      return res.status(401).json({ msg: 'Unauthorized' });
+    }
+    
+    const user = await User.findById(userId);
+    
+    if (!user) {
+      return res.status(404).json({ msg: 'User not found' });
+    }
+    
+    // Cancel Stripe subscription if exists
+    if (user.stripeSubscriptionId) {
+      try {
+        const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+        await stripe.subscriptions.cancel(user.stripeSubscriptionId);
+      } catch (stripeError) {
+        console.error('Error canceling subscription:', stripeError);
+        // Continue with deletion even if subscription cancel fails
+      }
+    }
+    
+    // Delete all user data
+    const IdeaResponse = require('../models/Idea-pitch-responses');
+    const ChatResponse = require('../models/Chat-response');
+    const CodeResponse = require('../models/Code-response');
+    const MarketResponse = require('../models/Market-responses');
+    const ScoreboardResponse = require('../models/Scoreboard-responses');
+    const ActionResponse = require('../models/Action-response');
+    const RawChatResponse = require('../models/RawChat-responses');
+    
+    await Promise.all([
+      IdeaResponse.deleteMany({ userId }),
+      ChatResponse.deleteMany({ userId }),
+      CodeResponse.deleteMany({ userId }),
+      MarketResponse.deleteMany({ userId }),
+      ScoreboardResponse.deleteMany({ userId }),
+      ActionResponse.deleteMany({ userId }),
+      RawChatResponse.deleteMany({ userId })
+    ]);
+    
+    // Delete the user
+    await User.findByIdAndDelete(userId);
+    
+    res.status(200).json({ msg: 'Account deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting account:', error);
+    res.status(500).json({ msg: error.message || error });
+  }
+};
+
+/**
+ * Logout from all devices (invalidate all refresh tokens)
+ */
+const logoutAll = async (req, res) => {
+  try {
+    const userId = req.user?.userId;
+    
+    if (!userId) {
+      return res.status(401).json({ msg: 'Unauthorized' });
+    }
+    
+    // Delete all refresh tokens for this user
+    const RefreshToken = require('../models/Refresh-Tokens');
+    await RefreshToken.deleteMany({ userId });
+    
+    res.status(200).json({ msg: 'Logged out from all devices' });
+  } catch (error) {
+    console.error('Error logging out all devices:', error);
+    res.status(500).json({ msg: error.message || error });
+  }
+};
+
 module.exports = {
   //createUser,
   //login,
   getUser,
   getAllUsersEmail,
   getApiUsage,
-  getApiUsageSummary
+  getApiUsageSummary,
+  getProfile,
+  updateProfile,
+  changePassword,
+  getSubscriptionStatus,
+  exportData,
+  deleteProjects,
+  deleteAccount,
+  logoutAll
 }

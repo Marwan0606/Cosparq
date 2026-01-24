@@ -16,8 +16,16 @@ const UserSchema = new mongoose.Schema({ //this sets the specific type of data e
     type:String,
     required:[true, 'must provide name']
   },
+  displayName: {
+    type: String,
+    trim: true,
+  },
   numberPrompts: {
     type:String,
+    default: 0,
+  },
+  projectCount: {
+    type: Number,
     default: 0,
   },
   // Subscription Plan
@@ -76,6 +84,8 @@ const UserSchema = new mongoose.Schema({ //this sets the specific type of data e
     totalTokens: Number,
     cost: Number // Cost of this specific request in USD
   }]
+}, {
+  timestamps: true // Adds createdAt and updatedAt
 })
 
 module.exports = mongoose.model('Users', UserSchema);
