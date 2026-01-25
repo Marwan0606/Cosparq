@@ -30,6 +30,12 @@ body { display:flex; justify-content:center; }
   -webkit-text-fill-color:transparent;
 }
 
+/* ——— Loading Grid Container ——— */
+.js-grid {
+  position: relative;
+  min-height: 500px;
+}
+
 /* ——— Concept Card ——— */
 .concept-card {
   background:#1f1f1f; border:1px solid #2c2c2c;
