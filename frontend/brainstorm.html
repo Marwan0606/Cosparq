@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BrainStorm Hub - CoSparq</title>
+  <link rel="stylesheet" href="styles/brainstorm.css">
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+<body>
+  <!-- Include Sidebar -->
+  <div id="sidebar-placeholder"></div>
+
+  <!-- Main Content -->
+  <main class="brainstorm-main" id="brainstorm-main">
+    <!-- Background gradient overlay -->
+    <div class="background-gradient"></div>
+    
+    <!-- Pannable Canvas Container -->
+    <div class="canvas-container" id="canvas-container">
+      <!-- SVG Layer for connection lines -->
+      <svg class="connection-lines" id="connection-svg">
+        <!-- Lines will be drawn dynamically -->
+      </svg>
+
+      <!-- Branches will be created dynamically by JavaScript -->
+
+      <!-- Central Hub -->
+      <div class="central-hub" id="central-hub">
+      <h1 class="hub-title"><span class="gradient-text">BrainStorm Hub</span></h1>
+      
+      <div class="hub-container">
+        <!-- Project Header -->
+        <div class="project-header">
+          <span class="project-name" id="project-name">Loading...</span>
+          <span class="project-badge">Your idea</span>
+        </div>
+        
+        <!-- Add Idea Input -->
+        <div class="add-idea-row">
+          <input 
+            type="text" 
+            class="idea-input" 
+            id="idea-input" 
+            placeholder="Brainstorm ideas here, AI assisted"
+            maxlength="200"
+          />
+          <button class="add-idea-btn" id="add-idea-btn" title="Add idea">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="12" y1="5" x2="12" y2="19"/>
+              <line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Ideas List (user added) -->
+        <div class="hub-ideas-list" id="hub-ideas-list">
+          <!-- Ideas will be added here dynamically -->
+        </div>
+        
+        <!-- AI Suggestions -->
+        <div class="ai-suggestions-container">
+          <div class="suggestions-header">
+            <span class="suggestions-label">AI SUGGESTIONS</span>
+            <button class="refresh-suggestions-btn" id="refresh-suggestions-btn" title="Refresh suggestions">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M23 4v6h-6"/>
+                <path d="M1 20v-6h6"/>
+                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+              </svg>
+            </button>
+          </div>
+          <div class="ai-suggestions-list" id="ai-suggestions-list">
+            <!-- AI suggestions will be loaded here -->
+            <div class="suggestions-loading">
+              <div class="loading-spinner"></div>
+              <span>Generating feature ideas...</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    </div> <!-- End canvas-container -->
+
+    <!-- Organize Button (appears after enough ideas) -->
+    <button class="organize-btn" id="organize-btn" style="display: none;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+        <path d="M2 17l10 5 10-5"/>
+        <path d="M2 12l10 5 10-5"/>
+      </svg>
+      Organize with AI
+    </button>
+
+    <!-- Session Controls -->
+    <div class="session-controls">
+      <button class="session-btn save-btn" id="save-session-btn" title="Save session">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+          <polyline points="17 21 17 13 7 13 7 21"/>
+          <polyline points="7 3 7 8 15 8"/>
+        </svg>
+      </button>
+      <button class="session-btn clear-btn" id="clear-session-btn" title="Clear all">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="3 6 5 6 21 6"/>
+          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+        </svg>
+      </button>
+    </div>
+  </main>
+
+  <!-- Pan Hint -->
+  <div class="pan-hint" id="pan-hint">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M5 9l-3 3 3 3"/>
+      <path d="M9 5l3-3 3 3"/>
+      <path d="M15 19l3 3-3 3"/>
+      <path d="M19 9l3 3-3 3"/>
+      <line x1="2" y1="12" x2="22" y2="12"/>
+      <line x1="12" y1="2" x2="12" y2="22"/>
+    </svg>
+    Drag to pan the canvas
+  </div>
+
+  <!-- Mini Map -->
+  <div class="mini-map" id="mini-map">
+    <div class="mini-map-canvas" id="mini-map-canvas">
+      <div class="mini-map-hub"></div>
+      <div class="mini-map-viewport" id="mini-map-viewport"></div>
+    </div>
+  </div>
+
+  <!-- Pan Controls -->
+  <div class="pan-controls">
+    <button class="pan-btn center-btn" id="center-view-btn" title="Center view">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M12 2v4"/>
+        <path d="M12 18v4"/>
+        <path d="M2 12h4"/>
+        <path d="M18 12h4"/>
+      </svg>
+    </button>
+    <button class="pan-btn" id="zoom-in-btn" title="Zoom in">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"/>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        <line x1="11" y1="8" x2="11" y2="14"/>
+        <line x1="8" y1="11" x2="14" y2="11"/>
+      </svg>
+    </button>
+    <button class="pan-btn" id="zoom-out-btn" title="Zoom out">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"/>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        <line x1="8" y1="11" x2="14" y2="11"/>
+      </svg>
+    </button>
+  </div>
+
+  <!-- Zoom Indicator -->
+  <div class="zoom-indicator" id="zoom-indicator">100%</div>
+
+  <!-- Branch Detail Popup -->
+  <div class="branch-popup-overlay" id="branch-popup-overlay">
+    <div class="branch-popup">
+      <div class="branch-popup-header">
+        <h2 class="branch-popup-title">
+          <span class="color-dot" id="popup-color-dot"></span>
+          <span id="popup-branch-name">Category Name</span>
+        </h2>
+        <span class="branch-popup-count" id="popup-idea-count">0 ideas</span>
+        <button class="branch-popup-close" id="popup-close-btn" title="Close">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <div class="branch-popup-body">
+        <div class="branch-popup-ideas" id="popup-ideas-list">
+          <!-- Ideas will be rendered here -->
+        </div>
+      </div>
+      <div class="branch-popup-footer">
+        <div class="popup-add-idea-row">
+          <input type="text" class="popup-idea-input" id="popup-idea-input" placeholder="Add new idea to this category..." maxlength="200">
+          <button class="popup-add-btn" id="popup-add-btn">Add</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Load sidebar -->
+  <script src="./scripts/subscriptionHandler.js"></script>
+  <script type="module">
+    async function loadSidebar() {
+      const res = await fetch('sidebar.html');
+      const html = await res.text();
+      document.getElementById('sidebar-placeholder').innerHTML = html;
+
+      const { initSidebar } = await import('./scripts/sidebar.js');
+      await initSidebar();
+    }
+    loadSidebar();
+  </script>
+  <script src="scripts/brainstorm.js"></script>
+</body>
+</html>

@@ -1,0 +1,1219 @@
+/* ============================
+   BrainStorm Hub Styles
+   ============================ */
+
+:root {
+  --bg: #0f0f10;
+  --panel: #191a1d;
+  --text: #e8e8ea;
+  --muted: #a5a7ae;
+  --border: rgba(255,255,255,0.06);
+  --grad: linear-gradient(90deg, #8400ff 0%, #f94016 40%, #f96d16 60%, #3b82f6 100%);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow: hidden;
+}
+
+/* ——— Background Gradient (matching app standard) ——— */
+.background-gradient {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(ellipse at 15% 15%, rgba(132, 0, 255, 0.12) 0%, transparent 45%),
+    radial-gradient(ellipse at 85% 20%, rgba(249, 64, 22, 0.10) 0%, transparent 45%),
+    radial-gradient(ellipse at 70% 80%, rgba(249, 109, 22, 0.08) 0%, transparent 45%),
+    radial-gradient(ellipse at 25% 75%, rgba(59, 130, 246, 0.08) 0%, transparent 45%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ——— Main Layout - Pannable Canvas ——— */
+.brainstorm-main {
+  margin-left: 88px;
+  height: 100vh;
+  position: relative;
+  overflow: hidden;
+  cursor: grab;
+}
+
+.brainstorm-main:active {
+  cursor: grabbing;
+}
+
+.brainstorm-main.panning {
+  cursor: grabbing;
+}
+
+/* The canvas that gets panned - size set dynamically via JS */
+.canvas-container {
+  position: absolute;
+  width: 1800px;
+  height: 1400px;
+  transform-origin: 0 0;
+  transition: width 0.3s ease, height 0.3s ease;
+}
+
+/* ——— SVG Connection Lines ——— */
+.connection-lines {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.connection-line {
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+
+.connection-line.visible {
+  opacity: 1;
+}
+
+.connection-line.line-purple {
+  stroke: url(#gradient-purple);
+}
+
+.connection-line.line-orange {
+  stroke: url(#gradient-orange);
+}
+
+.connection-line.line-pink {
+  stroke: url(#gradient-pink);
+}
+
+.connection-line.line-blue {
+  stroke: url(#gradient-blue);
+}
+
+/* ——— Central Hub ——— */
+.central-hub {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.hub-title {
+  font-size: 2rem;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 4px;
+}
+
+.gradient-text {
+  background: linear-gradient(
+    90deg,
+    #8400ff 0%,
+    #f94016 40%,
+    #f96d16 60%,
+    #3b82f6 100%
+  );
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.hub-container {
+  background: 
+    linear-gradient(rgba(20, 20, 22, 0.98), rgba(20, 20, 22, 0.98)) padding-box,
+    linear-gradient(90deg, #8400ff 0%, #f94016 40%, #f96d16 60%, #3b82f6 100%) border-box;
+  border: 2px solid transparent;
+  border-radius: 16px;
+  padding: 24px;
+  width: 440px;
+  max-width: 90vw;
+  backdrop-filter: blur(20px);
+  box-shadow: 
+    0 0 40px rgba(132, 0, 255, 0.15),
+    0 0 80px rgba(249, 64, 22, 0.08),
+    0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+/* ——— Project Header ——— */
+.project-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  background: #1a1a1c;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  margin-bottom: 12px;
+}
+
+.project-name {
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.project-badge {
+  padding: 4px 12px;
+  background: #8400ff;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #fff;
+}
+
+/* ——— Add Idea Row ——— */
+.add-idea-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.idea-input {
+  flex: 1;
+  padding: 14px 16px;
+  background: #1a1a1c;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  color: var(--text);
+  font-size: 0.9rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.idea-input:focus {
+  border-color: rgba(132, 0, 255, 0.5);
+}
+
+.idea-input::placeholder {
+  color: #666;
+}
+
+.add-idea-btn {
+  width: 48px;
+  height: 48px;
+  border: 1px solid var(--border);
+  background: #1a1a1c;
+  border-radius: 12px;
+  color: #666;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.add-idea-btn:hover {
+  background: var(--grad);
+  border-color: transparent;
+  color: #fff;
+}
+
+.add-idea-btn svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* ——— Hub Ideas List ——— */
+.hub-ideas-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 220px;
+  overflow-y: auto;
+  margin-bottom: 12px;
+}
+
+.hub-ideas-list:empty {
+  display: none;
+  margin-bottom: 0;
+}
+
+.hub-ideas-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.hub-ideas-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.hub-ideas-list::-webkit-scrollbar-thumb {
+  background: #333;
+  border-radius: 3px;
+}
+
+/* ——— Idea Item ——— */
+.idea-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  background: #1a1a1c;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  transition: all 0.2s ease;
+  cursor: grab;
+}
+
+.idea-item:hover {
+  border-color: rgba(255, 255, 255, 0.12);
+  background: #1f1f21;
+}
+
+.idea-item.dragging {
+  opacity: 0.5;
+  cursor: grabbing;
+}
+
+.idea-item .idea-text {
+  flex: 1;
+  font-size: 0.9rem;
+  color: var(--text);
+  outline: none;
+}
+
+.idea-item .idea-text:focus {
+  color: #fff;
+}
+
+.idea-item .idea-actions {
+  display: flex;
+  gap: 6px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.idea-item:hover .idea-actions {
+  opacity: 1;
+}
+
+.idea-action-btn {
+  width: 26px;
+  height: 26px;
+  border: none;
+  background: transparent;
+  color: #666;
+  cursor: pointer;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.idea-action-btn:hover {
+  background: #222;
+  color: #fff;
+}
+
+.idea-action-btn.delete-btn:hover {
+  color: #ff6b6b;
+}
+
+.idea-action-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* ——— AI Suggestions ——— */
+.ai-suggestions-container {
+  border-top: 1px solid var(--border);
+  padding-top: 14px;
+}
+
+.suggestions-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.suggestions-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--muted);
+  letter-spacing: 0.05em;
+}
+
+.refresh-suggestions-btn {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.refresh-suggestions-btn:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text);
+}
+
+.refresh-suggestions-btn.spinning svg {
+  animation: spin 0.8s linear infinite;
+}
+
+.refresh-suggestions-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+.ai-suggestions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.ai-suggestions-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.ai-suggestions-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.ai-suggestions-list::-webkit-scrollbar-thumb {
+  background: #333;
+  border-radius: 3px;
+}
+
+/* Suggestion Item */
+.suggestion-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  background: #1a1a1c;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.suggestion-item:hover {
+  border-color: rgba(132, 0, 255, 0.3);
+  background: rgba(132, 0, 255, 0.05);
+}
+
+.suggestion-text {
+  flex: 1;
+  font-size: 0.9rem;
+  color: var(--text);
+}
+
+.add-suggestion-btn {
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--border);
+  background: transparent;
+  border-radius: 8px;
+  color: #666;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.add-suggestion-btn:hover {
+  background: #8400ff;
+  border-color: #8400ff;
+  color: #fff;
+}
+
+.add-suggestion-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Loading state */
+.suggestions-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 30px;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.loading-spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #333;
+  border-top-color: #8400ff;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ——— Branches (Compact Card Style) ——— */
+.branch {
+  position: absolute;
+  z-index: 5;
+  width: 260px;
+  opacity: 0;
+  transform: scale(0.9);
+  transition: opacity 0.3s ease, transform 0.3s ease, box-shadow 0.2s ease;
+  background: rgba(20, 20, 22, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 16px;
+  backdrop-filter: blur(10px);
+  cursor: grab;
+  user-select: none;
+}
+
+.branch:hover {
+  border-color: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.branch.visible {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.branch.dragging {
+  cursor: grabbing;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5), 0 0 0 2px rgba(132, 0, 255, 0.4);
+  transform: scale(1.02);
+  transition: box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+/* Branch Header */
+.branch-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.branch-title {
+  font-size: 1rem;
+  font-weight: 700;
+  margin: 0;
+  padding: 0;
+  border-radius: 6px;
+  outline: none;
+  transition: background 0.2s;
+  flex: 1;
+}
+
+.branch-count {
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 3px 8px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  color: var(--muted);
+}
+
+/* Branch Ideas Preview (last 3) */
+.branch-ideas {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 140px;
+  overflow: hidden;
+}
+
+.branch-idea-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: rgba(30, 30, 32, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  font-size: 0.8rem;
+  color: #bbb;
+  transition: all 0.2s;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.branch-idea-item .idea-text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  pointer-events: none;
+}
+
+.branch-more-indicator {
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--muted);
+  padding: 6px 0 2px;
+  opacity: 0.7;
+}
+
+.branch-idea-item:hover {
+  border-color: #444;
+  background: rgba(40, 40, 40, 0.9);
+}
+
+.branch-idea-item .idea-text {
+  flex: 1;
+  outline: none;
+}
+
+/* ——— Organize Button ——— */
+.organize-btn {
+  position: fixed;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 28px;
+  background: linear-gradient(135deg, #8400ff, #f94016);
+  border: none;
+  border-radius: 14px;
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  z-index: 100;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 20px rgba(132, 0, 255, 0.3);
+}
+
+.organize-btn:hover {
+  transform: translateX(-50%) translateY(-3px);
+  box-shadow: 0 8px 30px rgba(132, 0, 255, 0.4);
+}
+
+.organize-btn svg {
+  width: 20px;
+  height: 20px;
+}
+
+.organize-btn.loading {
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+/* ——— Session Controls ——— */
+.session-controls {
+  position: fixed;
+  top: 20px;
+  right: 30px;
+  display: flex;
+  gap: 10px;
+  z-index: 100;
+}
+
+.session-btn {
+  width: 44px;
+  height: 44px;
+  border: 1px solid #2a2a2a;
+  background: rgba(26, 26, 26, 0.9);
+  border-radius: 12px;
+  color: #888;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  backdrop-filter: blur(10px);
+}
+
+.session-btn:hover {
+  border-color: #444;
+  color: #fff;
+  background: rgba(40, 40, 40, 0.9);
+}
+
+.session-btn.save-btn:hover {
+  border-color: #22c55e;
+  color: #22c55e;
+}
+
+.session-btn.clear-btn:hover {
+  border-color: #ff6b6b;
+  color: #ff6b6b;
+}
+
+.session-btn svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* ——— Animations ——— */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes branchAppear {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.idea-item {
+  animation: fadeInUp 0.3s ease;
+}
+
+.branch.visible {
+  animation: branchAppear 0.5s ease;
+}
+
+.suggestion-item {
+  animation: fadeInUp 0.3s ease;
+}
+
+/* ——— Empty State ——— */
+.empty-hub-message {
+  text-align: center;
+  padding: 20px;
+  color: #555;
+  font-size: 0.9rem;
+}
+
+/* ——— Toast Notifications ——— */
+.toast {
+  position: fixed;
+  bottom: 100px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  padding: 14px 24px;
+  background: rgba(26, 26, 26, 0.95);
+  border: 1px solid #2a2a2a;
+  border-radius: 12px;
+  color: #fff;
+  font-size: 0.9rem;
+  z-index: 1000;
+  opacity: 0;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+}
+
+.toast.visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.toast.success {
+  border-color: #22c55e;
+}
+
+.toast.error {
+  border-color: #ff6b6b;
+}
+
+/* ——— Branch Detail Popup ——— */
+.branch-popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(8px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.branch-popup-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.branch-popup {
+  background: #18181b;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  width: 90%;
+  max-width: 500px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  transform: scale(0.9) translateY(20px);
+  transition: transform 0.3s ease;
+  box-shadow: 0 25px 80px rgba(0, 0, 0, 0.5);
+}
+
+.branch-popup-overlay.active .branch-popup {
+  transform: scale(1) translateY(0);
+}
+
+.branch-popup-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.branch-popup-title {
+  font-size: 1.3rem;
+  font-weight: 700;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.branch-popup-title .color-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.branch-popup-count {
+  font-size: 0.85rem;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.branch-popup-close {
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  color: var(--muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.branch-popup-close:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.branch-popup-close svg {
+  width: 20px;
+  height: 20px;
+}
+
+.branch-popup-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 24px;
+}
+
+.branch-popup-ideas {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.popup-idea-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  background: rgba(30, 30, 32, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  transition: all 0.2s;
+}
+
+.popup-idea-item:hover {
+  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(40, 40, 42, 0.6);
+}
+
+.popup-idea-number {
+  width: 24px;
+  height: 24px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--muted);
+  flex-shrink: 0;
+}
+
+.popup-idea-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.popup-idea-text {
+  font-size: 0.95rem;
+  color: var(--text);
+  line-height: 1.5;
+  padding: 4px 8px;
+  border-radius: 6px;
+  outline: none;
+  display: block;
+  width: 100%;
+  transition: background 0.2s;
+}
+
+.popup-idea-text:hover,
+.popup-idea-text:focus {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.popup-idea-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.popup-idea-btn {
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  opacity: 0;
+}
+
+.popup-idea-item:hover .popup-idea-btn {
+  opacity: 1;
+}
+
+.popup-idea-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.popup-idea-btn.delete:hover {
+  color: #ff6b6b;
+}
+
+.popup-idea-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+.branch-popup-footer {
+  padding: 16px 24px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.popup-add-idea-row {
+  display: flex;
+  gap: 10px;
+}
+
+.popup-idea-input {
+  flex: 1;
+  padding: 12px 16px;
+  background: rgba(30, 30, 32, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  color: var(--text);
+  font-size: 0.9rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.popup-idea-input:focus {
+  border-color: rgba(132, 0, 255, 0.5);
+}
+
+.popup-add-btn {
+  padding: 12px 20px;
+  background: linear-gradient(135deg, #8400ff, #f94016);
+  border: none;
+  border-radius: 10px;
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.popup-add-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 15px rgba(132, 0, 255, 0.3);
+}
+
+/* Empty state in popup */
+.popup-empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--muted);
+}
+
+.popup-empty-state svg {
+  width: 48px;
+  height: 48px;
+  margin-bottom: 12px;
+  opacity: 0.5;
+}
+
+/* ——— Responsive ——— */
+/* ——— Pan Controls ——— */
+.pan-controls {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  display: flex;
+  gap: 8px;
+  z-index: 100;
+}
+
+.pan-btn {
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--border);
+  background: rgba(25, 26, 29, 0.9);
+  backdrop-filter: blur(10px);
+  border-radius: 10px;
+  color: var(--muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.pan-btn:hover {
+  background: rgba(40, 40, 45, 0.95);
+  color: var(--text);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.pan-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+.pan-btn.center-btn {
+  background: linear-gradient(135deg, rgba(132, 0, 255, 0.2), rgba(249, 64, 22, 0.2));
+  border-color: rgba(132, 0, 255, 0.3);
+}
+
+.pan-btn.center-btn:hover {
+  background: linear-gradient(135deg, rgba(132, 0, 255, 0.3), rgba(249, 64, 22, 0.3));
+}
+
+/* ——— Mini Map ——— */
+.mini-map {
+  position: fixed;
+  bottom: 80px;
+  right: 24px;
+  width: 150px;
+  height: 100px;
+  background: rgba(25, 26, 29, 0.9);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  backdrop-filter: blur(10px);
+  z-index: 100;
+  overflow: hidden;
+}
+
+.mini-map-canvas {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.mini-map-viewport {
+  position: absolute;
+  border: 2px solid #8400ff;
+  background: rgba(132, 0, 255, 0.1);
+  border-radius: 2px;
+  pointer-events: none;
+}
+
+.mini-map-hub {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background: linear-gradient(135deg, #8400ff, #f94016);
+  border-radius: 50%;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.mini-map-branch {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+/* ——— Zoom indicator ——— */
+.zoom-indicator {
+  position: fixed;
+  bottom: 24px;
+  left: 112px;
+  padding: 8px 14px;
+  background: rgba(25, 26, 29, 0.9);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 0.75rem;
+  color: var(--muted);
+  backdrop-filter: blur(10px);
+  z-index: 100;
+}
+
+/* ——— Pan hint ——— */
+.pan-hint {
+  position: fixed;
+  top: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-left: 44px;
+  padding: 10px 18px;
+  background: rgba(25, 26, 29, 0.9);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 0.85rem;
+  color: var(--muted);
+  backdrop-filter: blur(10px);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  opacity: 1;
+  transition: opacity 0.5s ease;
+}
+
+.pan-hint.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.pan-hint svg {
+  width: 16px;
+  height: 16px;
+}
+
+@media (max-width: 1200px) {
+  .branch-top-left,
+  .branch-bottom-left {
+    left: 40px;
+  }
+  
+  .branch-top-right,
+  .branch-bottom-right {
+    right: 40px;
+  }
+}
+
+@media (max-width: 900px) {
+  .brainstorm-main {
+    flex-direction: column;
+    padding: 20px;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+  
+  .branch {
+    position: relative;
+    top: auto !important;
+    left: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+    width: 100%;
+    max-width: 100%;
+    margin: 20px 0;
+  }
+  
+  .central-hub {
+    order: -1;
+    margin-bottom: 30px;
+  }
+  
+  .hub-container {
+    width: 100%;
+  }
+  
+  .connection-lines {
+    display: none;
+  }
+  
+  .organize-btn {
+    position: relative;
+    bottom: auto;
+    left: auto;
+    transform: none;
+    margin-top: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .brainstorm-main {
+    margin-left: 0;
+    padding: 15px;
+    padding-bottom: 80px;
+  }
+  
+  .hub-title {
+    font-size: 1.6rem;
+  }
+  
+  .hub-container {
+    padding: 16px;
+  }
+  
+  .session-controls {
+    top: auto;
+    bottom: 20px;
+    right: 20px;
+  }
+}
