@@ -10,7 +10,7 @@ const openai = new OpenAI({
 const generateSuggestions = async (req, res) => {
   try {
     const userId = req.user?.userId;
-    const { context, existingIdeas, userPreferences, projectName, projectDescription } = req.body;
+    const { context, existingIdeas, userPreferences, projectName, projectDescription, focusCategory } = req.body;
     
     // Build the prompt - now focused on features for the user's app
     let prompt = `You are a creative product feature brainstorming assistant. Your job is to suggest innovative features that could be added to a user's app or product.`;
@@ -23,19 +23,24 @@ const generateSuggestions = async (req, res) => {
       }
     }
     
+    // FOCUS MODE: If user is focused on a specific category, tailor suggestions
+    if (focusCategory) {
+      prompt += `\n\n**IMPORTANT: The user is in FOCUS MODE for the "${focusCategory}" category.** Generate ideas that specifically fit within this category theme. All suggestions must be directly related to "${focusCategory}".`;
+    }
+    
     if (userPreferences && userPreferences.acceptedTopics && userPreferences.acceptedTopics.length > 0) {
       prompt += `\n\nThe user has shown interest in these types of features: ${userPreferences.acceptedTopics.slice(-5).join(', ')}. Suggest similar or complementary features.`;
     }
     
     if (existingIdeas && existingIdeas.length > 0) {
-      prompt += `\n\nThe user has already brainstormed these features: ${existingIdeas.join('; ')}. Generate NEW and DIFFERENT feature ideas that complement these.`;
+      prompt += `\n\nThe user has already brainstormed these features in this category: ${existingIdeas.join('; ')}. Generate NEW and DIFFERENT feature ideas that complement these but don't repeat them.`;
     }
     
-    if (context && context.trim()) {
+    if (context && context.trim() && !focusCategory) {
       prompt += `\n\nThe user is currently thinking about: "${context}". Generate feature ideas related to this.`;
     }
     
-    prompt += `\n\nGenerate exactly 5 unique, specific feature suggestions for their app. Each should be a concise feature description (max 12 words) that would add value to the product. Focus on practical, implementable features.
+    prompt += `\n\nGenerate exactly 5 unique, specific feature suggestions${focusCategory ? ` for the "${focusCategory}" category` : ' for their app'}. Each should be a concise feature description (max 12 words) that would add value to the product. Focus on practical, implementable features.
 
 Examples of good feature suggestions:
 - "Real-time collaboration with team members"
@@ -50,7 +55,7 @@ Return ONLY a JSON array of 5 strings, no explanation:
     const completion = await openai.chat.completions.create({
       model: 'gpt-3.5-turbo', // Using cheaper model for suggestions
       messages: [
-        { role: 'system', content: 'You are a product feature brainstorming assistant. Return only valid JSON arrays of feature suggestions.' },
+        { role: 'system', content: `You are a product feature brainstorming assistant.${focusCategory ? ` Focus exclusively on "${focusCategory}" category features.` : ''} Return only valid JSON arrays of feature suggestions.` },
         { role: 'user', content: prompt }
       ],
       temperature: 0.9,
@@ -207,7 +212,9 @@ Return ONLY valid JSON in this exact format:
 const saveSession = async (req, res) => {
   try {
     const userId = req.user.userId;
-    const { sessionId, projectId, ideas, branches, userContext, name } = req.body;
+    const { sessionId, projectId, ideas, branches, userContext, name, suggestions, focusSuggestions } = req.body;
+    
+    console.log('Saving session - branches:', JSON.stringify(branches?.slice(0, 2), null, 2));
     
     let session;
     
@@ -222,6 +229,8 @@ const saveSession = async (req, res) => {
       session.ideas = ideas || [];
       session.branches = branches || [];
       session.userContext = userContext || session.userContext;
+      if (suggestions !== undefined) session.suggestions = suggestions;
+      if (focusSuggestions !== undefined) session.focusSuggestions = focusSuggestions;
       if (name) session.name = name;
       if (projectId) session.projectId = projectId;
       
@@ -235,6 +244,8 @@ const saveSession = async (req, res) => {
         session.ideas = ideas || [];
         session.branches = branches || [];
         session.userContext = userContext || session.userContext;
+        if (suggestions !== undefined) session.suggestions = suggestions;
+        if (focusSuggestions !== undefined) session.focusSuggestions = focusSuggestions;
         if (name) session.name = name;
         await session.save();
       } else {
@@ -245,6 +256,8 @@ const saveSession = async (req, res) => {
           ideas: ideas || [],
           branches: branches || [],
           userContext: userContext || {},
+          suggestions: suggestions || [],
+          focusSuggestions: focusSuggestions || {},
           name: name || 'Untitled Session'
         });
         await session.save();
@@ -256,6 +269,8 @@ const saveSession = async (req, res) => {
         ideas: ideas || [],
         branches: branches || [],
         userContext: userContext || {},
+        suggestions: suggestions || [],
+        focusSuggestions: focusSuggestions || {},
         name: name || 'Untitled Session'
       });
       
@@ -268,8 +283,12 @@ const saveSession = async (req, res) => {
       message: 'Session saved'
     });
   } catch (error) {
-    console.error('Error saving session:', error);
-    res.status(500).json({ success: false, message: 'Error saving session' });
+    console.error('Error saving session:', error.message);
+    console.error('Error details:', error);
+    if (error.errors) {
+      console.error('Validation errors:', JSON.stringify(error.errors, null, 2));
+    }
+    res.status(500).json({ success: false, message: 'Error saving session', error: error.message });
   }
 };
 

@@ -19,6 +19,7 @@ let sessionId = null;
 let ideas = []; // { id, text, source: 'manual'|'ai', branchId: null }
 let branches = []; // { id, name, color, position, ideaIds: [] }
 let suggestions = [];
+let focusSuggestionsByBranch = {};
 let userContext = {
   acceptedTopics: [],
   rejectedSuggestions: [],
@@ -118,6 +119,59 @@ const suggestionsCache = {
   }
 };
 
+// Focus suggestions cache (per project + branch)
+const focusSuggestionsCache = {
+  key: 'brainstorm_focus_suggestions_cache',
+  ttlMs: 30 * 60 * 1000,
+  
+  get(branchId) {
+    try {
+      const cached = localStorage.getItem(this.key);
+      if (!cached) return null;
+      const { items, timestamp, projectId } = JSON.parse(cached);
+      const currentProjectId = JSON.parse(localStorage.getItem('ideaId')) || 'default';
+      if (Date.now() - timestamp >= this.ttlMs || projectId !== currentProjectId) {
+        return null;
+      }
+      return items && items[branchId] ? items[branchId] : null;
+    } catch {
+      return null;
+    }
+  },
+  
+  set(branchId, suggestions) {
+    try {
+      const projectId = JSON.parse(localStorage.getItem('ideaId')) || 'default';
+      const cached = localStorage.getItem(this.key);
+      const payload = cached ? JSON.parse(cached) : { items: {}, timestamp: Date.now(), projectId };
+      payload.items = payload.items || {};
+      payload.items[branchId] = suggestions;
+      payload.timestamp = Date.now();
+      payload.projectId = projectId;
+      localStorage.setItem(this.key, JSON.stringify(payload));
+    } catch (e) {
+      console.error('Error caching focus suggestions:', e);
+    }
+  },
+  
+  clear(branchId) {
+    try {
+      const cached = localStorage.getItem(this.key);
+      if (!cached) return;
+      const payload = JSON.parse(cached);
+      if (!payload.items) return;
+      if (branchId) {
+        delete payload.items[branchId];
+      } else {
+        payload.items = {};
+      }
+      localStorage.setItem(this.key, JSON.stringify(payload));
+    } catch (e) {
+      console.error('Error clearing focus suggestions cache:', e);
+    }
+  }
+};
+
 // Branch positions and colors
 const branchConfig = {
   'user-features': { position: 'top-left', color: '#ec4899', name: 'User Features' },
@@ -150,6 +204,17 @@ const dragState = {
   startY: 0,
   offsetX: 0,
   offsetY: 0
+};
+
+// Focus Mode state
+const focusMode = {
+  active: false,
+  branchId: null,
+  previousPanX: 0,
+  previousPanY: 0,
+  previousZoom: 1,
+  canvasWidth: 1200, // Focus mode canvas size
+  canvasHeight: 900
 };
 
 // Thresholds
@@ -267,12 +332,25 @@ function setupEventListeners() {
   
   // Window resize - redraw connections
   window.addEventListener('resize', debounce(() => {
-    centerCanvas();
-    drawConnections();
+    if (focusMode.active) {
+      centerOnFocusHub();
+      drawFocusConnections(focusMode.branchId);
+    } else {
+      centerCanvas();
+      drawConnections();
+    }
   }, 200));
   
   // Pan and zoom controls
   setupPanZoomControls();
+
+  // Close idea descriptions when clicking outside
+  document.addEventListener('click', (e) => {
+    if (e.target.closest('.idea-item') || e.target.closest('.popup-idea-item') || e.target.closest('.focus-idea-branch')) {
+      return;
+    }
+    closeAllIdeaDescriptions();
+  });
 }
 
 async function refreshSuggestions() {
@@ -283,8 +361,9 @@ async function refreshSuggestions() {
     return;
   }
   
-  // Clear cache and force new suggestions
-  suggestionsCache.clear();
+  // Clear saved suggestions and force new suggestions
+  suggestions = [];
+  autoSaveSession();
   refreshSuggestionsBtn.classList.add('spinning');
   await loadInitialSuggestions(true); // Force fetch
   refreshSuggestionsBtn.classList.remove('spinning');
@@ -298,6 +377,7 @@ async function addManualIdea() {
   const idea = {
     id: generateId(),
     text: text,
+    description: '',
     source: 'manual',
     branchId: null,
     createdAt: new Date()
@@ -318,6 +398,7 @@ async function addSuggestionAsIdea(suggestionText, suggestionIndex) {
   const idea = {
     id: generateId(),
     text: suggestionText,
+    description: '',
     source: 'ai',
     branchId: null,
     createdAt: new Date()
@@ -329,6 +410,7 @@ async function addSuggestionAsIdea(suggestionText, suggestionIndex) {
   // Remove from suggestions
   suggestions.splice(suggestionIndex, 1);
   renderSuggestions();
+  autoSaveSession();
   
   // Auto-categorize the idea
   await categorizeAndAssignIdea(idea);
@@ -464,11 +546,26 @@ function createBranchElement(branch) {
   branchEl.innerHTML = `
     <div class="branch-header">
       <h3 class="branch-title" style="color: ${branch.color}">${escapeHtml(branch.name)}</h3>
-      <span class="branch-count">0 ideas</span>
+      <div class="branch-header-actions">
+        <span class="branch-count">0 ideas</span>
+        <button class="branch-view-btn" title="View all ideas" data-branch-id="${branch.id}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+            <circle cx="12" cy="12" r="3"/>
+          </svg>
+        </button>
+      </div>
     </div>
     <div class="branch-ideas"></div>
-    <div class="branch-more-indicator" style="display: none;">Click to see all →</div>
+    <div class="branch-focus-hint">Click to enter Focus Mode</div>
   `;
+  
+  // Add view button click handler (for popup)
+  const viewBtn = branchEl.querySelector('.branch-view-btn');
+  viewBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    openBranchPopup(branch.id);
+  });
   
   // Add drag functionality
   setupBranchDrag(branchEl, branch);
@@ -488,10 +585,11 @@ function setupBranchDrag(branchEl, branch) {
   let hasDragged = false;
   
   branchEl.addEventListener('mousedown', (e) => {
-    // Don't start drag if clicking on title or buttons
+    // Don't start drag if clicking on title, buttons, or view button
     if (e.target.classList.contains('branch-title') || 
         e.target.tagName === 'BUTTON' ||
-        e.target.closest('.branch-more-indicator')) {
+        e.target.closest('.branch-view-btn') ||
+        e.target.closest('svg')) {
       return;
     }
     
@@ -517,14 +615,22 @@ function setupBranchDrag(branchEl, branch) {
     branchEl.style.cursor = 'grabbing';
   });
   
-  // Click handler - only open popup if not dragged
+  // Click handler - only enter focus mode if not dragged
   branchEl.addEventListener('click', (e) => {
-    if (e.target.classList.contains('branch-title')) return;
+    // Don't trigger if clicking on buttons or view btn
+    if (e.target.closest('.branch-view-btn') || 
+        e.target.tagName === 'BUTTON' ||
+        e.target.closest('svg')) {
+      return;
+    }
+    
     if (hasDragged) {
       hasDragged = false;
       return;
     }
-    openBranchPopup(branch.id);
+    
+    // Enter focus mode for this branch
+    enterFocusMode(branch.id);
   });
   
   // Global mousemove for dragging
@@ -624,7 +730,33 @@ function updateIdeaText(ideaId, newText) {
   const idea = ideas.find(i => i.id === ideaId);
   if (idea) {
     idea.text = newText;
+    autoSaveSession(true);
   }
+}
+
+function updateBranchDescription(branchId, newDescription) {
+  const branch = branches.find(b => b.id === branchId);
+  if (branch) {
+    console.log('Updating branch description:', branchId, 'to:', newDescription);
+    branch.description = newDescription;
+    autoSaveSession(true).then(() => {
+      console.log('Branch description saved to DB');
+    });
+  }
+}
+
+function updateIdeaDescription(ideaId, newDescription) {
+  const idea = ideas.find(i => i.id === ideaId);
+  if (idea) {
+    idea.description = newDescription;
+    autoSaveSession(true);
+  }
+}
+
+function closeAllIdeaDescriptions() {
+  document.querySelectorAll('.idea-item.show-description').forEach(el => el.classList.remove('show-description'));
+  document.querySelectorAll('.popup-idea-item.show-description').forEach(el => el.classList.remove('show-description'));
+  document.querySelectorAll('.focus-idea-branch.show-description').forEach(el => el.classList.remove('show-description'));
 }
 
 // ==================== RENDERING ====================
@@ -639,6 +771,9 @@ function renderHubIdeas() {
   hubIdeasList.innerHTML = unbrachedIdeas.map(idea => `
     <div class="idea-item" data-idea-id="${idea.id}" draggable="true">
       <span class="idea-text" contenteditable="true">${escapeHtml(idea.text)}</span>
+      <div class="idea-description">
+        <textarea class="idea-description-input" placeholder="Add a description...">${escapeHtml(idea.description || '')}</textarea>
+      </div>
       <div class="idea-actions">
         <button class="idea-action-btn delete-btn" title="Remove" onclick="removeIdea('${idea.id}')">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -655,6 +790,25 @@ function renderHubIdeas() {
     el.addEventListener('blur', (e) => {
       const ideaId = e.target.closest('.idea-item').dataset.ideaId;
       updateIdeaText(ideaId, e.target.textContent.trim());
+    });
+    el.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const item = e.target.closest('.idea-item');
+      if (!item) return;
+      closeAllIdeaDescriptions();
+      item.classList.add('show-description');
+    });
+  });
+
+  hubIdeasList.querySelectorAll('.idea-description-input').forEach(el => {
+    el.addEventListener('blur', (e) => {
+      const ideaId = e.target.closest('.idea-item').dataset.ideaId;
+      updateIdeaDescription(ideaId, e.target.value.trim());
+    });
+    el.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        e.target.blur();
+      }
     });
   });
   
@@ -700,8 +854,11 @@ function renderBranches() {
     const ideasContainer = branchEl.querySelector('.branch-ideas');
     
     if (branchIdeas.length > 0) {
-      branchEl.style.display = 'block';
-      branchEl.classList.add('visible');
+      // Only show branches if NOT in focus mode
+      if (!focusMode.active) {
+        branchEl.style.display = 'block';
+        branchEl.classList.add('visible');
+      }
       
       // Update title
       const titleEl = branchEl.querySelector('.branch-title');
@@ -732,21 +889,18 @@ function renderBranches() {
     }
   });
   
-  // Draw connections
-  setTimeout(drawConnections, 100);
+  // Draw connections only if NOT in focus mode
+  if (!focusMode.active) {
+    setTimeout(drawConnections, 100);
+  }
 }
 
 // ==================== AI INTEGRATION ====================
 async function loadInitialSuggestions(forceFetch = false) {
-  // Check cache first (unless forced)
-  if (!forceFetch) {
-    const cachedSuggestions = suggestionsCache.get();
-    if (cachedSuggestions && cachedSuggestions.length > 0) {
-      console.log('Using cached suggestions');
-      suggestions = cachedSuggestions;
-      renderSuggestions();
-      return;
-    }
+  // Use saved suggestions from session unless forced
+  if (!forceFetch && suggestions && suggestions.length > 0) {
+    renderSuggestions();
+    return;
   }
   
   // Check rate limit
@@ -774,8 +928,8 @@ async function loadInitialSuggestions(forceFetch = false) {
     
     if (response.data.success) {
       suggestions = response.data.suggestions;
-      suggestionsCache.set(suggestions); // Cache the results
       renderSuggestions();
+      autoSaveSession();
     }
   } catch (error) {
     console.error('Error loading suggestions:', error);
@@ -807,8 +961,8 @@ async function loadSuggestionsForInput(input) {
     
     if (response.data.success) {
       suggestions = response.data.suggestions;
-      suggestionsCache.set(suggestions); // Cache the results
       renderSuggestions();
+      autoSaveSession();
     }
   } catch (error) {
     console.error('Error loading suggestions:', error);
@@ -817,11 +971,8 @@ async function loadSuggestionsForInput(input) {
 }
 
 async function loadSuggestionsForContext() {
-  // Check cache first
-  const cachedSuggestions = suggestionsCache.get();
-  if (cachedSuggestions && cachedSuggestions.length > 0) {
-    console.log('Using cached suggestions for context');
-    suggestions = cachedSuggestions;
+  // Use saved suggestions from session if available
+  if (suggestions && suggestions.length > 0) {
     renderSuggestions();
     return;
   }
@@ -848,8 +999,8 @@ async function loadSuggestionsForContext() {
     
     if (response.data.success) {
       suggestions = response.data.suggestions;
-      suggestionsCache.set(suggestions); // Cache the results
       renderSuggestions();
+      autoSaveSession();
     }
   } catch (error) {
     console.error('Error loading context suggestions:', error);
@@ -910,20 +1061,22 @@ async function organizeWithAI() {
 // ==================== SESSION MANAGEMENT ====================
 // Debounced auto-save (silent, no toast)
 let autoSaveTimeout = null;
-async function autoSaveSession() {
-  // Debounce - wait 1 second after last change before saving
+async function autoSaveSession(force = false) {
   if (autoSaveTimeout) {
     clearTimeout(autoSaveTimeout);
   }
   
-  autoSaveTimeout = setTimeout(async () => {
+  const save = async () => {
     try {
+      console.log('Saving branches with descriptions:', branches.map(b => ({ id: b.id, name: b.name, description: b.description })));
       const response = await axios.post('/api/brainstorm/session', {
         sessionId: sessionId,
         projectId: currentProject.id,  // Include project ID for cross-device sync
         ideas: ideas,
         branches: branches,
-        userContext: userContext
+        userContext: userContext,
+        suggestions: suggestions,
+        focusSuggestions: focusSuggestionsByBranch
       });
       
       if (response.data.success) {
@@ -933,7 +1086,13 @@ async function autoSaveSession() {
     } catch (error) {
       console.error('Error auto-saving session:', error);
     }
-  }, 1000);
+  };
+  
+  if (force) {
+    await save();
+  } else {
+    autoSaveTimeout = setTimeout(save, 1000);
+  }
 }
 
 async function saveSession() {
@@ -943,7 +1102,9 @@ async function saveSession() {
       projectId: currentProject.id,  // Include project ID for cross-device sync
       ideas: ideas,
       branches: branches,
-      userContext: userContext
+      userContext: userContext,
+      suggestions: suggestions,
+      focusSuggestions: focusSuggestionsByBranch
     });
     
     if (response.data.success) {
@@ -966,6 +1127,10 @@ async function loadSession(id) {
       ideas = response.data.session.ideas || [];
       branches = response.data.session.branches || [];
       userContext = response.data.session.userContext || userContext;
+      suggestions = response.data.session.suggestions || [];
+      focusSuggestionsByBranch = response.data.session.focusSuggestions || {};
+      
+      console.log('Loaded branches with descriptions:', branches.map(b => ({ id: b.id, name: b.name, description: b.description })));
       
       // Ensure all branches have positionIndex and color (for backwards compatibility)
       branches.forEach((branch, index) => {
@@ -981,8 +1146,12 @@ async function loadSession(id) {
       renderBranches();
       checkOrganizeThreshold();
       
-      // Load suggestions for current context
-      loadSuggestionsForContext();
+      // Load suggestions for current context (use saved if available)
+      if (suggestions.length > 0) {
+        renderSuggestions();
+      } else {
+        loadSuggestionsForContext();
+      }
     }
   } catch (error) {
     console.error('Error loading session:', error);
@@ -1001,6 +1170,10 @@ async function loadSessionByProject(projectId) {
       ideas = response.data.session.ideas || [];
       branches = response.data.session.branches || [];
       userContext = response.data.session.userContext || userContext;
+      suggestions = response.data.session.suggestions || [];
+      focusSuggestionsByBranch = response.data.session.focusSuggestions || {};
+      
+      console.log('Loaded branches by project with descriptions:', branches.map(b => ({ id: b.id, name: b.name, description: b.description })));
       
       // Ensure all branches have positionIndex and color (for backwards compatibility)
       branches.forEach((branch, index) => {
@@ -1016,8 +1189,12 @@ async function loadSessionByProject(projectId) {
       renderBranches();
       checkOrganizeThreshold();
       
-      // Load suggestions for current context
-      loadSuggestionsForContext();
+      // Load suggestions for current context (use saved if available)
+      if (suggestions.length > 0) {
+        renderSuggestions();
+      } else {
+        loadSuggestionsForContext();
+      }
       
       console.log('Session loaded for project:', projectId);
       return true;
@@ -1037,6 +1214,8 @@ function clearSession() {
   branches = [];
   sessionId = null;
   userContext = { acceptedTopics: [], rejectedSuggestions: [], inputHistory: [] };
+  suggestions = [];
+  focusSuggestionsByBranch = {};
   
   localStorage.removeItem('brainstormSessionId');
   window.history.replaceState({}, '', window.location.pathname);
@@ -1069,6 +1248,29 @@ function centerCanvas() {
   setTimeout(() => {
     if (panHint) panHint.classList.add('hidden');
   }, 5000);
+}
+
+// Center on focus hub when in focus mode
+function centerOnFocusHub() {
+  const focusHub = document.getElementById('focus-hub');
+  if (!focusHub) return;
+  
+  const mainRect = brainstormMain.getBoundingClientRect();
+  
+  // Get focus hub position and size
+  const hubLeft = parseFloat(focusHub.style.left) || 0;
+  const hubTop = parseFloat(focusHub.style.top) || 0;
+  const hubWidth = 380;
+  const hubHeight = focusHub.offsetHeight || 400;
+  const hubCenterX = hubLeft + hubWidth / 2;
+  const hubCenterY = hubTop + hubHeight / 2;
+  
+  // Calculate pan to center the focus hub
+  canvasState.panX = (mainRect.width / 2) - (hubCenterX * canvasState.zoom);
+  canvasState.panY = (mainRect.height / 2) - (hubCenterY * canvasState.zoom);
+  
+  updateCanvasTransform();
+  updateMiniMap();
 }
 
 function updateCanvasTransform() {
@@ -1144,7 +1346,12 @@ function setupPanZoomControls() {
     if (canvasState.isPanning) {
       canvasState.isPanning = false;
       brainstormMain.classList.remove('panning');
-      drawConnections();
+      // Draw appropriate connections based on mode
+      if (focusMode.active) {
+        drawFocusConnections(focusMode.branchId);
+      } else {
+        drawConnections();
+      }
     }
   });
   
@@ -1180,8 +1387,15 @@ function setupPanZoomControls() {
   if (centerBtn) {
     centerBtn.addEventListener('click', () => {
       canvasState.zoom = 1;
-      centerCanvas();
-      drawConnections();
+      
+      // If in focus mode, center on focus hub instead
+      if (focusMode.active) {
+        centerOnFocusHub();
+        drawFocusConnections(focusMode.branchId);
+      } else {
+        centerCanvas();
+        drawConnections();
+      }
     });
   }
   
@@ -1571,6 +1785,859 @@ function clearConnections() {
   existingLines.forEach(line => line.remove());
 }
 
+// ==================== FOCUS MODE ====================
+// Focus Mode: Zoom into a category, making it the center with ideas branching out
+
+function enterFocusMode(branchId) {
+  const branch = branches.find(b => b.id === branchId);
+  if (!branch) return;
+  
+  // Store current state for return
+  focusMode.previousPanX = canvasState.panX;
+  focusMode.previousPanY = canvasState.panY;
+  focusMode.previousZoom = canvasState.zoom;
+  focusMode.branchId = branchId;
+  focusMode.active = true;
+  
+  // Get the branch element position (we'll place the focus hub here)
+  const branchEl = document.getElementById(`branch-${branchId}`);
+  if (!branchEl) return;
+  
+  const branchLeft = parseFloat(branchEl.style.left) || 0;
+  const branchTop = parseFloat(branchEl.style.top) || 0;
+  
+  // Add focus mode class to body
+  document.body.classList.add('focus-mode-active');
+  
+  // Clear ALL existing connection lines first
+  clearConnections();
+  
+  // Hide ALL branches and the central hub (use display:none for complete hiding)
+  document.querySelectorAll('.branch').forEach(el => {
+    el.classList.add('focus-hidden');
+    el.style.display = 'none'; // Completely hide
+  });
+  document.getElementById('central-hub').classList.add('focus-hidden');
+  document.getElementById('central-hub').style.display = 'none';
+  
+  // Create focus hub (reusing exact same structure as central-hub)
+  createFocusHub(branch, branchLeft, branchTop);
+  
+  // Create idea nodes that branch out from this category
+  createFocusIdeaNodes(branchId);
+  
+  // Calculate zoom and pan to center on the focus hub
+  const mainRect = brainstormMain.getBoundingClientRect();
+  const targetZoom = 1.0;
+  
+  // Get focus hub dimensions for centering
+  const focusHub = document.getElementById('focus-hub');
+  const hubWidth = 440;
+  const hubHeight = focusHub ? focusHub.offsetHeight : 300;
+  const hubCenterX = branchLeft + hubWidth / 2;
+  const hubCenterY = branchTop + hubHeight / 2;
+  
+  const targetPanX = (mainRect.width / 2) - (hubCenterX * targetZoom);
+  const targetPanY = (mainRect.height / 2) - (hubCenterY * targetZoom);
+  
+  // Animate to the new position
+  canvasContainer.style.transition = 'transform 0.6s cubic-bezier(0.16, 1, 0.3, 1)';
+  
+  canvasState.zoom = targetZoom;
+  canvasState.panX = targetPanX;
+  canvasState.panY = targetPanY;
+  updateCanvasTransform();
+  
+  // Remove transition after animation and draw connections
+  setTimeout(() => {
+    canvasContainer.style.transition = '';
+    drawFocusConnections(branchId);
+  }, 600);
+  
+  // Setup focus mode event listeners
+  setupFocusModeListeners();
+  
+  // Load category-specific AI suggestions
+  loadFocusModeSuggestions(branch);
+  
+  showToast(`Focus Mode: ${branch.name}`, 'success');
+}
+
+// Create a focus hub that reuses the EXACT same structure as central-hub
+function createFocusHub(branch, left, top) {
+  const branchIdeas = ideas.filter(i => i.branchId === branch.id);
+  
+  const focusHub = document.createElement('div');
+  focusHub.className = 'central-hub focus-hub';
+  focusHub.id = 'focus-hub';
+  focusHub.style.left = `${left}px`;
+  focusHub.style.top = `${top}px`;
+  focusHub.style.transform = 'none'; // Override the default centering transform
+  focusHub.style.position = 'absolute';
+  
+  // Simplified hub - no ideas list inside since they're shown as branches around it
+  focusHub.innerHTML = `
+    <h1 class="hub-title">
+      <span class="gradient-text">${escapeHtml(branch.name)}</span>
+    </h1>
+    
+    <div class="hub-container focus-hub-container">
+      <!-- Exit Button + Category Info -->
+      <div class="project-header">
+        <button class="focus-exit-btn" id="focus-exit-btn" title="Exit Focus Mode">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="19" y1="12" x2="5" y2="12"/>
+            <polyline points="12 19 5 12 12 5"/>
+          </svg>
+        </button>
+        <span class="project-name" id="focus-idea-count">${branchIdeas.length} idea${branchIdeas.length !== 1 ? 's' : ''} in category</span>
+        <span class="project-badge" style="background: ${branch.color}">Focus Mode</span>
+      </div>
+      
+      <!-- Add Idea Input (same as main hub) -->
+      <div class="add-idea-row">
+        <input 
+          type="text" 
+          class="idea-input" 
+          id="focus-idea-input" 
+          placeholder="Add idea to ${escapeHtml(branch.name)}..."
+          maxlength="200"
+        />
+        <button class="add-idea-btn" id="focus-add-btn" title="Add idea">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="12" y1="5" x2="12" y2="19"/>
+            <line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+        </button>
+      </div>
+      
+      <!-- AI Suggestions (same as main hub) -->
+      <div class="ai-suggestions-container">
+        <div class="suggestions-header">
+          <span class="suggestions-label">AI SUGGESTIONS</span>
+          <button class="refresh-suggestions-btn" id="focus-refresh-btn" title="Refresh suggestions">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M23 4v6h-6"/>
+              <path d="M1 20v-6h6"/>
+              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+            </svg>
+          </button>
+        </div>
+        <div class="ai-suggestions-list" id="focus-suggestions-list">
+          <div class="suggestions-loading">
+            <div class="loading-spinner"></div>
+            <span>Generating ideas...</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  canvasContainer.appendChild(focusHub);
+  
+  // Animate in
+  setTimeout(() => focusHub.classList.add('visible'), 50);
+}
+
+function getFocusHubMetrics() {
+  const focusHub = document.getElementById('focus-hub');
+  if (!focusHub) return null;
+  
+  const hubContainer = focusHub.querySelector('.focus-hub-container');
+  const hubLeft = parseFloat(focusHub.style.left) || 0;
+  const hubTop = parseFloat(focusHub.style.top) || 0;
+  const hubWidth = hubContainer ? hubContainer.offsetWidth : (focusHub.offsetWidth || 380);
+  const hubHeight = focusHub.offsetHeight || 300;
+  const hubCenterX = hubLeft + hubWidth / 2;
+  const hubCenterY = hubTop + hubHeight / 2;
+  
+  return { hubLeft, hubTop, hubWidth, hubHeight, hubCenterX, hubCenterY };
+}
+
+function isOverlappingHub(nodeEl, hubMetrics) {
+  const nodeLeft = parseFloat(nodeEl.style.left) || 0;
+  const nodeTop = parseFloat(nodeEl.style.top) || 0;
+  const nodeWidth = nodeEl.offsetWidth || 260;
+  const nodeHeight = nodeEl.offsetHeight || 80;
+  
+  return (
+    nodeLeft < hubMetrics.hubLeft + hubMetrics.hubWidth &&
+    nodeLeft + nodeWidth > hubMetrics.hubLeft &&
+    nodeTop < hubMetrics.hubTop + hubMetrics.hubHeight &&
+    nodeTop + nodeHeight > hubMetrics.hubTop
+  );
+}
+
+function pushNodeOutsideHub(nodeEl, hubMetrics, padding = 60) {
+  const nodeWidth = nodeEl.offsetWidth || 260;
+  const nodeHeight = nodeEl.offsetHeight || 80;
+  const nodeLeft = parseFloat(nodeEl.style.left) || 0;
+  const nodeTop = parseFloat(nodeEl.style.top) || 0;
+  
+  const nodeCenterX = nodeLeft + nodeWidth / 2;
+  const nodeCenterY = nodeTop + nodeHeight / 2;
+  
+  let dx = nodeCenterX - hubMetrics.hubCenterX;
+  let dy = nodeCenterY - hubMetrics.hubCenterY;
+  
+  if (dx === 0 && dy === 0) {
+    dx = 1;
+  }
+  
+  const length = Math.sqrt(dx * dx + dy * dy);
+  const nx = dx / length;
+  const ny = dy / length;
+  
+  const minRadius = Math.max(hubMetrics.hubWidth, hubMetrics.hubHeight) / 2 + Math.max(nodeWidth, nodeHeight) / 2 + padding;
+  
+  const newCenterX = hubMetrics.hubCenterX + nx * minRadius;
+  const newCenterY = hubMetrics.hubCenterY + ny * minRadius;
+  
+  nodeEl.style.left = `${newCenterX - nodeWidth / 2}px`;
+  nodeEl.style.top = `${newCenterY - nodeHeight / 2}px`;
+}
+
+function reflowFocusIdeaNodes() {
+  if (!focusMode.active) return;
+  const hubMetrics = getFocusHubMetrics();
+  if (!hubMetrics) return;
+  
+  const ideaNodes = document.querySelectorAll('.focus-idea-branch');
+  ideaNodes.forEach(node => {
+    const ideaId = node.dataset.ideaId;
+    const idea = ideas.find(i => i.id === ideaId);
+    if (!idea) return;
+    
+    // Only auto-reflow ideas that do not have a saved position
+    if (idea.focusX !== undefined && idea.focusY !== undefined) return;
+    
+    if (isOverlappingHub(node, hubMetrics)) {
+      pushNodeOutsideHub(node, hubMetrics, 70);
+    }
+  });
+  
+  drawFocusConnections(focusMode.branchId);
+}
+
+function exitFocusMode() {
+  if (!focusMode.active) return;
+  
+  // Remove focus mode class
+  document.body.classList.remove('focus-mode-active');
+  
+  // Remove the focus hub
+  const focusHub = document.getElementById('focus-hub');
+  if (focusHub) {
+    focusHub.remove();
+  }
+  
+  // Remove focus idea nodes
+  document.querySelectorAll('.focus-idea-node').forEach(el => el.remove());
+  document.querySelectorAll('.focus-idea-branch').forEach(el => el.remove());
+  
+  // Clear focus connections
+  clearConnections();
+  
+  // Show all branches and central hub again (restore display)
+  document.querySelectorAll('.branch.focus-hidden').forEach(el => {
+    el.classList.remove('focus-hidden');
+    el.style.display = ''; // Restore display
+  });
+  const centralHub = document.getElementById('central-hub');
+  if (centralHub) {
+    centralHub.classList.remove('focus-hidden');
+    centralHub.style.display = ''; // Restore display
+  }
+  
+  // Animate back to previous position
+  canvasContainer.style.transition = 'transform 0.5s cubic-bezier(0.16, 1, 0.3, 1)';
+  
+  canvasState.zoom = focusMode.previousZoom;
+  canvasState.panX = focusMode.previousPanX;
+  canvasState.panY = focusMode.previousPanY;
+  updateCanvasTransform();
+  
+  setTimeout(() => {
+    canvasContainer.style.transition = '';
+    // Redraw normal connections
+    drawConnections();
+  }, 500);
+  
+  // Clear focus mode state
+  focusMode.active = false;
+  focusMode.branchId = null;
+  
+  // Restore normal suggestions
+  loadSuggestionsForContext();
+  
+  showToast('Exited Focus Mode', 'info');
+}
+
+// Render the ideas list in the focus hub (reuses exact same structure as main hub)
+function renderFocusIdeasList(branchId) {
+  const focusIdeasList = document.getElementById('focus-ideas-list');
+  if (!focusIdeasList) return;
+  
+  const branchIdeas = ideas.filter(i => i.branchId === branchId);
+  
+  if (branchIdeas.length === 0) {
+    focusIdeasList.innerHTML = '';
+    return;
+  }
+  
+  focusIdeasList.innerHTML = branchIdeas.map(idea => `
+    <div class="idea-item" data-id="${idea.id}" draggable="true">
+      <span class="idea-text" contenteditable="true">${escapeHtml(idea.text)}</span>
+      <div class="idea-actions">
+        <button class="idea-action-btn delete-btn" data-id="${idea.id}" title="Delete">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="3 6 5 6 21 6"/>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  `).join('');
+  
+  // Add event listeners for editing and deleting
+  focusIdeasList.querySelectorAll('.idea-text').forEach(el => {
+    el.addEventListener('blur', (e) => {
+      const ideaId = e.target.closest('.idea-item').dataset.id;
+      updateIdeaText(ideaId, e.target.textContent.trim());
+    });
+  });
+  
+  focusIdeasList.querySelectorAll('.delete-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const ideaId = btn.dataset.id;
+      deleteFocusIdea(ideaId);
+    });
+  });
+}
+
+// Create idea nodes that radiate from focus hub (reuses branch-like styling and drag logic)
+function createFocusIdeaNodes(branchId) {
+  const branch = branches.find(b => b.id === branchId);
+  if (!branch) return;
+  
+  // Get focus hub metrics
+  const hubMetrics = getFocusHubMetrics();
+  if (!hubMetrics) return;
+  
+  // Get ideas for this branch
+  const branchIdeas = ideas.filter(i => i.branchId === branchId);
+  const ideaCount = branchIdeas.length;
+  
+  if (ideaCount === 0) return;
+  
+  // Calculate positions in a radial pattern (like branches around central hub)
+  const baseRadius = Math.max(hubMetrics.hubWidth, hubMetrics.hubHeight) / 2 + 180;
+  const startAngle = -Math.PI / 2; // Start at top
+  
+  branchIdeas.forEach((idea, index) => {
+    let x, y;
+    
+    // Use saved position if available, otherwise calculate radial position
+    if (idea.focusX !== undefined && idea.focusY !== undefined) {
+      x = idea.focusX;
+      y = idea.focusY;
+    } else {
+      // Calculate angle for this idea (spread evenly)
+      const angle = startAngle + (index / Math.max(ideaCount, 1)) * Math.PI * 2;
+      const radius = baseRadius + (index % 3) * 30;
+      
+      x = hubMetrics.hubCenterX + Math.cos(angle) * radius - 130;
+      y = hubMetrics.hubCenterY + Math.sin(angle) * radius - 50;
+    }
+    
+    // Create idea node element - reuses .branch styling!
+    const ideaNode = document.createElement('div');
+    ideaNode.className = 'branch focus-idea-branch';
+    ideaNode.id = `focus-idea-${idea.id}`;
+    ideaNode.dataset.ideaId = idea.id;
+    ideaNode.style.left = `${x}px`;
+    ideaNode.style.top = `${y}px`;
+    
+    // Reuse similar structure to branch cards - clean and compact
+    ideaNode.innerHTML = `
+      <div class="branch-header">
+        <span class="idea-text focus-idea-text" contenteditable="true" style="color: ${branch.color}; font-weight: 500; flex: 1;">${escapeHtml(idea.text)}</span>
+        <div class="branch-header-actions">
+          <button class="branch-view-btn focus-idea-delete" title="Delete idea" data-idea-id="${idea.id}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"/>
+              <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <div class="focus-idea-description">
+        <textarea class="focus-idea-description-input" placeholder="Add a description...">${escapeHtml(idea.description || '')}</textarea>
+      </div>
+    `;
+    
+    // Add event listeners for text editing
+    const textEl = ideaNode.querySelector('.focus-idea-text');
+    textEl.addEventListener('blur', () => {
+      updateIdeaText(idea.id, textEl.textContent.trim());
+    });
+    textEl.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        textEl.blur();
+      }
+    });
+    textEl.addEventListener('click', (e) => {
+      e.stopPropagation();
+      closeAllIdeaDescriptions();
+      ideaNode.classList.add('show-description');
+    });
+
+    const descInput = ideaNode.querySelector('.focus-idea-description-input');
+    if (descInput) {
+      descInput.addEventListener('blur', () => {
+        updateIdeaDescription(idea.id, descInput.value.trim());
+      });
+      descInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          descInput.blur();
+        }
+      });
+    }
+    
+    const deleteBtn = ideaNode.querySelector('.focus-idea-delete');
+    deleteBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      deleteFocusIdea(idea.id);
+    });
+
+    // Click anywhere on the idea card to open description
+    ideaNode.addEventListener('click', (e) => {
+      if (e.target.closest('.focus-idea-delete') || e.target.classList.contains('focus-idea-description-input')) {
+        return;
+      }
+      closeAllIdeaDescriptions();
+      ideaNode.classList.add('show-description');
+    });
+    
+    // Setup drag for this idea node (reusing branch drag logic)
+    setupFocusIdeaDrag(ideaNode, idea);
+    
+    // Add to canvas
+    canvasContainer.appendChild(ideaNode);
+    
+    // Ensure it doesn't overlap the hub if no saved position
+    if (idea.focusX === undefined || idea.focusY === undefined) {
+      setTimeout(() => {
+        const latestHubMetrics = getFocusHubMetrics();
+        if (!latestHubMetrics) return;
+        if (isOverlappingHub(ideaNode, latestHubMetrics)) {
+          pushNodeOutsideHub(ideaNode, latestHubMetrics, 70);
+          drawFocusConnections(focusMode.branchId);
+        }
+      }, 0);
+    }
+    
+    // Animate in with delay
+    setTimeout(() => ideaNode.classList.add('visible'), 100 + index * 50);
+  });
+}
+
+// Setup drag for focus idea nodes (reuses setupBranchDrag logic)
+function setupFocusIdeaDrag(ideaNode, idea) {
+  let isDragging = false;
+  let hasDragged = false;
+  let offsetX = 0;
+  let offsetY = 0;
+  let startX = 0;
+  let startY = 0;
+  
+  ideaNode.addEventListener('mousedown', (e) => {
+    // Don't start drag if clicking on text or delete button
+    if (e.target.classList.contains('focus-idea-text') || 
+        e.target.closest('.focus-idea-delete') ||
+        e.target.tagName === 'BUTTON' ||
+        e.target.closest('svg')) {
+      return;
+    }
+    
+    e.stopPropagation();
+    
+    hasDragged = false;
+    isDragging = true;
+    
+    const nodeRect = ideaNode.getBoundingClientRect();
+    offsetX = e.clientX - nodeRect.left;
+    offsetY = e.clientY - nodeRect.top;
+    startX = e.clientX;
+    startY = e.clientY;
+    
+    ideaNode.classList.add('dragging');
+    ideaNode.style.zIndex = '100';
+    ideaNode.style.cursor = 'grabbing';
+    
+    const onMouseMove = (e) => {
+      if (!isDragging || !focusMode.active) return;
+      
+      // Check if we've moved enough to consider it a drag
+      const dx = Math.abs(e.clientX - startX);
+      const dy = Math.abs(e.clientY - startY);
+      if (dx > 5 || dy > 5) {
+        hasDragged = true;
+      }
+      
+      // Calculate new position in canvas coordinates (same as branch drag)
+      const canvasRect = canvasContainer.getBoundingClientRect();
+      
+      let newX = (e.clientX - canvasRect.left) / canvasState.zoom - offsetX / canvasState.zoom;
+      let newY = (e.clientY - canvasRect.top) / canvasState.zoom - offsetY / canvasState.zoom;
+      
+      // Update element position
+      ideaNode.style.left = `${newX}px`;
+      ideaNode.style.top = `${newY}px`;
+      
+      // Redraw connections in real-time
+      drawFocusConnections(focusMode.branchId);
+    };
+    
+    const onMouseUp = () => {
+      if (!isDragging) return;
+      
+      isDragging = false;
+      
+      // Save the custom position to the idea object
+      const newX = parseFloat(ideaNode.style.left);
+      const newY = parseFloat(ideaNode.style.top);
+      
+      idea.focusX = newX;
+      idea.focusY = newY;
+      
+      // Reset drag state
+      ideaNode.classList.remove('dragging');
+      ideaNode.style.zIndex = '';
+      ideaNode.style.cursor = '';
+      
+      // Final connection redraw
+      drawFocusConnections(focusMode.branchId);
+      
+      // Auto-save to persist positions
+      if (hasDragged) {
+        autoSaveSession();
+      }
+      
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
+    };
+    
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+  });
+}
+
+// Draw connections from focus hub to idea nodes (reuses drawConnections logic)
+function drawFocusConnections(branchId) {
+  // Clear existing connection lines
+  clearConnections();
+  
+  const branch = branches.find(b => b.id === branchId);
+  if (!branch) return;
+  
+  const hubMetrics = getFocusHubMetrics();
+  if (!hubMetrics) return;
+  
+  // Draw lines to each focus idea node (same logic as branch connections)
+  const ideaNodes = document.querySelectorAll('.focus-idea-branch');
+  
+  ideaNodes.forEach((ideaNode, index) => {
+    const nodeLeft = parseFloat(ideaNode.style.left) || 0;
+    const nodeTop = parseFloat(ideaNode.style.top) || 0;
+    const nodeWidth = ideaNode.offsetWidth || 260;
+    const nodeHeight = ideaNode.offsetHeight || 100;
+    
+    let nodeX, nodeY;
+    const dx = (nodeLeft + nodeWidth / 2) - hubMetrics.hubCenterX;
+    const dy = (nodeTop + nodeHeight / 2) - hubMetrics.hubCenterY;
+    
+    // Connect from the side of node closest to hub (same as branch logic)
+    if (Math.abs(dx) > Math.abs(dy)) {
+      nodeX = dx > 0 ? nodeLeft : nodeLeft + nodeWidth;
+      nodeY = nodeTop + 40;
+    } else {
+      nodeX = nodeLeft + nodeWidth / 2;
+      nodeY = dy > 0 ? nodeTop : nodeTop + nodeHeight;
+    }
+    
+    const path = createCurvedPathSimple(hubMetrics.hubCenterX, hubMetrics.hubCenterY, nodeX, nodeY);
+    
+    const pathEl = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    pathEl.setAttribute('d', path);
+    pathEl.setAttribute('class', 'connection-line focus-connection');
+    pathEl.setAttribute('stroke', branch.color);
+    
+    connectionSvg.appendChild(pathEl);
+    
+    setTimeout(() => pathEl.classList.add('visible'), 50 + index * 30);
+  });
+}
+
+function setupFocusModeListeners() {
+  const exitBtn = document.getElementById('focus-exit-btn');
+  const addBtn = document.getElementById('focus-add-btn');
+  const input = document.getElementById('focus-idea-input');
+  const refreshBtn = document.getElementById('focus-refresh-btn');
+  
+  if (exitBtn) {
+    exitBtn.addEventListener('click', exitFocusMode);
+  }
+  
+  if (addBtn) {
+    addBtn.addEventListener('click', addFocusIdea);
+  }
+  
+  if (input) {
+    input.onkeypress = (e) => {
+      if (e.key === 'Enter') addFocusIdea();
+    };
+  }
+  
+  if (refreshBtn) {
+    refreshBtn.addEventListener('click', () => {
+      const branch = branches.find(b => b.id === focusMode.branchId);
+      if (branch) {
+        if (focusSuggestionsByBranch[branch.id]) {
+          delete focusSuggestionsByBranch[branch.id];
+          autoSaveSession();
+        }
+        loadFocusModeSuggestions(branch);
+      }
+    });
+  }
+  
+  // Escape key to exit
+  document.addEventListener('keydown', handleFocusEscape);
+}
+
+function handleFocusEscape(e) {
+  if (e.key === 'Escape' && focusMode.active) {
+    exitFocusMode();
+    document.removeEventListener('keydown', handleFocusEscape);
+  }
+}
+
+async function loadFocusModeSuggestions(branch) {
+  const focusSuggestionsList = document.getElementById('focus-suggestions-list');
+  if (!focusSuggestionsList) return;
+
+  // Use saved focus suggestions if available
+  const savedFocusSuggestions = focusSuggestionsByBranch[branch.id];
+  if (savedFocusSuggestions && savedFocusSuggestions.length > 0) {
+    renderFocusSuggestions(savedFocusSuggestions);
+    return;
+  }
+  
+  // Show loading (same structure as main hub)
+  focusSuggestionsList.innerHTML = `
+    <div class="suggestions-loading">
+      <div class="loading-spinner"></div>
+      <span>Generating ideas for ${escapeHtml(branch.name)}...</span>
+    </div>
+  `;
+  
+  // Check rate limit
+  if (!rateLimiter.canMakeRequest()) {
+    const waitTime = rateLimiter.getTimeUntilNextRequest();
+    focusSuggestionsList.innerHTML = `
+      <div class="suggestions-loading">
+        <span>Wait ${waitTime}s for more AI suggestions</span>
+      </div>
+    `;
+    return;
+  }
+  
+  try {
+    rateLimiter.recordRequest();
+    
+    // Get existing ideas in this category
+    const categoryIdeas = ideas.filter(i => i.branchId === branch.id).map(i => i.text);
+    
+    const response = await axios.post('/api/brainstorm/suggest', {
+      context: `Focus on "${branch.name}" category features`,
+      existingIdeas: categoryIdeas,
+      userPreferences: userContext,
+      projectName: currentProject.name,
+      projectDescription: currentProject.description,
+      focusCategory: branch.name
+    });
+    
+    if (response.data.success) {
+      renderFocusSuggestions(response.data.suggestions);
+      focusSuggestionsByBranch[branch.id] = response.data.suggestions;
+      autoSaveSession();
+    }
+  } catch (error) {
+    console.error('Error loading focus suggestions:', error);
+    if (focusSuggestionsList) {
+      focusSuggestionsList.innerHTML = `
+        <div class="suggestions-loading">
+          <span>Failed to load suggestions</span>
+        </div>
+      `;
+    }
+  }
+}
+
+function renderFocusSuggestions(focusSuggestions) {
+  const focusSuggestionsList = document.getElementById('focus-suggestions-list');
+  if (!focusSuggestionsList) return;
+  
+  if (!focusSuggestions || focusSuggestions.length === 0) {
+    focusSuggestionsList.innerHTML = `
+      <div class="suggestions-loading">
+        <span>No suggestions available</span>
+      </div>
+    `;
+    return;
+  }
+  
+  // Use EXACT same structure as main hub suggestions (suggestion-item class)
+  focusSuggestionsList.innerHTML = focusSuggestions.map(suggestion => `
+    <div class="suggestion-item" data-suggestion="${escapeHtml(suggestion).replace(/"/g, '&quot;')}">
+      <span class="suggestion-text">${escapeHtml(suggestion)}</span>
+      <button class="add-suggestion-btn" title="Add this idea">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="12" y1="5" x2="12" y2="19"/>
+          <line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+      </button>
+    </div>
+  `).join('');
+  
+  // Add click handlers
+  focusSuggestionsList.querySelectorAll('.suggestion-item').forEach(item => {
+    item.addEventListener('click', () => {
+      const suggestion = item.dataset.suggestion;
+      addFocusSuggestion(suggestion);
+      item.remove();
+      
+      // Persist updated suggestions list for this branch
+      if (focusMode.active && focusMode.branchId) {
+        const remaining = Array.from(focusSuggestionsList.querySelectorAll('.suggestion-item'))
+          .map(el => el.dataset.suggestion);
+        focusSuggestionsByBranch[focusMode.branchId] = remaining;
+        autoSaveSession();
+      }
+    });
+  });
+
+  // Hub height may grow after suggestions render; reflow ideas to avoid overlap
+  setTimeout(() => reflowFocusIdeaNodes(), 50);
+}
+
+function addFocusIdea() {
+  if (!focusMode.active || !focusMode.branchId) return;
+  
+  const input = document.getElementById('focus-idea-input');
+  const text = input.value.trim();
+  if (!text) return;
+  
+  const idea = {
+    id: generateId(),
+    text: text,
+    description: '',
+    source: 'manual',
+    branchId: focusMode.branchId,
+    createdAt: new Date()
+  };
+  
+  ideas.push(idea);
+  userContext.inputHistory.push(text);
+  input.value = '';
+  
+  // Re-render focus mode
+  refreshFocusMode();
+  
+  // Update main branches (for when we exit)
+  renderBranches();
+  
+  // Auto-save
+  autoSaveSession();
+  
+  showToast('Idea added!', 'success');
+}
+
+function addFocusSuggestion(suggestionText) {
+  if (!focusMode.active || !focusMode.branchId) return;
+  
+  const idea = {
+    id: generateId(),
+    text: suggestionText,
+    description: '',
+    source: 'ai',
+    branchId: focusMode.branchId,
+    createdAt: new Date()
+  };
+  
+  ideas.push(idea);
+  userContext.acceptedTopics.push(suggestionText);
+  
+  // Re-render focus mode
+  refreshFocusMode();
+  
+  // Update main branches
+  renderBranches();
+  
+  // Auto-save
+  autoSaveSession();
+  
+  showToast('Idea added!', 'success');
+}
+
+function deleteFocusIdea(ideaId) {
+  const index = ideas.findIndex(i => i.id === ideaId);
+  if (index > -1) {
+    ideas.splice(index, 1);
+    
+    // Re-render focus mode
+    if (focusMode.active) {
+      refreshFocusMode();
+    }
+    
+    // Update main branches
+    renderBranches();
+    
+    // Auto-save
+    autoSaveSession();
+  }
+}
+
+function refreshFocusMode() {
+  if (!focusMode.active || !focusMode.branchId) return;
+  
+  // Remove old idea nodes and recreate them
+  document.querySelectorAll('.focus-idea-branch').forEach(el => el.remove());
+  createFocusIdeaNodes(focusMode.branchId);
+  
+  // Redraw connections after nodes are created
+  setTimeout(() => drawFocusConnections(focusMode.branchId), 150);
+  // Reflow nodes in case hub size changed
+  setTimeout(() => reflowFocusIdeaNodes(), 200);
+  
+  // Update the count in the project header
+  const branchIdeas = ideas.filter(i => i.branchId === focusMode.branchId);
+  const countEl = document.getElementById('focus-idea-count');
+  if (countEl) {
+    countEl.textContent = `${branchIdeas.length} idea${branchIdeas.length !== 1 ? 's' : ''} in category`;
+  }
+}
+
+// Make focus mode functions globally available
+window.addFocusSuggestion = addFocusSuggestion;
+window.deleteFocusIdea = deleteFocusIdea;
+window.addFocusIdea = addFocusIdea;
+window.exitFocusMode = exitFocusMode;
+
 // ==================== DRAG AND DROP ====================
 function setupDragAndDrop() {
   const draggables = document.querySelectorAll('[draggable="true"]');
@@ -1665,13 +2732,23 @@ function openBranchPopup(branchId) {
   currentPopupBranchId = branchId;
   
   const overlay = document.getElementById('branch-popup-overlay');
+  const popup = overlay ? overlay.querySelector('.branch-popup') : null;
   const colorDot = document.getElementById('popup-color-dot');
   const branchName = document.getElementById('popup-branch-name');
   const ideaCount = document.getElementById('popup-idea-count');
+  const descInput = document.getElementById('popup-branch-description');
   
   // Set header info
   colorDot.style.background = branch.color;
   branchName.textContent = branch.name;
+  if (descInput) descInput.value = branch.description || '';
+  if (popup) {
+    if (branch.description && branch.description.trim().length > 0) {
+      popup.classList.add('show-description');
+    } else {
+      popup.classList.remove('show-description');
+    }
+  }
   
   // Render ideas in popup
   renderPopupIdeas(branchId);
@@ -1688,6 +2765,10 @@ function openBranchPopup(branchId) {
 function closeBranchPopup() {
   const overlay = document.getElementById('branch-popup-overlay');
   overlay.classList.remove('active');
+  const descInput = document.getElementById('popup-branch-description');
+  if (currentPopupBranchId && descInput) {
+    updateBranchDescription(currentPopupBranchId, descInput.value.trim());
+  }
   currentPopupBranchId = null;
 }
 
@@ -1715,6 +2796,9 @@ function renderPopupIdeas(branchId) {
       <span class="popup-idea-number">${index + 1}</span>
       <div class="popup-idea-content">
         <span class="popup-idea-text" contenteditable="true">${escapeHtml(idea.text)}</span>
+        <div class="popup-idea-description">
+          <textarea class="popup-idea-description-input" placeholder="Add a description...">${escapeHtml(idea.description || '')}</textarea>
+        </div>
       </div>
       <div class="popup-idea-actions">
         <button class="popup-idea-btn delete" onclick="deleteIdeaFromPopup('${idea.id}')" title="Delete">
@@ -1740,6 +2824,26 @@ function renderPopupIdeas(branchId) {
         e.target.blur();
       }
     });
+
+    el.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const item = e.target.closest('.popup-idea-item');
+      if (!item) return;
+      closeAllIdeaDescriptions();
+      item.classList.add('show-description');
+    });
+  });
+
+  ideasList.querySelectorAll('.popup-idea-description-input').forEach(el => {
+    el.addEventListener('blur', (e) => {
+      const ideaId = e.target.closest('.popup-idea-item').dataset.ideaId;
+      updateIdeaDescription(ideaId, e.target.value.trim());
+    });
+    el.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        e.target.blur();
+      }
+    });
   });
 }
 
@@ -1752,6 +2856,7 @@ function addIdeaFromPopup() {
   const idea = {
     id: generateId(),
     text: text,
+    description: '',
     source: 'manual',
     branchId: currentPopupBranchId,
     createdAt: new Date()
@@ -1801,6 +2906,34 @@ function setupPopupEventListeners() {
   const addBtn = document.getElementById('popup-add-btn');
   if (addBtn) {
     addBtn.addEventListener('click', addIdeaFromPopup);
+  }
+
+  // Category description toggle
+  const descBtn = document.getElementById('popup-desc-btn');
+  if (descBtn) {
+    descBtn.addEventListener('click', () => {
+      const overlay = document.getElementById('branch-popup-overlay');
+      const popup = overlay ? overlay.querySelector('.branch-popup') : null;
+      if (!popup) return;
+      popup.classList.toggle('show-description');
+      const descInput = document.getElementById('popup-branch-description');
+      if (descInput) descInput.focus();
+    });
+  }
+
+  // Save category description
+  const descInput = document.getElementById('popup-branch-description');
+  if (descInput) {
+    descInput.addEventListener('blur', () => {
+      if (currentPopupBranchId) {
+        updateBranchDescription(currentPopupBranchId, descInput.value.trim());
+      }
+    });
+    descInput.addEventListener('input', debounce(() => {
+      if (currentPopupBranchId) {
+        updateBranchDescription(currentPopupBranchId, descInput.value.trim());
+      }
+    }, 500));
   }
   
   // Enter to add

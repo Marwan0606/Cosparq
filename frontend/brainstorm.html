@@ -171,6 +171,12 @@
           <span id="popup-branch-name">Category Name</span>
         </h2>
         <span class="branch-popup-count" id="popup-idea-count">0 ideas</span>
+        <button class="branch-popup-desc-btn" id="popup-desc-btn" title="Add category description">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 20h9"/>
+            <path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4 12.5-12.5z"/>
+          </svg>
+        </button>
         <button class="branch-popup-close" id="popup-close-btn" title="Close">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="18" y1="6" x2="6" y2="18"/>
@@ -179,6 +185,10 @@
         </button>
       </div>
       <div class="branch-popup-body">
+        <div class="branch-popup-description" id="popup-branch-description-section">
+          <label for="popup-branch-description">Category description</label>
+          <textarea id="popup-branch-description" placeholder="Add a description for this category..."></textarea>
+        </div>
         <div class="branch-popup-ideas" id="popup-ideas-list">
           <!-- Ideas will be rendered here -->
         </div>

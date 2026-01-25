@@ -10,6 +10,10 @@ const ideaSchema = new mongoose.Schema({
     required: true,
     maxlength: 500
   },
+  description: {
+    type: String,
+    default: ''
+  },
   source: {
     type: String,
     enum: ['manual', 'ai'],
@@ -38,6 +42,10 @@ const branchSchema = new mongoose.Schema({
     type: String,
     required: true,
     maxlength: 100
+  },
+  description: {
+    type: String,
+    default: ''
   },
   color: {
     type: String,
@@ -94,6 +102,14 @@ const brainstormSessionSchema = new mongoose.Schema({
   },
   ideas: [ideaSchema],
   branches: [branchSchema],
+  suggestions: [{
+    type: String
+  }],
+  focusSuggestions: {
+    type: Map,
+    of: [String],
+    default: () => ({})
+  },
   userContext: {
     type: userContextSchema,
     default: () => ({
