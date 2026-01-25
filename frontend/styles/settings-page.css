@@ -1123,3 +1123,302 @@ body {
     justify-content: center;
   }
 }
+
+/* ============================================
+   MARKETPLACE POSTS SECTION
+   ============================================ */
+
+.marketplace-posts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.posts-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 40px 20px;
+  color: var(--text-muted);
+}
+
+.posts-loading .spinner {
+  width: 24px;
+  height: 24px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.posts-empty {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-muted);
+}
+
+.posts-empty-icon {
+  width: 48px;
+  height: 48px;
+  margin: 0 auto 12px;
+  opacity: 0.4;
+}
+
+.posts-empty h4 {
+  font-size: 1rem;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+}
+
+.posts-empty p {
+  font-size: 0.9rem;
+}
+
+.marketplace-post-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  transition: all 0.3s ease;
+}
+
+.marketplace-post-item:hover {
+  border-color: rgba(255, 255, 255, 0.12);
+  background: var(--bg-card-hover);
+}
+
+.post-thumbnail {
+  width: 64px;
+  height: 64px;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--bg-elevated);
+  flex-shrink: 0;
+}
+
+.post-thumbnail img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.post-thumbnail-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #8400ff;
+  background: linear-gradient(135deg, #222, #1a1a1a);
+}
+
+.post-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.post-name {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.post-tagline {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.post-meta {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 8px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.post-stat {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.post-stat svg {
+  width: 14px;
+  height: 14px;
+}
+
+.post-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.post-action-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-fast);
+}
+
+.post-action-btn:hover {
+  background: var(--bg-elevated);
+  color: var(--text);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.post-action-btn.delete:hover {
+  background: var(--danger-bg);
+  color: var(--danger);
+  border-color: rgba(255, 74, 74, 0.3);
+}
+
+.post-action-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Delete confirmation modal */
+.delete-confirm-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.delete-confirm-modal.hidden {
+  display: none;
+}
+
+.delete-confirm-content {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  max-width: 400px;
+  width: 100%;
+  text-align: center;
+}
+
+.delete-confirm-icon {
+  width: 48px;
+  height: 48px;
+  margin: 0 auto 16px;
+  color: var(--danger);
+}
+
+.delete-confirm-content h3 {
+  font-size: 1.2rem;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+
+.delete-confirm-content p {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin-bottom: 24px;
+}
+
+.delete-confirm-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.delete-confirm-actions .btn {
+  min-width: 100px;
+}
+
+/* Edit Post Modal */
+.edit-post-modal {
+  max-width: 500px;
+}
+
+.edit-post-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.edit-post-form .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.edit-post-form label {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.edit-post-form .required {
+  color: #ff4a4a;
+}
+
+.edit-post-form .input {
+  padding: 10px 14px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-size: 0.95rem;
+  transition: border-color var(--transition-fast);
+}
+
+.edit-post-form .input:focus {
+  outline: none;
+  border-color: #8400ff;
+}
+
+.edit-post-form textarea.input {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.edit-post-images {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.edit-post-images img {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+}
+
+.post-action-btn.edit:hover {
+  background: rgba(132, 0, 255, 0.1);
+  color: #8400ff;
+  border-color: rgba(132, 0, 255, 0.3);
+}

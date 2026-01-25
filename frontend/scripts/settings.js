@@ -695,6 +695,265 @@
   }
 
   // ============================================
+  // MARKETPLACE POSTS
+  // ============================================
+
+  let marketplacePostsLoaded = false;
+
+  async function loadMarketplacePosts() {
+    const container = document.querySelector('.js-marketplace-posts');
+    if (!container || marketplacePostsLoaded) return;
+
+    try {
+      const data = await apiRequest('/marketplace/my-listings');
+      marketplacePostsLoaded = true;
+      
+      if (!data || !data.listings || data.listings.length === 0) {
+        userPosts = [];
+        container.innerHTML = `
+          <div class="posts-empty">
+            <svg class="posts-empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+              <polyline points="9 22 9 12 15 12 15 22"/>
+            </svg>
+            <h4>No posts yet</h4>
+            <p>You haven't shared any apps on the marketplace yet.</p>
+          </div>
+        `;
+        return;
+      }
+
+      userPosts = data.listings;
+      renderMarketplacePosts(data.listings, container);
+    } catch (error) {
+      console.error('Error loading marketplace posts:', error);
+      userPosts = [];
+      container.innerHTML = `
+        <div class="posts-empty">
+          <h4>Failed to load posts</h4>
+          <p>${error.message || 'Something went wrong. Please try again.'}</p>
+        </div>
+      `;
+    }
+  }
+
+  function renderMarketplacePosts(posts, container) {
+    container.innerHTML = posts.map(post => `
+      <div class="marketplace-post-item" data-post-id="${post._id}">
+        <div class="post-thumbnail">
+          ${post.images && post.images.length > 0 
+            ? `<img src="${post.images[0]}" alt="${post.name}" />`
+            : `<div class="post-thumbnail-placeholder">${post.name.charAt(0).toUpperCase()}</div>`
+          }
+        </div>
+        <div class="post-info">
+          <div class="post-name">${escapeHtml(post.name)}</div>
+          <div class="post-tagline">${escapeHtml(post.tagline || '')}</div>
+          <div class="post-meta">
+            <span class="post-stat">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 19l-7-7 1.41-1.41L12 16.17l5.59-5.58L19 12l-7 7z"/>
+                <path d="M12 5l-7 7 1.41 1.41L12 7.83l5.59 5.58L19 12l-7-7z"/>
+              </svg>
+              ${post.upvotes || 0} upvotes
+            </span>
+            <span class="post-stat">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                <line x1="16" y1="2" x2="16" y2="6"/>
+                <line x1="8" y1="2" x2="8" y2="6"/>
+                <line x1="3" y1="10" x2="21" y2="10"/>
+              </svg>
+              ${formatDate(post.createdAt)}
+            </span>
+          </div>
+        </div>
+        <div class="post-actions">
+          <button class="post-action-btn edit" onclick="editMarketplacePost('${post._id}')" title="Edit post">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+            </svg>
+          </button>
+          <button class="post-action-btn" onclick="window.open('/marketplace.html', '_blank')" title="View on marketplace">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+              <polyline points="15 3 21 3 21 9"/>
+              <line x1="10" y1="14" x2="21" y2="3"/>
+            </svg>
+          </button>
+          <button class="post-action-btn delete" onclick="deleteMarketplacePost('${post._id}', '${escapeHtml(post.name)}')" title="Delete post">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="3 6 5 6 21 6"/>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+              <line x1="10" y1="11" x2="10" y2="17"/>
+              <line x1="14" y1="11" x2="14" y2="17"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  // Store posts data for edit
+  let userPosts = [];
+
+  function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  function formatDate(dateStr) {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+
+  // Edit marketplace post
+  window.editMarketplacePost = function(postId) {
+    const post = userPosts.find(p => p._id === postId);
+    if (!post) return;
+
+    // Populate form
+    document.getElementById('editPostId').value = postId;
+    document.getElementById('editPostName').value = post.name || '';
+    document.getElementById('editPostTagline').value = post.tagline || '';
+    document.getElementById('editPostUrl').value = post.appUrl || '';
+    document.getElementById('editPostCategory').value = post.category || 'other';
+    document.getElementById('editPostDescription').value = post.description || '';
+
+    // Show images preview
+    const imagesContainer = document.getElementById('editPostImages');
+    if (post.images && post.images.length > 0) {
+      imagesContainer.innerHTML = post.images.map(img => `<img src="${img}" alt="Preview"/>`).join('');
+    } else {
+      imagesContainer.innerHTML = '<span style="color: var(--text-muted); font-size: 0.85rem;">No images</span>';
+    }
+
+    // Show modal
+    document.getElementById('editPostModal').classList.add('active');
+  };
+
+  // Initialize edit modal handlers
+  function initEditPostModal() {
+    const modal = document.getElementById('editPostModal');
+    const closeBtn = document.getElementById('editPostCloseBtn');
+    const cancelBtn = document.getElementById('editPostCancelBtn');
+    const saveBtn = document.getElementById('editPostSaveBtn');
+
+    const closeModal = () => modal.classList.remove('active');
+
+    closeBtn.addEventListener('click', closeModal);
+    cancelBtn.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) closeModal();
+    });
+
+    saveBtn.addEventListener('click', async () => {
+      const postId = document.getElementById('editPostId').value;
+      const name = document.getElementById('editPostName').value.trim();
+      const tagline = document.getElementById('editPostTagline').value.trim();
+      const appUrl = document.getElementById('editPostUrl').value.trim();
+      const category = document.getElementById('editPostCategory').value;
+      const description = document.getElementById('editPostDescription').value.trim();
+
+      if (!name || !tagline || !appUrl || !category) {
+        showToast('Please fill in all required fields', 'error');
+        return;
+      }
+
+      try {
+        saveBtn.disabled = true;
+        saveBtn.textContent = 'Saving...';
+
+        await apiRequest(`/marketplace/${postId}`, {
+          method: 'PUT',
+          body: JSON.stringify({ name, tagline, appUrl, category, description })
+        });
+
+        showToast('Post updated successfully');
+        closeModal();
+
+        // Refresh posts
+        marketplacePostsLoaded = false;
+        loadMarketplacePosts();
+      } catch (error) {
+        showToast(error.message || 'Failed to update post', 'error');
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Save Changes';
+      }
+    });
+  }
+
+  // Make delete function global for onclick handlers
+  window.deleteMarketplacePost = async function(postId, postName) {
+    showConfirmModal(
+      'Delete Post',
+      `Are you sure you want to delete "${postName}" from the marketplace? This action cannot be undone.`,
+      async () => {
+        try {
+          await apiRequest(`/marketplace/${postId}`, {
+            method: 'DELETE'
+          });
+
+          showToast('Post deleted successfully');
+
+          // Remove from DOM
+          const postElement = document.querySelector(`[data-post-id="${postId}"]`);
+          if (postElement) {
+            postElement.style.opacity = '0';
+            postElement.style.transform = 'translateX(20px)';
+            setTimeout(() => {
+              postElement.remove();
+              
+              // Check if no posts left
+              const container = document.querySelector('.js-marketplace-posts');
+              if (container && container.children.length === 0) {
+                container.innerHTML = `
+                  <div class="posts-empty">
+                    <svg class="posts-empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                      <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                      <polyline points="9 22 9 12 15 12 15 22"/>
+                    </svg>
+                    <h4>No posts yet</h4>
+                    <p>You haven't shared any apps on the marketplace yet.</p>
+                  </div>
+                `;
+              }
+            }, 300);
+          }
+
+          // Reset the loaded flag so posts can be reloaded
+          marketplacePostsLoaded = false;
+        } catch (error) {
+          showToast(error.message || 'Failed to delete post', 'error');
+        }
+      }
+    );
+  };
+
+  function initMarketplacePosts() {
+    // Load marketplace posts when the tab becomes active
+    const tabs = document.querySelectorAll('.nav-tab');
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        if (tab.dataset.tab === 'marketplace') {
+          loadMarketplacePosts();
+        }
+      });
+    });
+
+    // Also check if marketplace tab is already active (from saved preference)
+    const savedTab = localStorage.getItem('settingsTab');
+    if (savedTab === 'marketplace') {
+      // Small delay to ensure DOM is ready
+      setTimeout(loadMarketplacePosts, 100);
+    }
+  }
+
+  // ============================================
   // INITIALIZE
   // ============================================
 
@@ -708,6 +967,8 @@
     initBilling();
     initLogout();
     initDangerZone();
+    initMarketplacePosts();
+    initEditPostModal();
   }
 
   // Run on DOM ready

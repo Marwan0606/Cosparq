@@ -17,6 +17,7 @@ const tasks = require('./routes/tasks-page.js')
 const saveCode = require('./routes/save-code.js')
 const saveRenew = require('./routes/save-renew.js')
 const payments = require('./routes/payments.js')
+const marketplace = require('./routes/marketplace.js')
 
 const authenticateToken = require('./middleware/authenticateToken.js')
 const { captureRawBody, verifyStripeSignature } = require('./middleware/stripeWebhook.js');
@@ -42,7 +43,9 @@ app.post(
   handleWebhook
 );
 
-app.use(express.json());
+// Increase body size limit for base64 image uploads (50MB to handle up to 5 images at 5MB each with base64 overhead)
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use(cookieParser());
 
 
@@ -72,6 +75,9 @@ app.use('/api/save', saveRenew);
 
 // Payment routes (includes webhook which handles its own body parsing)
 app.use('/api/payments', payments);
+
+// Marketplace routes
+app.use('/api/marketplace', marketplace);
 
 const port = process.env.PORT || 5004
 

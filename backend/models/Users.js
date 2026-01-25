@@ -113,6 +113,40 @@ const UserSchema = new mongoose.Schema({ //this sets the specific type of data e
       type: Boolean,
       default: false,
     },
+  },
+  
+  // Marketplace Autofills (one AI generation per idea)
+  marketplaceAutofills: [{
+    ideaId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Idea',
+    },
+    data: {
+      name: String,
+      tagline: String,
+      description: String,
+      category: String,
+    },
+    generatedAt: {
+      type: Date,
+      default: Date.now,
+    },
+  }],
+  
+  // Legacy field - kept for backward compatibility
+  marketplaceAutofill: {
+    generated: {
+      type: Boolean,
+      default: false,
+    },
+    data: {
+      name: String,
+      tagline: String,
+      description: String,
+      category: String,
+      ideaId: String,
+    },
+    generatedAt: Date,
   }
 }, {
   timestamps: true // Adds createdAt and updatedAt

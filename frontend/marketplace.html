@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Startup Marketplace — CoSparq</title>
+  <link rel="stylesheet" href="styles/marketplace.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+</head>
+<body>
+  <div id="sidebar-placeholder"></div>
+  
+  <div class="container">
+    <!-- Header -->
+    <header class="page-header">
+      <h1 class="headline"><span class="gradient-text">Startup Marketplace</span></h1>
+      <p class="subtitle">Discover amazing apps built by founders like you. Share your creation with the community.</p>
+    </header>
+
+    <!-- Category Filters -->
+    <div class="category-filters">
+      <button class="category-btn active" data-category="all">All</button>
+      <button class="category-btn" data-category="productivity">Productivity</button>
+      <button class="category-btn" data-category="dev-tools">Dev Tools</button>
+      <button class="category-btn" data-category="marketing">Marketing</button>
+      <button class="category-btn" data-category="finance">Finance</button>
+      <button class="category-btn" data-category="design">Design</button>
+      <button class="category-btn" data-category="ai-ml">AI/ML</button>
+      <button class="category-btn" data-category="e-commerce">E-commerce</button>
+      <button class="category-btn" data-category="education">Education</button>
+      <button class="category-btn" data-category="other">Other</button>
+    </div>
+
+    <!-- Search Bar -->
+    <div class="search-container">
+      <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"/>
+        <path d="m21 21-4.35-4.35"/>
+      </svg>
+      <input type="text" class="search-input" placeholder="Search apps, categories, or features..."/>
+    </div>
+
+    <!-- Sort Tabs -->
+    <div class="sort-tabs">
+      <button class="sort-btn active" data-sort="latest">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <polyline points="12 6 12 12 16 14"/>
+        </svg>
+        Latest
+      </button>
+      <button class="sort-btn" data-sort="trending">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+        </svg>
+        Trending
+      </button>
+      <button class="sort-btn" data-sort="hall-of-fame">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/>
+          <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/>
+          <path d="M4 22h16"/>
+          <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/>
+          <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/>
+          <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>
+        </svg>
+        Hall of Fame
+      </button>
+    </div>
+
+    <!-- Apps Grid -->
+    <div class="apps-grid js-apps-grid">
+      <!-- Apps will be dynamically loaded here -->
+      <div class="empty-state">
+        <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+          <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+          <line x1="12" y1="22.08" x2="12" y2="12"/>
+        </svg>
+        <h3>No apps yet</h3>
+        <p>Be the first to share your creation with the community!</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Floating Add Button -->
+  <button class="fab-button js-add-app">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+      <line x1="12" y1="5" x2="12" y2="19"/>
+      <line x1="5" y1="12" x2="19" y2="12"/>
+    </svg>
+  </button>
+
+  <!-- Add App Modal -->
+  <div class="modal-overlay js-modal-overlay hidden">
+    <div class="modal js-modal">
+      <div class="modal-header">
+        <h2>Share Your App</h2>
+        <button class="modal-close js-modal-close">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      
+      <!-- AI Autofill Section -->
+      <div class="autofill-section js-autofill-section">
+        <div class="autofill-header">
+          <span class="autofill-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+              <path d="M2 17l10 5 10-5"/>
+              <path d="M2 12l10 5 10-5"/>
+            </svg>
+          </span>
+          <span>AI Autofill</span>
+        </div>
+        <p class="autofill-desc">Let AI fill out the form based on one of your ideas</p>
+        <div class="autofill-controls">
+          <select class="autofill-select js-idea-select">
+            <option value="">Select an idea...</option>
+          </select>
+          <button type="button" class="autofill-btn js-autofill-btn" disabled>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+              <path d="M2 17l10 5 10-5"/>
+              <path d="M2 12l10 5 10-5"/>
+            </svg>
+            Generate
+          </button>
+        </div>
+        <p class="autofill-note js-autofill-note hidden"></p>
+      </div>
+      
+      <form class="modal-form js-app-form">
+        <div class="form-group">
+          <label for="app-name">App Name <span class="required">*</span></label>
+          <input type="text" id="app-name" name="appName" required placeholder="My Awesome App"/>
+        </div>
+        <div class="form-group">
+          <label for="app-tagline">Tagline <span class="required">*</span></label>
+          <input type="text" id="app-tagline" name="tagline" required placeholder="A short description of your app"/>
+        </div>
+        <div class="form-group">
+          <label for="app-url">App URL <span class="required">*</span></label>
+          <input type="url" id="app-url" name="appUrl" required placeholder="https://myapp.com"/>
+        </div>
+        <div class="form-group">
+          <label for="app-category">Category <span class="required">*</span></label>
+          <select id="app-category" name="category" required>
+            <option value="">Select a category</option>
+            <option value="productivity">Productivity</option>
+            <option value="dev-tools">Dev Tools</option>
+            <option value="marketing">Marketing</option>
+            <option value="finance">Finance</option>
+            <option value="design">Design</option>
+            <option value="ai-ml">AI/ML</option>
+            <option value="e-commerce">E-commerce</option>
+            <option value="education">Education</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="app-description">Description</label>
+          <textarea id="app-description" name="description" rows="4" placeholder="Tell us more about your app..."></textarea>
+        </div>
+        <div class="form-group">
+          <label>Images <span class="required">*</span> <span class="hint">(At least 1 required, max 5)</span></label>
+          <div class="image-dropzone js-image-dropzone">
+            <div class="dropzone-content">
+              <svg class="dropzone-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                <circle cx="8.5" cy="8.5" r="1.5"/>
+                <polyline points="21 15 16 10 5 21"/>
+              </svg>
+              <p class="dropzone-text">Drag & drop images here</p>
+              <p class="dropzone-hint">or click to browse</p>
+            </div>
+            <input type="file" class="dropzone-input js-file-input" accept="image/*" multiple hidden/>
+          </div>
+          <div class="image-previews js-image-previews"></div>
+        </div>
+        <button type="submit" class="submit-btn">Submit App</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- App Detail Modal -->
+  <div class="detail-overlay js-detail-overlay hidden">
+    <div class="detail-modal js-detail-modal">
+      <div class="detail-header-bar">
+        <button class="detail-close js-detail-close">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <div class="detail-content js-detail-content">
+        <!-- Content loaded dynamically -->
+      </div>
+    </div>
+  </div>
+
+<script>
+(function () {
+  const LOGIN_URL = '/auth.html';
+  if (location.pathname.endsWith('/auth.html')) return;
+  const token = localStorage.getItem('accessToken');
+  if (!token) {
+    window.location.href = LOGIN_URL;
+    return;
+  }
+})();
+</script>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script src="./scripts/subscriptionHandler.js"></script>
+<script type="module">
+  async function loadSidebar() {
+    const res = await fetch('sidebar.html');
+    const html = await res.text();
+    document.getElementById('sidebar-placeholder').innerHTML = html;
+
+    const { initSidebar } = await import('./scripts/sidebar.js');
+    await initSidebar();
+  }
+  loadSidebar();
+</script>
+<script src="scripts/marketplace.js"></script>
+</body>
+</html>
