@@ -381,24 +381,36 @@
   // NOTIFICATIONS
   // ============================================
 
-  function initNotifications() {
+  async function initNotifications() {
     const saveNotificationsBtn = document.getElementById('saveNotificationsBtn');
-    
-    // Load saved preferences
-    const prefs = JSON.parse(localStorage.getItem('notificationPrefs') || '{}');
     
     const productUpdates = document.getElementById('notifyProductUpdates');
     const usageAlerts = document.getElementById('notifyUsageAlerts');
     const weeklySummary = document.getElementById('notifyWeeklySummary');
     const marketing = document.getElementById('notifyMarketing');
 
-    if (productUpdates) productUpdates.checked = prefs.productUpdates !== false;
-    if (usageAlerts) usageAlerts.checked = prefs.usageAlerts !== false;
-    if (weeklySummary) weeklySummary.checked = prefs.weeklySummary || false;
-    if (marketing) marketing.checked = prefs.marketing || false;
+    // Load preferences from backend
+    try {
+      const data = await apiRequest('/users/notification-preferences');
+      if (data && data.preferences) {
+        const prefs = data.preferences;
+        if (productUpdates) productUpdates.checked = prefs.productUpdates !== false;
+        if (usageAlerts) usageAlerts.checked = prefs.usageAlerts !== false;
+        if (weeklySummary) weeklySummary.checked = prefs.weeklySummary || false;
+        if (marketing) marketing.checked = prefs.marketing || false;
+      }
+    } catch (error) {
+      console.log('Could not load notification preferences:', error);
+      // Fall back to localStorage
+      const prefs = JSON.parse(localStorage.getItem('notificationPrefs') || '{}');
+      if (productUpdates) productUpdates.checked = prefs.productUpdates !== false;
+      if (usageAlerts) usageAlerts.checked = prefs.usageAlerts !== false;
+      if (weeklySummary) weeklySummary.checked = prefs.weeklySummary || false;
+      if (marketing) marketing.checked = prefs.marketing || false;
+    }
 
     if (saveNotificationsBtn) {
-      saveNotificationsBtn.addEventListener('click', () => {
+      saveNotificationsBtn.addEventListener('click', async () => {
         const newPrefs = {
           productUpdates: productUpdates?.checked,
           usageAlerts: usageAlerts?.checked,
@@ -406,8 +418,27 @@
           marketing: marketing?.checked
         };
 
-        localStorage.setItem('notificationPrefs', JSON.stringify(newPrefs));
-        showToast('Notification preferences saved');
+        saveNotificationsBtn.disabled = true;
+        saveNotificationsBtn.textContent = 'Saving...';
+
+        try {
+          await apiRequest('/users/notification-preferences', {
+            method: 'PUT',
+            body: JSON.stringify(newPrefs)
+          });
+          
+          // Also save to localStorage as backup
+          localStorage.setItem('notificationPrefs', JSON.stringify(newPrefs));
+          showToast('Notification preferences saved');
+        } catch (error) {
+          console.error('Failed to save notification preferences:', error);
+          // Still save to localStorage
+          localStorage.setItem('notificationPrefs', JSON.stringify(newPrefs));
+          showToast('Preferences saved locally', 'warning');
+        } finally {
+          saveNotificationsBtn.disabled = false;
+          saveNotificationsBtn.textContent = 'Save Preferences';
+        }
       });
     }
   }

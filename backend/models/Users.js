@@ -83,7 +83,37 @@ const UserSchema = new mongoose.Schema({ //this sets the specific type of data e
     completionTokens: Number,
     totalTokens: Number,
     cost: Number // Cost of this specific request in USD
-  }]
+  }],
+  
+  // Password Reset
+  passwordResetToken: {
+    type: String,
+    default: null,
+  },
+  passwordResetExpires: {
+    type: Date,
+    default: null,
+  },
+  
+  // Email Notification Preferences
+  notificationPreferences: {
+    productUpdates: {
+      type: Boolean,
+      default: true,
+    },
+    usageAlerts: {
+      type: Boolean,
+      default: true,
+    },
+    weeklySummary: {
+      type: Boolean,
+      default: false,
+    },
+    marketing: {
+      type: Boolean,
+      default: false,
+    },
+  }
 }, {
   timestamps: true // Adds createdAt and updatedAt
 })

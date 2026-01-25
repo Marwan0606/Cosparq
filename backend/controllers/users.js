@@ -425,6 +425,76 @@ const logoutAll = async (req, res) => {
   }
 };
 
+/**
+ * Get notification preferences
+ */
+const getNotificationPreferences = async (req, res) => {
+  try {
+    const userId = req.user?.userId;
+    
+    if (!userId) {
+      return res.status(401).json({ msg: 'Unauthorized' });
+    }
+    
+    const user = await User.findById(userId).select('notificationPreferences');
+    
+    if (!user) {
+      return res.status(404).json({ msg: 'User not found' });
+    }
+    
+    // Return preferences with defaults if not set
+    const preferences = {
+      productUpdates: user.notificationPreferences?.productUpdates ?? true,
+      usageAlerts: user.notificationPreferences?.usageAlerts ?? true,
+      weeklySummary: user.notificationPreferences?.weeklySummary ?? false,
+      marketing: user.notificationPreferences?.marketing ?? false,
+    };
+    
+    res.status(200).json({ preferences });
+  } catch (error) {
+    console.error('Error getting notification preferences:', error);
+    res.status(500).json({ msg: error.message || error });
+  }
+};
+
+/**
+ * Update notification preferences
+ */
+const updateNotificationPreferences = async (req, res) => {
+  try {
+    const userId = req.user?.userId;
+    const { productUpdates, usageAlerts, weeklySummary, marketing } = req.body;
+    
+    if (!userId) {
+      return res.status(401).json({ msg: 'Unauthorized' });
+    }
+    
+    const user = await User.findById(userId);
+    
+    if (!user) {
+      return res.status(404).json({ msg: 'User not found' });
+    }
+    
+    // Update notification preferences
+    user.notificationPreferences = {
+      productUpdates: productUpdates ?? user.notificationPreferences?.productUpdates ?? true,
+      usageAlerts: usageAlerts ?? user.notificationPreferences?.usageAlerts ?? true,
+      weeklySummary: weeklySummary ?? user.notificationPreferences?.weeklySummary ?? false,
+      marketing: marketing ?? user.notificationPreferences?.marketing ?? false,
+    };
+    
+    await user.save();
+    
+    res.status(200).json({ 
+      msg: 'Notification preferences updated',
+      preferences: user.notificationPreferences
+    });
+  } catch (error) {
+    console.error('Error updating notification preferences:', error);
+    res.status(500).json({ msg: error.message || error });
+  }
+};
+
 module.exports = {
   //createUser,
   //login,
@@ -439,5 +509,7 @@ module.exports = {
   exportData,
   deleteProjects,
   deleteAccount,
-  logoutAll
+  logoutAll,
+  getNotificationPreferences,
+  updateNotificationPreferences
 }

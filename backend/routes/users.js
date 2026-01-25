@@ -15,7 +15,9 @@ const {
   exportData,
   deleteProjects,
   deleteAccount,
-  logoutAll
+  logoutAll,
+  getNotificationPreferences,
+  updateNotificationPreferences
 } = require('../controllers/users')
 
 
@@ -32,6 +34,10 @@ router.post('/change-password', changePassword)
 
 // Subscription status
 router.get('/subscription-status', getSubscriptionStatus)
+
+// Notification preferences
+router.get('/notification-preferences', getNotificationPreferences)
+router.put('/notification-preferences', updateNotificationPreferences)
 
 // Data export (GDPR)
 router.get('/export-data', exportData)

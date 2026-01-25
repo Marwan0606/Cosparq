@@ -17,6 +17,10 @@
 
 const Stripe = require('stripe');
 const User = require('../models/Users');
+const { 
+  sendSubscriptionUpgradeEmail, 
+  sendSubscriptionCanceledEmail 
+} = require('../services/emailService');
 
 // Initialize Stripe with secret key
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
@@ -354,6 +358,12 @@ async function handleCheckoutCompleted(event) {
         });
         
         console.log(`✅ User ${user.email} upgraded: ${previousPlan} -> ${plan}`);
+        
+        // Send upgrade confirmation email (non-blocking)
+        const planName = plan.charAt(0).toUpperCase() + plan.slice(1);
+        sendSubscriptionUpgradeEmail(user.email, user.name, planName).catch(err => {
+          console.error('Failed to send upgrade email:', err);
+        });
       }
     } catch (err) {
       console.error('Error retrieving subscription:', err.message);
@@ -502,6 +512,16 @@ async function updateUserSubscription(subscription, eventId, action) {
     // On cancellation, downgrade to free
     user.subscriptionPlan = 'free';
     console.log('Setting plan to free (canceled)');
+    
+    // Send cancellation email (non-blocking)
+    const endDate = new Date(subscription.current_period_end * 1000).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+    sendSubscriptionCanceledEmail(user.email, user.name, endDate).catch(err => {
+      console.error('Failed to send cancellation email:', err);
+    });
   }
 
   // Add to subscription history for audit trail
