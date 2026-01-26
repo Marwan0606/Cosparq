@@ -33,6 +33,78 @@ body {
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   min-height: 100vh;
   padding-left: 60px;
+  overflow-x: hidden;
+}
+
+/* ============================================
+   ANIMATED BACKGROUND
+   ============================================ */
+
+.background-gradient {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(ellipse at 15% 15%, rgba(132, 0, 255, 0.12) 0%, transparent 50%),
+    radial-gradient(ellipse at 85% 20%, rgba(249, 64, 22, 0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at 70% 80%, rgba(249, 109, 22, 0.06) 0%, transparent 50%),
+    radial-gradient(ellipse at 25% 75%, rgba(59, 130, 246, 0.08) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Floating orbs animation */
+.orb {
+  position: fixed;
+  border-radius: 50%;
+  filter: blur(100px);
+  opacity: 0.3;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.orb-1 {
+  width: 400px;
+  height: 400px;
+  background: rgba(132, 0, 255, 0.25);
+  top: -100px;
+  left: -100px;
+  animation: float1 30s ease-in-out infinite;
+}
+
+.orb-2 {
+  width: 300px;
+  height: 300px;
+  background: rgba(249, 64, 22, 0.2);
+  top: 50%;
+  right: -100px;
+  animation: float2 35s ease-in-out infinite;
+}
+
+.orb-3 {
+  width: 350px;
+  height: 350px;
+  background: rgba(59, 130, 246, 0.18);
+  bottom: -100px;
+  left: 30%;
+  animation: float3 32s ease-in-out infinite;
+}
+
+@keyframes float1 {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(80px, 60px); }
+}
+
+@keyframes float2 {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(-60px, -30px); }
+}
+
+@keyframes float3 {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(40px, -50px); }
 }
 
 /* ============================================
@@ -43,6 +115,8 @@ body {
   max-width: 900px;
   margin: 0 auto;
   padding: 40px 24px;
+  position: relative;
+  z-index: 1;
 }
 
 .page-header {
@@ -51,10 +125,10 @@ body {
 }
 
 .headline {
-  font-size: 3.5rem;
+  font-size: 4.5rem;
   font-weight: 800;
-  margin-bottom: 20px;
-  letter-spacing: -0.02em;
+  margin-bottom: 0;
+  letter-spacing: -0.03em;
 }
 
 .gradient-text {
@@ -70,6 +144,7 @@ body {
   max-width: 500px;
   margin: 0 auto;
   line-height: 1.6;
+  margin-top: 16px;
 }
 
 /* ============================================
@@ -706,7 +781,11 @@ body {
   }
 
   .headline {
-    font-size: 1.8rem;
+    font-size: 2.5rem;
+  }
+
+  .orb {
+    display: none;
   }
 
   .action-buttons {
