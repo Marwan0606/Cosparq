@@ -36,8 +36,8 @@ const generateSuggestions = async (req, res) => {
       prompt += `\n\nThe user has already brainstormed these features in this category: ${existingIdeas.join('; ')}. Generate NEW and DIFFERENT feature ideas that complement these but don't repeat them.`;
     }
     
-    if (context && context.trim() && !focusCategory) {
-      prompt += `\n\nThe user is currently thinking about: "${context}". Generate feature ideas related to this.`;
+    if (context && context.trim()) {
+      prompt += `\n\nThe user is currently thinking about: "${context}". Generate feature ideas related to this${focusCategory ? ` within the "${focusCategory}" category` : ''}.`;
     }
     
     prompt += `\n\nGenerate exactly 5 unique, specific feature suggestions${focusCategory ? ` for the "${focusCategory}" category` : ' for their app'}. Each should be a concise feature description (max 12 words) that would add value to the product. Focus on practical, implementable features.

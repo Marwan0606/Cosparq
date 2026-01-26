@@ -21,6 +21,7 @@ const {
   sendSubscriptionUpgradeEmail, 
   sendSubscriptionCanceledEmail 
 } = require('../services/emailService');
+const { syncSubscriptionFromStripe } = require('../services/subscriptionService');
 
 // Initialize Stripe with secret key
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
@@ -141,9 +142,10 @@ const createCheckoutSession = async (req, res) => {
     // If user already has a subscription, handle upgrade/downgrade
     if (user.stripeSubscriptionId && user.subscriptionStatus === 'active') {
       // For existing subscribers, use portal for plan changes
-      return res.status(400).json({
-        success: false,
-        message: 'You already have an active subscription. Please use the billing portal to change plans.',
+      // Return 200 so frontend can handle the redirect properly
+      return res.status(200).json({
+        success: true,
+        message: 'You already have an active subscription. Redirecting to billing portal to change plans.',
         redirectToPortal: true,
       });
     }
@@ -545,6 +547,7 @@ async function updateUserSubscription(subscription, eventId, action) {
 
 /**
  * Get current subscription status
+ * Automatically syncs with Stripe if cache is stale (hybrid approach)
  * 
  * @route GET /api/payments/subscription-status
  * @access Private (requires authentication)
@@ -560,9 +563,7 @@ const getSubscriptionStatus = async (req, res) => {
       });
     }
 
-    const user = await User.findById(userId).select(
-      'subscriptionPlan subscriptionStatus subscriptionPeriodEnd stripeCustomerId'
-    );
+    const user = await User.findById(userId);
 
     if (!user) {
       return res.status(404).json({
@@ -571,13 +572,17 @@ const getSubscriptionStatus = async (req, res) => {
       });
     }
 
+    // Use the centralized subscription service to get fresh data
+    const subscription = await syncSubscriptionFromStripe(user);
+
     res.json({
       success: true,
       subscription: {
-        plan: user.subscriptionPlan,
-        status: user.subscriptionStatus,
-        periodEnd: user.subscriptionPeriodEnd,
+        plan: subscription.plan,
+        status: subscription.status,
+        periodEnd: subscription.periodEnd,
         hasStripeAccount: !!user.stripeCustomerId,
+        source: subscription.source, // 'cache', 'stripe', or 'cache_fallback'
       },
     });
   } catch (error) {
@@ -589,10 +594,230 @@ const getSubscriptionStatus = async (req, res) => {
   }
 };
 
+/**
+ * Verify checkout session and update subscription
+ * This is a FALLBACK for when webhooks don't work (local dev) or have race conditions
+ * 
+ * SECURITY: We verify directly with Stripe API using the session ID
+ * Only the user who made the payment (matched by userId in metadata) gets upgraded
+ * 
+ * @route POST /api/payments/verify-session
+ * @access Private (requires authentication)
+ */
+const verifyCheckoutSession = async (req, res) => {
+  try {
+    const userId = req.user?.id || req.user?.userId;
+    const { sessionId } = req.body;
+
+    console.log('=== VERIFY CHECKOUT SESSION ===');
+    console.log('User ID:', userId);
+    console.log('Session ID:', sessionId);
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: 'Authentication required',
+      });
+    }
+
+    if (!sessionId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Session ID is required',
+      });
+    }
+
+    // Get user from database
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found',
+      });
+    }
+
+    // Retrieve the checkout session from Stripe
+    let session;
+    try {
+      session = await stripe.checkout.sessions.retrieve(sessionId, {
+        expand: ['subscription', 'subscription.items.data.price']
+      });
+    } catch (stripeError) {
+      console.error('Failed to retrieve session from Stripe:', stripeError.message);
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid session ID or session expired',
+      });
+    }
+
+    console.log('Session retrieved from Stripe:');
+    console.log('  - Payment status:', session.payment_status);
+    console.log('  - Customer:', session.customer);
+    console.log('  - Subscription:', session.subscription?.id || session.subscription);
+    console.log('  - Metadata userId:', session.metadata?.userId);
+    console.log('  - Metadata plan:', session.metadata?.plan);
+
+    // SECURITY CHECK: Verify the session belongs to this user
+    if (session.metadata?.userId !== userId.toString()) {
+      console.error('❌ User ID mismatch! Session userId:', session.metadata?.userId, 'Request userId:', userId);
+      return res.status(403).json({
+        success: false,
+        message: 'This session does not belong to you',
+      });
+    }
+
+    // Check if payment was successful
+    if (session.payment_status !== 'paid') {
+      console.log('Session payment_status is not "paid":', session.payment_status);
+      return res.status(400).json({
+        success: false,
+        message: 'Payment not completed',
+        paymentStatus: session.payment_status,
+      });
+    }
+
+    const plan = session.metadata?.plan;
+    if (!plan || !['pro', 'business'].includes(plan)) {
+      console.error('Invalid plan in metadata:', plan);
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid plan in session',
+      });
+    }
+
+    // Check if user is already on this plan (already processed)
+    if (user.subscriptionPlan === plan && user.subscriptionStatus === 'active') {
+      console.log('User already has this plan, returning success');
+      return res.json({
+        success: true,
+        message: 'Subscription already active',
+        subscription: {
+          plan: user.subscriptionPlan,
+          status: user.subscriptionStatus,
+        },
+        alreadyProcessed: true,
+      });
+    }
+
+    // Update the user's subscription
+    const previousPlan = user.subscriptionPlan;
+    
+    user.stripeCustomerId = session.customer;
+    
+    // Get subscription details
+    let subscriptionObj = session.subscription;
+    if (typeof subscriptionObj === 'string') {
+      // If it's just an ID, fetch the full subscription
+      subscriptionObj = await stripe.subscriptions.retrieve(subscriptionObj);
+    }
+    
+    if (subscriptionObj) {
+      user.stripeSubscriptionId = subscriptionObj.id;
+      user.subscriptionStatus = subscriptionObj.status;
+      user.subscriptionPeriodEnd = new Date(subscriptionObj.current_period_end * 1000);
+    } else {
+      user.subscriptionStatus = 'active';
+    }
+    
+    user.subscriptionPlan = plan;
+
+    // Add to audit trail
+    user.subscriptionHistory.push({
+      timestamp: new Date(),
+      action: 'verify_session_upgrade',
+      fromPlan: previousPlan,
+      toPlan: plan,
+      stripeSessionId: sessionId,
+    });
+
+    await user.save();
+
+    console.log(`✅ User ${user.email} upgraded via verify-session: ${previousPlan} -> ${plan}`);
+
+    // Send upgrade confirmation email (non-blocking)
+    const planName = plan.charAt(0).toUpperCase() + plan.slice(1);
+    sendSubscriptionUpgradeEmail(user.email, user.name, planName).catch(err => {
+      console.error('Failed to send upgrade email:', err);
+    });
+
+    res.json({
+      success: true,
+      message: 'Subscription activated successfully',
+      subscription: {
+        plan: user.subscriptionPlan,
+        status: user.subscriptionStatus,
+        periodEnd: user.subscriptionPeriodEnd,
+      },
+    });
+  } catch (error) {
+    console.error('Verify session error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to verify session',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined,
+    });
+  }
+};
+
+/**
+ * Sync Subscription Status
+ * Fetches the latest subscription status from Stripe and updates the local database.
+ * This uses the centralized subscription service for consistency.
+ * 
+ * @route POST /api/payments/sync-subscription
+ * @access Private (requires authentication)
+ */
+const syncSubscription = async (req, res) => {
+  try {
+    const userId = req.user?.id || req.user?.userId;
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: 'Authentication required',
+      });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found',
+      });
+    }
+
+    // Use the centralized subscription service with force refresh
+    const result = await syncSubscriptionFromStripe(user, true); // forceRefresh = true
+
+    return res.json({
+      success: true,
+      message: result.changed 
+        ? `Subscription updated to ${result.plan}`
+        : 'Subscription is up to date',
+      changed: result.changed,
+      subscription: {
+        plan: result.plan,
+        status: result.status,
+        periodEnd: result.periodEnd,
+      },
+      source: result.source,
+    });
+  } catch (error) {
+    console.error('Sync subscription error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to sync subscription',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined,
+    });
+  }
+};
+
 module.exports = {
   createCheckoutSession,
   createPortalSession,
   handleWebhook,
   getSubscriptionStatus,
+  verifyCheckoutSession,
+  syncSubscription,
   stripe, // Export stripe instance for route middleware
 };

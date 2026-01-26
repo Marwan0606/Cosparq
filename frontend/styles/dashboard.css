@@ -26,6 +26,12 @@ body{
   border-right:1px solid var(--border);
   padding:24px 16px;
   display:flex; flex-direction:column; gap:16px;
+  overflow-y:auto;
+  scrollbar-width:none; /* Firefox */
+  -ms-overflow-style:none; /* IE/Edge */
+}
+.sidebar::-webkit-scrollbar{
+  display:none; /* Chrome, Safari, Opera */
 }
 .brand{ font-weight:800; font-size:28px; letter-spacing:.2px; }
 .menu{ display:flex; flex-direction:column; gap:8px }

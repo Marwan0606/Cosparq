@@ -267,7 +267,51 @@
   };
 
   /**
+   * Sync subscription with Stripe and update UI
+   * This calls the sync endpoint which forces a fresh check with Stripe
+   */
+  const syncSubscriptionWithStripe = async () => {
+    try {
+      // Configure axios if needed
+      if (!axios.defaults.baseURL) {
+        axios.defaults.baseURL = 'http://localhost:5004';
+      }
+      axios.defaults.withCredentials = true;
+
+      const token = localStorage.getItem('accessToken');
+      if (!token) return; // Not logged in
+
+      // Call sync endpoint - this forces a fresh check with Stripe
+      const response = await axios.post('/api/payments/sync-subscription', {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      if (response.data.success) {
+        const subscription = response.data.subscription;
+        const plan = subscription.plan;
+        const isActive = ['active', 'trialing', 'canceling'].includes(subscription.status);
+
+        console.log('🔄 Subscription synced with Stripe:', { plan, status: subscription.status, changed: response.data.changed });
+
+        // Store in localStorage for quick access
+        localStorage.setItem('subscriptionPlan', plan);
+        localStorage.setItem('subscriptionStatus', subscription.status || 'none');
+        localStorage.setItem('subscriptionLastSync', Date.now().toString());
+
+        updateSidebarUI(plan, isActive);
+        
+        return { plan, status: subscription.status, changed: response.data.changed };
+      }
+    } catch (error) {
+      console.error('Failed to sync subscription with Stripe:', error);
+      // Fall back to cached status
+      return updateSubscriptionUI();
+    }
+  };
+
+  /**
    * Fetch subscription status and update sidebar UI
+   * This uses cached data from the server (fast but may be stale)
    */
   const updateSubscriptionUI = async () => {
     try {
@@ -287,7 +331,7 @@
       if (response.data.success) {
         const subscription = response.data.subscription;
         const plan = subscription.plan;
-        const isActive = ['active', 'trialing'].includes(subscription.status);
+        const isActive = ['active', 'trialing', 'canceling'].includes(subscription.status);
 
         console.log('Subscription status:', { plan, status: subscription.status, isActive });
 
@@ -377,7 +421,7 @@
   const hasPaidSubscription = () => {
     const plan = localStorage.getItem('subscriptionPlan');
     const status = localStorage.getItem('subscriptionStatus');
-    const isActive = ['active', 'trialing'].includes(status);
+    const isActive = ['active', 'trialing', 'canceling'].includes(status);
     return isActive && (plan === 'pro' || plan === 'business');
   };
 
@@ -387,25 +431,78 @@
   const getSubscriptionPlan = () => {
     const plan = localStorage.getItem('subscriptionPlan');
     const status = localStorage.getItem('subscriptionStatus');
-    const isActive = ['active', 'trialing'].includes(status);
+    const isActive = ['active', 'trialing', 'canceling'].includes(status);
     return isActive ? (plan || 'free') : 'free';
+  };
+
+  // Sync interval ID (for cleanup if needed)
+  let syncIntervalId = null;
+
+  /**
+   * Start periodic subscription sync (every 5 minutes)
+   */
+  const startPeriodicSync = () => {
+    // Clear any existing interval
+    if (syncIntervalId) {
+      clearInterval(syncIntervalId);
+    }
+
+    // Sync every 5 minutes (300000 ms)
+    syncIntervalId = setInterval(() => {
+      console.log('⏰ Periodic subscription sync...');
+      syncSubscriptionWithStripe();
+    }, 5 * 60 * 1000);
+
+    console.log('🔁 Periodic subscription sync started (every 5 min)');
+  };
+
+  /**
+   * Initialize subscription handler
+   */
+  const initialize = async () => {
+    setupAxiosInterceptor();
+    
+    // First, show cached data immediately for fast UI
+    const cachedPlan = localStorage.getItem('subscriptionPlan');
+    const cachedStatus = localStorage.getItem('subscriptionStatus');
+    if (cachedPlan) {
+      const isActive = ['active', 'trialing', 'canceling'].includes(cachedStatus);
+      updateSidebarUI(cachedPlan, isActive);
+    }
+
+    // Then sync with Stripe in the background (this will update UI if different)
+    syncSubscriptionWithStripe();
+
+    // Start periodic sync every 5 minutes
+    startPeriodicSync();
   };
 
   // Initialize when DOM is ready
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
-      setupAxiosInterceptor();
-      updateSubscriptionUI();
-    });
+    document.addEventListener('DOMContentLoaded', initialize);
   } else {
-    setupAxiosInterceptor();
-    updateSubscriptionUI();
+    initialize();
   }
+
+  // Also sync when tab becomes visible again (user returns to tab)
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      const lastSync = parseInt(localStorage.getItem('subscriptionLastSync') || '0');
+      const timeSinceLastSync = Date.now() - lastSync;
+      
+      // If it's been more than 1 minute since last sync, sync again
+      if (timeSinceLastSync > 60 * 1000) {
+        console.log('👁️ Tab visible - syncing subscription...');
+        syncSubscriptionWithStripe();
+      }
+    }
+  });
 
   // Expose functions globally
   window.showSubscriptionRequiredPopup = showSubscriptionRequiredPopup;
   window.SubscriptionHandler = {
     update: updateSubscriptionUI,
+    sync: syncSubscriptionWithStripe,
     hasPaid: hasPaidSubscription,
     getPlan: getSubscriptionPlan
   };

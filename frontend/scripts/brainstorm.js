@@ -2400,6 +2400,18 @@ function setupFocusModeListeners() {
     input.onkeypress = (e) => {
       if (e.key === 'Enter') addFocusIdea();
     };
+    
+    // Generate new suggestions when user STOPS typing (1.5 second delay) - same as hub
+    let focusTypingTimeout;
+    input.addEventListener('input', () => {
+      clearTimeout(focusTypingTimeout);
+      // Only trigger after user stops typing for 1.5 seconds
+      focusTypingTimeout = setTimeout(() => {
+        if (input.value.trim().length > 3) { // Require at least 4 characters
+          loadFocusSuggestionsForInput(input.value.trim());
+        }
+      }, 1500); // Same 1500ms delay as hub
+    });
   }
   
   if (refreshBtn) {
@@ -2479,6 +2491,66 @@ async function loadFocusModeSuggestions(branch) {
   } catch (error) {
     console.error('Error loading focus suggestions:', error);
     if (focusSuggestionsList) {
+      focusSuggestionsList.innerHTML = `
+        <div class="suggestions-loading">
+          <span>Failed to load suggestions</span>
+        </div>
+      `;
+    }
+  }
+}
+
+// Load suggestions based on user input in focus mode (same as hub behavior)
+async function loadFocusSuggestionsForInput(inputText) {
+  const focusSuggestionsList = document.getElementById('focus-suggestions-list');
+  if (!focusSuggestionsList || !focusMode.active) return;
+  
+  const branch = branches.find(b => b.id === focusMode.branchId);
+  if (!branch) return;
+  
+  // Check rate limit
+  if (!rateLimiter.canMakeRequest()) {
+    const waitTime = rateLimiter.getTimeUntilNextRequest();
+    showToast(`AI rate limit reached. Wait ${waitTime}s`, 'error');
+    return;
+  }
+  
+  // Show loading
+  focusSuggestionsList.innerHTML = `
+    <div class="suggestions-loading">
+      <div class="loading-spinner"></div>
+      <span>Generating ideas...</span>
+    </div>
+  `;
+  
+  try {
+    rateLimiter.recordRequest();
+    
+    // Get existing ideas in this category
+    const categoryIdeas = ideas.filter(i => i.branchId === branch.id).map(i => i.text);
+    
+    const response = await axios.post('/api/brainstorm/suggest', {
+      context: inputText,
+      existingIdeas: categoryIdeas,
+      userPreferences: userContext,
+      projectName: currentProject.name,
+      projectDescription: currentProject.description,
+      focusCategory: branch.name
+    });
+    
+    if (response.data.success) {
+      renderFocusSuggestions(response.data.suggestions);
+      // Save to cache
+      focusSuggestionsByBranch[branch.id] = response.data.suggestions;
+      autoSaveSession();
+    }
+  } catch (error) {
+    console.error('Error loading focus suggestions for input:', error);
+    // Restore previous suggestions if available
+    const savedFocusSuggestions = focusSuggestionsByBranch[branch.id];
+    if (savedFocusSuggestions && savedFocusSuggestions.length > 0) {
+      renderFocusSuggestions(savedFocusSuggestions);
+    } else {
       focusSuggestionsList.innerHTML = `
         <div class="suggestions-loading">
           <span>Failed to load suggestions</span>

@@ -1,6 +1,7 @@
 const User = require('../models/Users.js')
 const { get } = require('../routes/gpt-responses.js')
 const { getUserApiStats } = require('../services/apiUsageTracker')
+const { syncSubscriptionFromStripe } = require('../services/subscriptionService')
 const bcrypt = require('bcrypt')
 
 /*
@@ -118,6 +119,7 @@ const getApiUsageSummary = async (req, res) => {
 
 /**
  * Get current user's profile
+ * Automatically syncs subscription from Stripe if cache is stale
  */
 const getProfile = async (req, res) => {
   try {
@@ -132,6 +134,32 @@ const getProfile = async (req, res) => {
     if (!user) {
       return res.status(404).json({ msg: 'User not found' });
     }
+
+    // Sync subscription from Stripe if cache is stale (hybrid approach)
+    // This ensures subscription data is always accurate
+    let subscriptionData = {
+      plan: user.subscriptionPlan || 'free',
+      status: user.subscriptionStatus,
+    };
+
+    if (user.stripeCustomerId) {
+      try {
+        const syncResult = await syncSubscriptionFromStripe(user);
+        subscriptionData = {
+          plan: syncResult.plan,
+          status: syncResult.status,
+          periodEnd: syncResult.periodEnd,
+          source: syncResult.source,
+        };
+        
+        if (syncResult.changed) {
+          console.log(`📊 Profile load triggered subscription sync for ${user.email}`);
+        }
+      } catch (syncError) {
+        console.error('Subscription sync error during profile load:', syncError);
+        // Continue with cached data on error
+      }
+    }
     
     res.status(200).json({ 
       user: {
@@ -139,8 +167,9 @@ const getProfile = async (req, res) => {
         email: user.email,
         displayName: user.displayName || user.name,
         createdAt: user.createdAt,
-        subscriptionPlan: user.subscriptionPlan || 'free',
-        subscriptionStatus: user.subscriptionStatus,
+        subscriptionPlan: subscriptionData.plan,
+        subscriptionStatus: subscriptionData.status,
+        subscriptionPeriodEnd: subscriptionData.periodEnd,
         apiUsage: {
           totalCost: user.totalApiCost || 0,
           totalRequests: user.totalApiRequests || 0

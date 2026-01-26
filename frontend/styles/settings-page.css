@@ -500,6 +500,34 @@ body {
   filter: brightness(1.1);
 }
 
+/* Outline button - subtle border */
+.btn-outline {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  padding: 10px 16px;
+}
+
+.btn-outline::before {
+  display: none;
+}
+
+.btn-outline:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+/* Spinning animation for sync button */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.btn svg.spin {
+  animation: spin 1s linear infinite;
+}
+
 .btn-danger-outline {
   background: linear-gradient(90deg, #ff4a4a 0%, #dc2626 100%);
   color: #fff;

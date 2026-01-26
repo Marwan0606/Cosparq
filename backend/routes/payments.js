@@ -6,11 +6,13 @@
  * SECURITY:
  * - User routes require JWT authentication
  * - Webhook route requires Stripe signature verification
- * - No route directly modifies subscription (only webhook does)
+ * - Rate limiting prevents brute-force attacks
+ * - Session verification done server-to-server with Stripe
  */
 
 const express = require('express');
 const router = express.Router();
+const rateLimit = require('express-rate-limit');
 
 const authenticateToken = require('../middleware/authenticateToken');
 const { captureRawBody, verifyStripeSignature } = require('../middleware/stripeWebhook');
@@ -19,8 +21,34 @@ const {
   createPortalSession,
   handleWebhook,
   getSubscriptionStatus,
+  verifyCheckoutSession,
+  syncSubscription,
   stripe,
 } = require('../controllers/payments');
+
+// Rate limiter for payment endpoints - reasonable limits
+const paymentRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 50, // 50 requests per 15 minutes per IP
+  message: {
+    success: false,
+    message: 'Too many payment requests. Please try again later.',
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Rate limiter for session verification
+const verifySessionLimiter = rateLimit({
+  windowMs: 5 * 60 * 1000, // 5 minutes
+  max: 20, // 20 verification attempts per 5 minutes
+  message: {
+    success: false,
+    message: 'Too many verification attempts. Please try again later.',
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 // ============================================
 // AUTHENTICATED ROUTES (require JWT)
@@ -32,14 +60,14 @@ const {
  * @access  Private
  * @body    { plan: 'pro' | 'business' }
  */
-router.post('/create-checkout-session', authenticateToken, createCheckoutSession);
+router.post('/create-checkout-session', paymentRateLimiter, authenticateToken, createCheckoutSession);
 
 /**
  * @route   POST /api/payments/create-portal-session
  * @desc    Create Stripe Customer Portal session for billing management
  * @access  Private
  */
-router.post('/create-portal-session', authenticateToken, createPortalSession);
+router.post('/create-portal-session', paymentRateLimiter, authenticateToken, createPortalSession);
 
 /**
  * @route   GET /api/payments/subscription-status
@@ -47,6 +75,21 @@ router.post('/create-portal-session', authenticateToken, createPortalSession);
  * @access  Private
  */
 router.get('/subscription-status', authenticateToken, getSubscriptionStatus);
+
+/**
+ * @route   POST /api/payments/verify-session
+ * @desc    Verify checkout session and activate subscription (fallback for webhooks)
+ * @access  Private
+ * @body    { sessionId: string }
+ */
+router.post('/verify-session', verifySessionLimiter, authenticateToken, verifyCheckoutSession);
+
+/**
+ * @route   POST /api/payments/sync-subscription
+ * @desc    Sync subscription status from Stripe (fallback for webhooks on plan changes)
+ * @access  Private
+ */
+router.post('/sync-subscription', verifySessionLimiter, authenticateToken, syncSubscription);
 
 // ============================================
 // WEBHOOK ROUTE - Registered in app.js BEFORE auth middleware

@@ -52,6 +52,11 @@ const UserSchema = new mongoose.Schema({ //this sets the specific type of data e
     type: Date,
     default: null,
   },
+  // Timestamp of last Stripe verification (for cache invalidation)
+  subscriptionLastChecked: {
+    type: Date,
+    default: null,
+  },
   // Audit trail for subscription changes (security)
   subscriptionHistory: [{
     timestamp: {

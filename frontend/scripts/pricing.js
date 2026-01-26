@@ -30,8 +30,15 @@
   async function init() {
     // Check URL params for success/cancel
     const urlParams = new URLSearchParams(window.location.search);
+    const sessionId = urlParams.get('session_id');
     
-    if (urlParams.get('success') === 'true') {
+    if (urlParams.get('success') === 'true' && sessionId) {
+      // IMPORTANT: Verify the session with our backend to ensure subscription is activated
+      // This is a fallback in case webhooks don't work (local dev) or are delayed
+      await verifyCheckoutSession(sessionId);
+      // Clean up URL
+      window.history.replaceState({}, '', '/pricing-page.html');
+    } else if (urlParams.get('success') === 'true') {
       showSuccessMessage();
       // Clean up URL
       window.history.replaceState({}, '', '/pricing-page.html');
@@ -45,6 +52,40 @@
 
     // Set up button handlers
     setupButtonHandlers();
+  }
+
+  /**
+   * Verify checkout session with backend and activate subscription
+   * This ensures the subscription is activated even if webhooks fail
+   */
+  async function verifyCheckoutSession(sessionId) {
+    try {
+      console.log('Verifying checkout session:', sessionId);
+      const response = await axios.post('/api/payments/verify-session', { sessionId });
+      
+      if (response.data.success) {
+        console.log('Session verified successfully:', response.data);
+        showSuccessMessage();
+        
+        // If already processed by webhook, that's fine
+        if (response.data.alreadyProcessed) {
+          console.log('Subscription was already activated by webhook');
+        }
+      } else {
+        console.error('Session verification failed:', response.data);
+        showErrorMessage('Failed to activate subscription. Please contact support.');
+      }
+    } catch (error) {
+      console.error('Error verifying checkout session:', error);
+      // Don't show error if it's just a duplicate - webhook might have already processed it
+      if (error.response?.status === 403) {
+        showErrorMessage('This session does not belong to your account.');
+      } else {
+        // Still show success since payment was made, but log the error
+        console.error('Verification failed, but payment may have succeeded via webhook');
+        showSuccessMessage();
+      }
+    }
   }
 
   /**
