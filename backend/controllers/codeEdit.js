@@ -103,7 +103,7 @@ Includes no extra commentary, markdown fences, or wrapping-text just the raw dif
       console.warn('🔄 Patch failed - requesting full file from AI...');
       try {
         const fullFileResponse = await openai.chat.completions.create({
-          model: "gpt-5-nano",
+          model: "gpt-5-mini",
           messages: [
             {
               role: "system",

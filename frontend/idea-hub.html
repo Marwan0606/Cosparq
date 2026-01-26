@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Idea Hub — CoSparq</title>
+  <link rel="stylesheet" href="styles/idea-hub.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+</head>
+<body>
+  <div id="sidebar-placeholder"></div>
+
+  <div class="container">
+    <!-- Header -->
+    <header class="page-header">
+      <h1 class="headline">
+        <span class="gradient-text">Idea Hub</span>
+      </h1>
+      <p class="subtitle">
+        Your idea as it evolves. Sync with AI to incorporate insights from all your conversations and research.
+      </p>
+    </header>
+
+    <!-- Main Content -->
+    <div class="idea-hub-content">
+      <!-- Current Idea Section -->
+      <section class="current-idea-section">
+        <div class="section-header">
+          <h2 class="section-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+            </svg>
+            Current Idea
+          </h2>
+          <div class="idea-name-badge" id="ideaName">Loading...</div>
+        </div>
+
+        <div class="idea-card">
+          <div class="idea-content" id="ideaContent">
+            <div class="loading-state">
+              <div class="spinner"></div>
+              <span>Loading your idea...</span>
+            </div>
+          </div>
+
+          <div class="idea-meta">
+            <span class="meta-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <polyline points="12 6 12 12 16 14"/>
+              </svg>
+              Last synced: <span id="lastSynced">Never</span>
+            </span>
+            <span class="meta-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+              </svg>
+              <span id="historyCount">0 versions</span> in history
+            </span>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+          <button class="btn btn-primary" id="syncBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+            </svg>
+            Sync with AI
+          </button>
+          <button class="btn btn-secondary" id="editBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+            </svg>
+            Edit Manually
+          </button>
+        </div>
+      </section>
+
+      <!-- History Section -->
+      <section class="history-section">
+        <div class="section-header">
+          <h2 class="section-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <polyline points="12 6 12 12 16 14"/>
+            </svg>
+            Version History
+          </h2>
+          <button class="btn btn-ghost" id="toggleHistoryBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="chevron">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </button>
+        </div>
+
+        <div class="history-list" id="historyList">
+          <div class="empty-history">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <circle cx="12" cy="12" r="10"/>
+              <polyline points="12 6 12 12 16 14"/>
+            </svg>
+            <p>No history yet</p>
+            <span style="font-size: 0.85rem">Your idea versions will appear here as you make updates.</span>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- Edit Modal -->
+  <div class="modal-overlay hidden" id="editModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>Edit Your Idea</h2>
+        <button class="modal-close close-modal">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <textarea class="idea-textarea" id="editIdeaTextarea" placeholder="Enter your updated idea..."></textarea>
+        <div class="char-count" id="charCount">0 characters</div>
+        <div class="edit-updated" style="margin-top: 16px;">
+          <label style="display: block; font-size: 0.85rem; color: var(--muted); margin-bottom: 8px;">What changed? (optional)</label>
+          <input type="text" id="editSummaryInput" class="idea-textarea" style="min-height: 40px; padding: 10px 14px;" placeholder="e.g., Added payment feature">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost close-modal">Cancel</button>
+        <button class="btn btn-primary" id="saveEditBtn">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sync Preview Modal -->
+  <div class="modal-overlay hidden" id="syncModal">
+    <div class="modal modal-lg">
+      <div class="modal-header">
+        <h2>Review AI Updates</h2>
+        <button class="modal-close close-modal">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="changes-summary" id="changesSummary">AI analyzed your conversations and found updates.</div>
+        <div class="sync-comparison">
+          <div class="comparison-item">
+            <h3>Current Idea</h3>
+            <div class="comparison-content" id="currentIdeaPreview"></div>
+          </div>
+          <div class="comparison-arrow">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="5" y1="12" x2="19" y2="12"/>
+              <polyline points="12 5 19 12 12 19"/>
+            </svg>
+          </div>
+          <div class="comparison-item">
+            <h3>Updated Idea</h3>
+            <div class="comparison-content" id="newIdeaPreview"></div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost close-modal">Discard</button>
+        <button class="btn btn-primary" id="confirmSyncBtn">Accept & Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- History Detail Modal -->
+  <div class="modal-overlay hidden" id="historyModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>Version Details</h2>
+        <button class="modal-close close-modal">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="history-detail-meta">
+          <span><strong>Date:</strong> <span id="historyDetailDate"></span></span>
+          <span><strong>Type:</strong> <span id="historyDetailSource"></span></span>
+          <span><strong>Summary:</strong> <span id="historyDetailSummary"></span></span>
+        </div>
+        <div class="history-detail-content" id="historyDetailContent"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost close-modal">Close</button>
+        <button class="btn btn-primary" id="restoreBtn">Restore This Version</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div class="toast hidden" id="toast">
+    <span class="toast-message"></span>
+  </div>
+
+<script>
+(function () {
+  const LOGIN_URL = '/auth.html';
+  if (location.pathname.endsWith('/auth.html')) return;
+  const token = localStorage.getItem('accessToken');
+  if (!token) {
+    window.location.href = LOGIN_URL;
+    return;
+  }
+})();
+</script>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script src="./scripts/subscriptionHandler.js"></script>
+<script type="module">
+  async function loadSidebar() {
+    const res = await fetch('sidebar.html');
+    const html = await res.text();
+    document.getElementById('sidebar-placeholder').innerHTML = html;
+
+    const { initSidebar } = await import('./scripts/sidebar.js');
+    await initSidebar();
+  }
+  loadSidebar();
+</script>
+<script src="scripts/idea-hub.js"></script>
+</body>
+</html>
