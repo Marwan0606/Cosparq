@@ -20,6 +20,7 @@ const payments = require('./routes/payments.js')
 const marketplace = require('./routes/marketplace.js')
 const brainstorm = require('./routes/brainstorm.js')
 const ideaHub = require('./routes/ideaHub.js')
+const dashboard = require('./routes/dashboard.js')
 
 const authenticateToken = require('./middleware/authenticateToken.js')
 const { captureRawBody, verifyStripeSignature } = require('./middleware/stripeWebhook.js');
@@ -86,6 +87,9 @@ app.use('/api/brainstorm', brainstorm);
 
 // Idea Hub routes
 app.use('/api/idea-hub', ideaHub);
+
+// Dashboard routes
+app.use('/api/dashboard', dashboard);
 
 const port = process.env.PORT || 5004
 

@@ -65,10 +65,7 @@ body {
 .icon-wrap {
   width: 72px; height: 72px;
   margin: 0 auto 24px;
-  background: linear-gradient(
-    90deg,
-    #8400ff 0%, #f94016 40%, #f96d16 60%, #3b82f6 100%
-  );
+  background: #8400ff;
   border-radius: 16px;
   display: flex; align-items: center; justify-content: center;
 }

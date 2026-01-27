@@ -3,10 +3,48 @@ const User = require('../models/Users');
 const Idea = require('../models/Idea-pitch-responses');
 const ScoreboardResponse = require('../models/Scoreboard-responses');
 const OpenAI = require('openai');
+const sharp = require('sharp');
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
 });
+
+// Compress base64 image to create a thumbnail
+async function createThumbnail(base64Image, width = 400, quality = 60) {
+  try {
+    // Extract the base64 data and mime type
+    const matches = base64Image.match(/^data:image\/([a-zA-Z]+);base64,(.+)$/);
+    if (!matches) {
+      console.log('[Thumbnail] Invalid base64 format, returning original');
+      return base64Image;
+    }
+    
+    const imageBuffer = Buffer.from(matches[2], 'base64');
+    
+    // Compress and resize using sharp
+    const compressedBuffer = await sharp(imageBuffer)
+      .resize(width, null, { 
+        withoutEnlargement: true,
+        fit: 'inside'
+      })
+      .jpeg({ quality, progressive: true })
+      .toBuffer();
+    
+    // Convert back to base64
+    const compressedBase64 = `data:image/jpeg;base64,${compressedBuffer.toString('base64')}`;
+    
+    // Log compression ratio
+    const originalSize = base64Image.length;
+    const compressedSize = compressedBase64.length;
+    const ratio = ((1 - compressedSize / originalSize) * 100).toFixed(1);
+    console.log(`[Thumbnail] Compressed: ${(originalSize/1024).toFixed(1)}KB -> ${(compressedSize/1024).toFixed(1)}KB (${ratio}% reduction)`);
+    
+    return compressedBase64;
+  } catch (error) {
+    console.error('[Thumbnail] Error creating thumbnail:', error.message);
+    return base64Image; // Return original if compression fails
+  }
+}
 
 // Get all listings with filtering, sorting, and search
 const getListings = async (req, res) => {
@@ -72,7 +110,7 @@ const getListings = async (req, res) => {
             demoUrl: 1,
             views: 1,
             recentUpvotes: 1,
-            thumbnail: { $arrayElemAt: ['$images', 0] }
+            thumbnail: { $ifNull: ['$thumbnail', { $arrayElemAt: ['$images', 0] }] }
           }
         }
       ];
@@ -128,7 +166,7 @@ const getListings = async (req, res) => {
           status: 1,
           demoUrl: 1,
           views: 1,
-          thumbnail: { $arrayElemAt: ['$images', 0] }
+          thumbnail: { $ifNull: ['$thumbnail', { $arrayElemAt: ['$images', 0] }] }
         }
       }
     ]);
@@ -194,12 +232,17 @@ const createListing = async (req, res) => {
     
     const authorName = user.name || user.email.split('@')[0];
     
+    // Create compressed thumbnail from first image
+    console.log('[Marketplace] Creating thumbnail for new listing...');
+    const thumbnail = await createThumbnail(images[0]);
+    
     const listing = new MarketplaceListing({
       name,
       tagline,
       description,
       appUrl,
       images,
+      thumbnail,
       category,
       author: userId,
       authorName
@@ -237,7 +280,12 @@ const updateListing = async (req, res) => {
     if (tagline) listing.tagline = tagline;
     if (description !== undefined) listing.description = description;
     if (appUrl) listing.appUrl = appUrl;
-    if (images && Array.isArray(images) && images.length > 0) listing.images = images;
+    if (images && Array.isArray(images) && images.length > 0) {
+      listing.images = images;
+      // Regenerate thumbnail when images are updated
+      console.log('[Marketplace] Regenerating thumbnail for updated listing...');
+      listing.thumbnail = await createThumbnail(images[0]);
+    }
     if (category) listing.category = category;
     
     await listing.save();
@@ -779,6 +827,55 @@ const markReviewHelpful = async (req, res) => {
   }
 };
 
+// Migration: Generate thumbnails for existing listings that don't have them
+const migrateThumbnails = async (req, res) => {
+  try {
+    console.log('[Migration] Starting thumbnail migration...');
+    
+    // Find listings without thumbnails
+    const listings = await MarketplaceListing.find({ 
+      $or: [
+        { thumbnail: { $exists: false } },
+        { thumbnail: null },
+        { thumbnail: '' }
+      ],
+      images: { $exists: true, $ne: [] }
+    });
+    
+    console.log(`[Migration] Found ${listings.length} listings without thumbnails`);
+    
+    let processed = 0;
+    let failed = 0;
+    
+    for (const listing of listings) {
+      try {
+        if (listing.images && listing.images.length > 0) {
+          const thumbnail = await createThumbnail(listing.images[0]);
+          await MarketplaceListing.findByIdAndUpdate(listing._id, { thumbnail });
+          processed++;
+          console.log(`[Migration] Processed ${processed}/${listings.length}: ${listing.name}`);
+        }
+      } catch (err) {
+        failed++;
+        console.error(`[Migration] Failed for listing ${listing._id}:`, err.message);
+      }
+    }
+    
+    console.log(`[Migration] Complete! Processed: ${processed}, Failed: ${failed}`);
+    
+    res.json({ 
+      success: true, 
+      message: `Migration complete. Processed: ${processed}, Failed: ${failed}`,
+      processed,
+      failed,
+      total: listings.length
+    });
+  } catch (error) {
+    console.error('Error during thumbnail migration:', error);
+    res.status(500).json({ success: false, message: 'Error during migration' });
+  }
+};
+
 module.exports = {
   getListings,
   getListing,
@@ -793,5 +890,6 @@ module.exports = {
   getReviews,
   updateReview,
   deleteReview,
-  markReviewHelpful
+  markReviewHelpful,
+  migrateThumbnails
 };

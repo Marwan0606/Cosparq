@@ -3,20 +3,25 @@ axios.defaults.withCredentials = true;   // ← send & receive cookies
 
 
 async function checkPending() {
-  const ideaId = JSON.parse(localStorage.getItem('ideaId'));
-  const res = await axios.get(`/api/v1/tasks/pending/${ideaId}`);
+  try {
+    const ideaId = JSON.parse(localStorage.getItem('ideaId'));
+    const res = await axios.get(`/api/v1/tasks/pending/${ideaId}`);
 
-  const pending = res?.data?.tasks?.[0];
-  if (!pending) return false;
+    const pending = res?.data?.tasks?.[0];
+    if (!pending) return false;
 
-  // ONLY act if AI response is ready
-  if (pending.title) {
-    await generateAiTasks(pending.title);
-    return true;
+    // ONLY act if AI response is ready
+    if (pending.title) {
+      await generateAiTasks(pending.title);
+      return true;
+    }
+
+    // Otherwise do NOTHING (no loader, no polling)
+    return false;
+  } catch (error) {
+    console.error('Error checking pending tasks:', error);
+    return false; // Fall through to getAllTasks
   }
-
-  // Otherwise do NOTHING (no loader, no polling)
-  return false;
 }
 
 checkPending().then((hasPending) => {
@@ -57,7 +62,7 @@ const addTask = async ()=>{
     let urgency = document.getElementById('urgencySelect').value
     let date = document.getElementById('dueInput').value
     let description = document.getElementById('description-text').value
-    response = await axios.post('/api/v1/tasks', {title, description, assignedToName, urgency, date, ideaId})
+    response = await axios.post('/api/v1/tasks', {title, description, assignedToName, urgency, date, ideaId, status: 'success'})
   } catch (error) {
     console.log(error)
   }
@@ -273,22 +278,43 @@ const tasksAI = async (userRequest)=>{
 
 //this is to map the response and generate the tasks
 generateAiTasks = async (response)=>{
-  let tasksAiRes = (typeof response === 'string') ? JSON.parse(response) : response;
-  //tasksAiRes = JSON.parse(response)
-  console.log(response)
-  /*
-  if (response.data.result) {
-    tasksAiRes = JSON.parse(response.data.result)
+  let tasksAiRes;
+  try {
+    tasksAiRes = (typeof response === 'string') ? JSON.parse(response) : response;
+  } catch (parseError) {
+    console.error('Failed to parse AI response as JSON:', parseError);
+    // Delete the invalid pending task and load existing tasks instead
+    try {
+      let ideaId = JSON.parse(localStorage.getItem('ideaId'));
+      console.log('Deleting pending task for ideaId:', ideaId);
+      await axios.delete(`/api/v1/tasks/pending/${ideaId}`);
+      console.log('Pending task deleted, loading all tasks...');
+    } catch (deleteError) {
+      console.error('Error deleting pending task:', deleteError);
+    }
+    await getAllTasks();
+    return;
   }
-    */
   
+  console.log(response)
   console.log('response parsed', tasksAiRes)
+  
   if (tasksAiRes.tasks) {
     tasksAiRes = tasksAiRes.tasks
   }
   if (tasksAiRes.steps) {
     tasksAiRes = tasksAiRes.steps
   }
+  
+  // Validate that we have an array of tasks
+  if (!Array.isArray(tasksAiRes) || tasksAiRes.length === 0) {
+    console.error('Invalid tasks format:', tasksAiRes);
+    let ideaId = JSON.parse(localStorage.getItem('ideaId'));
+    await axios.delete(`/api/v1/tasks/pending/${ideaId}`);
+    await getAllTasks();
+    return;
+  }
+  
   console.log('final format', tasksAiRes)
   console.log(tasksAiRes.length)
   let ideaId = JSON.parse(localStorage.getItem('ideaId'))

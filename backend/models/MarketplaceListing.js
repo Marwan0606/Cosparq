@@ -63,6 +63,10 @@ const marketplaceListingSchema = new mongoose.Schema({
     type: String,
     trim: true
   }],
+  thumbnail: {
+    type: String,
+    trim: true
+  },
   category: {
     type: String,
     required: true,

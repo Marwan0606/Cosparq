@@ -15,13 +15,18 @@ const {
   getReviews,
   updateReview,
   deleteReview,
-  markReviewHelpful
+  markReviewHelpful,
+  migrateThumbnails
 } = require('../controllers/marketplace');
 
 // Public routes (still need auth to see who upvoted)
 router.get('/', authenticateToken, getListings);
 router.get('/my-listings', authenticateToken, getMyListings);
 router.get('/autofill', authenticateToken, getAutofill);
+
+// Migration route (run once to generate thumbnails for existing listings)
+router.post('/migrate-thumbnails', authenticateToken, migrateThumbnails);
+
 router.get('/:id', authenticateToken, getListing);
 router.get('/:id/reviews', authenticateToken, getReviews);
 

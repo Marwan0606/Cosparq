@@ -35,7 +35,7 @@ const codePage = async (req, res) => {
 
   try {
     const response = await openai.chat.completions.create({
-      model: "gpt-5.2",
+      model: "gpt-5-nano",
       messages,
       //reasoning_effort:"high"
       //temperature: 0.7

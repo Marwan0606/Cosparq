@@ -82,7 +82,7 @@ const login = async ()=>{
     }
     */
 
-    window.location.href = 'idea-page.html';
+    window.location.href = 'dashboard.html';
     
   } catch (error) {
 

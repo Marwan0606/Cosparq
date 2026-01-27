@@ -46,7 +46,7 @@ async function populateIdeas() {
     
       .map(i => `
         <a 
-          href="/scoreboard-page.html" 
+          href="/dashboard.html" 
           data-product-id="${i._id}" 
           class="menu-item menu-item-ideas"
         >

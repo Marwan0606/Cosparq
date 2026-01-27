@@ -20,6 +20,8 @@ axios.interceptors.request.use(
 
 // State
 let apps = [];
+let allApps = []; // Cache all listings for client-side filtering
+let allAppsLoaded = false; // Flag to know if we have all data
 let currentCategory = 'all';
 let currentSort = 'latest';
 let searchQuery = '';
@@ -127,7 +129,7 @@ async function loadMoreApps() {
     params.append('limit', ITEMS_PER_PAGE);
     
     const response = await axios.get(`/api/marketplace?${params.toString()}`, {
-      timeout: 15000
+      timeout: 60000
     });
     
     if (response.data.success) {
@@ -344,7 +346,7 @@ function setupEventListeners() {
       btn.style.borderColor = catColor.color;
       btn.style.color = '#fff';
       currentCategory = btn.dataset.category;
-      loadApps(true); // Fresh load on filter change
+      applyFilters(); // Client-side filtering - instant!
     });
   });
 
@@ -354,7 +356,7 @@ function setupEventListeners() {
       sortBtns.forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       currentSort = btn.dataset.sort;
-      loadApps(true); // Fresh load on sort change
+      applyFilters(); // Client-side sorting - instant!
     });
   });
 
@@ -364,8 +366,8 @@ function setupEventListeners() {
     clearTimeout(searchTimeout);
     searchTimeout = setTimeout(() => {
       searchQuery = e.target.value.toLowerCase();
-      loadApps(true); // Fresh load on search
-    }, 300);
+      applyFilters(); // Client-side search - instant!
+    }, 150); // Reduced debounce since it's instant now
   });
 
   // FAB button - open modal
@@ -700,9 +702,105 @@ function closeDetailModal() {
   currentImageIndex = 0;
 }
 
-// Load apps from backend (fresh load with pagination reset)
+// Lazy loading for images using Intersection Observer
+function initLazyLoading() {
+  const lazyImages = document.querySelectorAll('.lazy-image');
+  
+  if ('IntersectionObserver' in window) {
+    const imageObserver = new IntersectionObserver((entries, observer) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const img = entry.target;
+          if (img.dataset.src) {
+            img.src = img.dataset.src;
+            img.classList.add('loaded');
+            img.removeAttribute('data-src');
+          }
+          observer.unobserve(img);
+        }
+      });
+    }, {
+      rootMargin: '100px', // Load images 100px before they enter viewport
+      threshold: 0.01
+    });
+    
+    lazyImages.forEach(img => {
+      if (!img.src || img.src === window.location.href) {
+        imageObserver.observe(img);
+      }
+    });
+  } else {
+    // Fallback for browsers without IntersectionObserver
+    lazyImages.forEach(img => {
+      if (img.dataset.src) {
+        img.src = img.dataset.src;
+      }
+    });
+  }
+}
+
+// Client-side filtering and sorting functions
+function filterAndSortApps() {
+  let filtered = [...allApps];
+  
+  // Category filter
+  if (currentCategory !== 'all') {
+    filtered = filtered.filter(app => app.category === currentCategory);
+  }
+  
+  // Search filter
+  if (searchQuery) {
+    const query = searchQuery.toLowerCase();
+    filtered = filtered.filter(app => 
+      app.name.toLowerCase().includes(query) ||
+      app.tagline.toLowerCase().includes(query) ||
+      (app.description && app.description.toLowerCase().includes(query)) ||
+      app.category.toLowerCase().includes(query)
+    );
+  }
+  
+  // Sort
+  switch (currentSort) {
+    case 'trending':
+      // Sort by recent upvotes (use recentUpvotes if available, else upvotes)
+      filtered.sort((a, b) => (b.recentUpvotes || b.upvotes || 0) - (a.recentUpvotes || a.upvotes || 0));
+      break;
+    case 'hall-of-fame':
+      // Sort by total upvotes
+      filtered.sort((a, b) => (b.upvotes || 0) - (a.upvotes || 0));
+      break;
+    case 'latest':
+    default:
+      // Sort by creation date (newest first)
+      filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  }
+  
+  return filtered;
+}
+
+// Apply filters client-side (fast, no API call)
+function applyFilters() {
+  if (!allAppsLoaded) {
+    // If we haven't loaded all apps yet, do a server load
+    loadApps(true);
+    return;
+  }
+  
+  // Client-side filtering - instant!
+  apps = filterAndSortApps();
+  renderApps();
+}
+
+// Load ALL apps from backend once, then filter client-side
 async function loadApps(freshLoad = true) {
   console.log('loadApps() called, freshLoad:', freshLoad);
+  
+  // If we already have all apps cached, just filter client-side
+  if (allAppsLoaded && freshLoad) {
+    apps = filterAndSortApps();
+    renderApps();
+    return;
+  }
   
   // Reset pagination state on fresh load
   if (freshLoad) {
@@ -720,30 +818,32 @@ async function loadApps(freshLoad = true) {
   `;
   
   try {
+    // Load ALL listings at once (no filters, let client handle it)
+    // Use a high limit to get all listings in one request
     const params = new URLSearchParams();
-    if (currentCategory !== 'all') params.append('category', currentCategory);
-    if (currentSort) params.append('sort', currentSort);
-    if (searchQuery) params.append('search', searchQuery);
-    params.append('page', currentPage);
-    params.append('limit', ITEMS_PER_PAGE);
+    params.append('limit', 500); // Get up to 500 listings at once
+    params.append('page', 1);
     
-    console.log('Loading apps with params:', params.toString());
+    console.log('Loading all apps from server...');
     
     const response = await axios.get(`/api/marketplace?${params.toString()}`, {
-      timeout: 15000
+      timeout: 60000
     });
     
     console.log('Apps loaded:', response.data);
     
     if (response.data.success) {
-      apps = response.data.listings;
-      const pagination = response.data.pagination;
+      // Cache all apps
+      allApps = response.data.listings;
+      allAppsLoaded = true;
       
-      // Update pagination state
-      totalPages = pagination.pages;
-      hasMoreItems = currentPage < totalPages;
+      // Apply current filters
+      apps = filterAndSortApps();
       
-      console.log(`Loaded page ${currentPage}/${totalPages}, hasMore: ${hasMoreItems}`);
+      // No pagination needed for client-side filtering
+      hasMoreItems = false;
+      
+      console.log(`Loaded ${allApps.length} total apps, ${apps.length} after filtering`);
       
       renderApps();
     } else {
@@ -785,6 +885,9 @@ function renderApps() {
 
   appsGrid.innerHTML = apps.map(app => createAppCard(app)).join('');
 
+  // Initialize lazy loading for images
+  initLazyLoading();
+
   // Add click handlers for app cards
   document.querySelectorAll('.app-card').forEach((card) => {
     const appId = card.dataset.appId;
@@ -823,7 +926,7 @@ function createAppCard(app) {
   return `
     <div class="app-card" data-app-id="${app._id}">
       <div class="app-card-image">
-        ${thumbnailUrl ? `<img src="${thumbnailUrl}" alt="${app.name}" onerror="this.style.display='none'"/>` : `<div class="app-card-placeholder">${app.name.charAt(0).toUpperCase()}</div>`}
+        ${thumbnailUrl ? `<img data-src="${thumbnailUrl}" alt="${app.name}" class="lazy-image" onerror="this.style.display='none'"/>` : `<div class="app-card-placeholder">${app.name.charAt(0).toUpperCase()}</div>`}
       </div>
       <div class="app-card-body">
         <h3 class="app-name">${escapeHtml(app.name)}</h3>
