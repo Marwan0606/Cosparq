@@ -54,13 +54,13 @@ If no meaningful changes needed, return:
         content: `### CURRENT IDEA
 ${oldIdea}
 
-### CHAT CONVERSATIONS (if any)
+### CHAT CONVERSATIONS & CO-FOUNDER MEETINGS (if any)
 ${chatLogs || 'No chat conversations yet'}
 
 ### MARKET RESEARCH (if any)
 ${marketData || 'No market research yet'}
 
-Based on the conversations and research above, should the idea be updated? Remember: ONLY make changes if they were actually discussed. Don't hallucinate new features.`
+Based on the conversations, co-founder meetings, and research above, should the idea be updated? Remember: ONLY make changes if they were actually discussed. Don't hallucinate new features.`
       },
     ];
 

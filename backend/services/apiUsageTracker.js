@@ -33,6 +33,16 @@ const MODEL_PRICING = {
   'default': { input: 0.01, output: 0.03 }
 };
 
+// Audio pricing (TTS and Whisper)
+const AUDIO_PRICING = {
+  // TTS pricing per 1M characters
+  'tts-1': 15.00 / 1000000,      // $15 per 1M chars = $0.000015 per char
+  'tts-1-hd': 30.00 / 1000000,   // $30 per 1M chars = $0.000030 per char
+  
+  // Whisper pricing per minute
+  'whisper-1': 0.006             // $0.006 per minute
+};
+
 /**
  * Calculate the cost of an OpenAI API call
  * @param {string} model - The model name used
@@ -143,6 +153,87 @@ const trackApiUsage = async (userId, response, endpoint = 'unknown') => {
 };
 
 /**
+ * Track audio API usage (TTS and Whisper)
+ * @param {string} userId - The user's ID
+ * @param {string} model - The audio model used (tts-1, tts-1-hd, whisper-1)
+ * @param {object} usage - Usage details { characters, durationMinutes }
+ * @param {string} endpoint - The endpoint/feature name
+ * @returns {Promise<object>} Updated user stats
+ */
+const trackAudioUsage = async (userId, model, usage, endpoint = 'audio') => {
+  try {
+    if (!userId) {
+      console.warn('⚠️ No userId provided to trackAudioUsage');
+      return null;
+    }
+
+    let cost = 0;
+    let description = '';
+
+    if (model.startsWith('tts')) {
+      // TTS is billed per character
+      const characters = usage.characters || 0;
+      const pricePerChar = AUDIO_PRICING[model] || AUDIO_PRICING['tts-1'];
+      cost = characters * pricePerChar;
+      description = `${characters} chars`;
+    } else if (model === 'whisper-1') {
+      // Whisper is billed per minute
+      const minutes = usage.durationMinutes || 0;
+      cost = minutes * AUDIO_PRICING['whisper-1'];
+      description = `${minutes.toFixed(2)} mins`;
+    }
+
+    // Create usage record
+    const usageRecord = {
+      timestamp: new Date(),
+      endpoint,
+      model,
+      promptTokens: 0,
+      completionTokens: 0,
+      totalTokens: 0,
+      cost
+    };
+
+    // Update user document
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      {
+        $inc: {
+          totalApiRequests: 1,
+          totalApiCost: cost
+        },
+        $push: {
+          apiUsageHistory: {
+            $each: [usageRecord],
+            $slice: -1000
+          }
+        }
+      },
+      { new: true }
+    );
+
+    if (updatedUser) {
+      console.log(`🔊 Audio Usage tracked for user ${userId}:`);
+      console.log(`   Endpoint: ${endpoint}`);
+      console.log(`   Model: ${model}`);
+      console.log(`   Usage: ${description}`);
+      console.log(`   Cost: $${cost.toFixed(6)}`);
+      console.log(`   Total requests: ${updatedUser.totalApiRequests}`);
+      console.log(`   Total cost: $${updatedUser.totalApiCost.toFixed(4)}`);
+    }
+
+    return {
+      requestCost: cost,
+      totalRequests: updatedUser?.totalApiRequests || 0,
+      totalCost: updatedUser?.totalApiCost || 0
+    };
+  } catch (error) {
+    console.error('❌ Error tracking audio usage:', error);
+    return null;
+  }
+};
+
+/**
  * Get API usage stats for a user
  * @param {string} userId - The user's ID
  * @returns {Promise<object>} User's API usage statistics
@@ -209,7 +300,9 @@ const getUserApiStats = async (userId) => {
 
 module.exports = {
   trackApiUsage,
+  trackAudioUsage,
   getUserApiStats,
   calculateCost,
-  MODEL_PRICING
+  MODEL_PRICING,
+  AUDIO_PRICING
 };

@@ -1,7 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const authenticateToken = require('../middleware/authenticateToken');
-const { getDashboardData, getDashboardAIInsights } = require('../controllers/dashboard');
+const { getDashboardData, getDashboardAIInsights, getProjects } = require('../controllers/dashboard');
+
+// Get all projects/ideas for a user - must come BEFORE /:ideaId
+router.get('/projects', authenticateToken, getProjects);
 
 // Get all dashboard data for an idea
 router.get('/:ideaId', authenticateToken, getDashboardData);

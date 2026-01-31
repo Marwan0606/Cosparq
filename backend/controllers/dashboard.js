@@ -438,4 +438,31 @@ function generateQuickActions(scoreData, marketData, chats) {
   return actions;
 }
 
-module.exports = { getDashboardData, getDashboardAIInsights };
+/**
+ * Get all projects/ideas for a user
+ */
+const getProjects = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    
+    const ideas = await Idea.find({ userId })
+      .select('ideaName idea createdAt updatedAt')
+      .sort({ updatedAt: -1 });
+    
+    res.json({
+      success: true,
+      projects: ideas.map(idea => ({
+        _id: idea._id,
+        name: idea.ideaName,
+        description: idea.idea?.substring(0, 200) || '',
+        createdAt: idea.createdAt,
+        updatedAt: idea.updatedAt
+      }))
+    });
+  } catch (error) {
+    console.error('Error getting projects:', error);
+    res.status(500).json({ error: 'Failed to get projects' });
+  }
+};
+
+module.exports = { getDashboardData, getDashboardAIInsights, getProjects };

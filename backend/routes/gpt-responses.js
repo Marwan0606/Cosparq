@@ -7,6 +7,7 @@ const { checkPaidSubscription } = require('../middleware/checkSubscription');
 const { rateIdea } = require('../controllers/scoreboard');
 const { marketResearch } = require('../controllers/marketResearch');
 const { chat } = require('../controllers/chat')
+const { chatWithActions } = require('../controllers/chatWithActions')
 const { renewIdea } = require('../controllers/renewIdea');
 const { actionPlan } = require('../controllers/actionPlan');
 const { tasksAi } = require('../controllers/tasksAi')
@@ -22,6 +23,9 @@ router.post('/idea', checkApiLimit, rateIdea);
 router.post('/research', checkApiLimit, marketResearch);
 
 router.post('/chat', checkApiLimit, chat);
+
+// Chat with Actions - enables action execution from chat (email, calendar, slides, forms, sheets)
+router.post('/chatWithActions', checkApiLimit, chatWithActions);
 
 router.post('/renewIdea', checkApiLimit, renewIdea);
 

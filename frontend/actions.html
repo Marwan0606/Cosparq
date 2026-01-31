@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Actions — CoSparq</title>
+  <link rel="stylesheet" href="styles/actions.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+</head>
+<body>
+  <!-- Background Effects -->
+  <div class="background-effects">
+    <div class="ambient-glow glow-1"></div>
+    <div class="ambient-glow glow-2"></div>
+  </div>
+
+  <div id="sidebar-placeholder"></div>
+
+  <main class="actions-main">
+    <!-- Header -->
+    <div class="actions-header">
+      <h1 class="actions-title">
+        <span class="gradient-text">Actions</span>
+      </h1>
+      <p class="actions-subtitle">Automate tasks for your startup with AI-powered actions</p>
+      
+      <!-- Current Idea Context -->
+      <div class="idea-context" id="ideaContext">
+        <span class="context-label">Working on:</span>
+        <span class="context-idea" id="currentIdeaName">Loading...</span>
+      </div>
+    </div>
+
+    <!-- Google Connection Status -->
+    <div class="connection-section" id="connectionSection">
+      <div class="connection-card" id="googleConnection">
+        <div class="connection-info">
+          <div class="connection-icon google-icon">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+              <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+              <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+              <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+            </svg>
+          </div>
+          <div class="connection-details">
+            <h3>Google Account</h3>
+            <p class="connection-status" id="googleStatus">Not connected</p>
+          </div>
+        </div>
+        <button class="connect-btn" id="connectGoogleBtn">
+          <span>Connect Google</span>
+        </button>
+        <button class="disconnect-btn hidden" id="disconnectGoogleBtn">
+          <span>Disconnect</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Actions Grid -->
+    <div class="actions-grid">
+      <!-- Send Email Action -->
+      <div class="action-card" data-action="email" data-requires="google">
+        <div class="action-header">
+          <div class="action-icon email-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+              <polyline points="22,6 12,13 2,6"/>
+            </svg>
+          </div>
+          <div class="action-badge">Gmail</div>
+        </div>
+        <h3 class="action-title">Send Email</h3>
+        <p class="action-description">Draft and send cold emails, outreach, or follow-ups with AI assistance</p>
+        <button class="action-btn" data-action="email">
+          <span>Create Email</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M5 12h14M12 5l7 7-7 7"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Calendar Action -->
+      <div class="action-card" data-action="calendar" data-requires="google">
+        <div class="action-header">
+          <div class="action-icon calendar-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+              <line x1="16" y1="2" x2="16" y2="6"/>
+              <line x1="8" y1="2" x2="8" y2="6"/>
+              <line x1="3" y1="10" x2="21" y2="10"/>
+            </svg>
+          </div>
+          <div class="action-badge">Calendar</div>
+        </div>
+        <h3 class="action-title">Schedule Event</h3>
+        <p class="action-description">Add meetings, deadlines, and reminders directly to Google Calendar</p>
+        <button class="action-btn" data-action="calendar">
+          <span>Add Event</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M5 12h14M12 5l7 7-7 7"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Google Sheets Action -->
+      <div class="action-card" data-action="sheets" data-requires="google">
+        <div class="action-header">
+          <div class="action-icon sheets-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+              <line x1="3" y1="9" x2="21" y2="9"/>
+              <line x1="3" y1="15" x2="21" y2="15"/>
+              <line x1="9" y1="3" x2="9" y2="21"/>
+            </svg>
+          </div>
+          <div class="action-badge">Sheets</div>
+        </div>
+        <h3 class="action-title">Create Spreadsheet</h3>
+        <p class="action-description">AI builds structured spreadsheets for tracking, planning, or analysis</p>
+        <button class="action-btn" data-action="sheets">
+          <span>Create Sheet</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M5 12h14M12 5l7 7-7 7"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Content Generation -->
+      <div class="action-card" data-action="content">
+        <div class="action-header">
+          <div class="action-icon content-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 20h9"/>
+              <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+            </svg>
+          </div>
+          <div class="action-badge ai-badge">AI</div>
+        </div>
+        <h3 class="action-title">Generate Content</h3>
+        <p class="action-description">Create social media posts, blog outlines, or marketing copy for your idea</p>
+        <button class="action-btn" data-action="content">
+          <span>Create Content</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M5 12h14M12 5l7 7-7 7"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Google Slides Action -->
+      <div class="action-card" data-action="slides" data-requires="google">
+        <div class="action-header">
+          <div class="action-icon slides-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+              <line x1="8" y1="21" x2="16" y2="21"/>
+              <line x1="12" y1="17" x2="12" y2="21"/>
+            </svg>
+          </div>
+          <div class="action-badge">Slides</div>
+        </div>
+        <h3 class="action-title">Plan Pitch Deck</h3>
+        <p class="action-description">AI plans your slide structure with titles, content & speaker notes</p>
+        <button class="action-btn" data-action="slides">
+          <span>Create Slides</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M5 12h14M12 5l7 7-7 7"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Google Forms Action -->
+      <div class="action-card" data-action="forms" data-requires="google">
+        <div class="action-header">
+          <div class="action-icon forms-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 11l3 3L22 4"/>
+              <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+            </svg>
+          </div>
+          <div class="action-badge">Forms</div>
+        </div>
+        <h3 class="action-title">Create Survey</h3>
+        <p class="action-description">AI builds a Google Form for customer feedback, research, or signups</p>
+        <button class="action-btn" data-action="forms">
+          <span>Create Form</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M5 12h14M12 5l7 7-7 7"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Action History -->
+    <div class="history-section">
+      <h2 class="history-title">Recent Actions</h2>
+      <div class="history-list" id="historyList">
+        <div class="history-empty">
+          <p>No actions yet. Start by creating an email or scheduling an event!</p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Modal Overlay -->
+  <div class="modal-overlay hidden" id="modalOverlay">
+    <div class="modal" id="actionModal">
+      <button class="modal-close" id="modalClose">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+      <div class="modal-content" id="modalContent">
+        <!-- Dynamic content loaded here -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div class="toast hidden" id="toast">
+    <div class="toast-content">
+      <span class="toast-icon"></span>
+      <span class="toast-message"></span>
+    </div>
+  </div>
+
+<script>
+(function () {
+  const LOGIN_URL = '/auth.html';
+  if (location.pathname.endsWith('/auth.html')) return;
+  const token = localStorage.getItem('accessToken');
+  if (!token) {
+    return location.replace(LOGIN_URL);
+  }
+})();
+</script>
+
+  <script
+    src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.21.1/axios.min.js"
+    integrity="sha512-bZS47S7sPOxkjU/4Bt0zrhEtWx0y0CRkhEp8IckzK+ltifIIE9EMIMTuT/mEzoIMewUINruDBIR/jJnbguonqQ=="
+    crossorigin="anonymous"
+    referrerpolicy="no-referrer"
+  ></script>
+  <script src="./scripts/apiLimitHandler.js"></script>
+  <script src="./scripts/subscriptionHandler.js"></script>
+  <script type="module" src="scripts/actions.js"></script>
+  <script type="module">
+  async function loadSidebar() {
+    const res  = await fetch('sidebar.html');
+    const html = await res.text();
+    document.getElementById('sidebar-placeholder').innerHTML = html;
+
+    const { initSidebar } = await import('./scripts/sidebar.js');
+    await initSidebar();
+  }
+  loadSidebar();
+</script>
+
+</body>
+</html>

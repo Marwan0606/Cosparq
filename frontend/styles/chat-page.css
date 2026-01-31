@@ -175,6 +175,13 @@ html::before {
   overflow:auto;
   min-height: 0;
   
+  /* Hide scrollbar */
+  scrollbar-width: none;           /* Firefox */
+  -ms-overflow-style: none;        /* IE/Edge */
+}
+
+.chat-window::-webkit-scrollbar {
+  display: none;                   /* Chrome, Safari, Opera */
 }
 
 /* message layout */
@@ -241,9 +248,6 @@ html::before {
 
 /* ===== Side panel (quick actions) ===== */
 
-/* hide the original quick-title element and render heading inside quick-actions (keeps layout correct) */
-.quick-title { display: none;}
-
 /* quick-actions panel — now stretches full column height and aligns with chat */
 .quick-actions{
   background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(0,0,0,0.02));
@@ -260,19 +264,27 @@ html::before {
   position:relative;
 }
 
-/* inject the heading at the top of quick-actions using a pseudo-element (centered) */
-.quick-actions::before{
-  content: "Quick actions to get started:";
-  display:block;
-  font-weight:700;
-  color:white;
-  text-align:center;
-  margin:-4px 0 8px 0;
-  font-size:0.98rem;
-  padding:4px 2px;
+/* Inline Actions label inside the panel */
+.quick-actions-label {
+  display: block;
+  text-align: center;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: rgba(255,255,255,0.4);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  padding-bottom: 8px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
 }
 
-/* quick button styling */
+/* No pseudo heading needed anymore */
+.quick-actions::before{
+  content: "";
+  display:none;
+}
+
+/* quick button styling (legacy) */
 .quick-btn{
   display:inline-flex; align-items:center; justify-content:center; gap:8px;
   padding:12px 14px; border-radius:10px;
@@ -282,6 +294,65 @@ html::before {
   transition: transform .13s ease, box-shadow .13s ease, border-color .12s;
 }
 .quick-btn:hover{ transform: translateY(-4px); box-shadow: 0 12px 36px rgba(0,0,0,0.45); border-color: rgba(132,0,255,0.28); }
+
+/* Action quick buttons */
+.action-quick-btn{
+  display:inline-flex; align-items:center; justify-content:center; gap:6px;
+  padding:10px 16px; border-radius:20px;
+  background: rgba(255,255,255,0.05);
+  border:1px solid rgba(255,255,255,0.1);
+  color:var(--text); font-weight:600; font-size:0.85rem; cursor:pointer;
+  transition: all .15s ease;
+}
+.action-quick-btn svg {
+  flex-shrink: 0;
+}
+.action-quick-btn:hover{ 
+  transform: translateY(-2px); 
+  background: rgba(255,255,255,0.1);
+  border-color: rgba(132,0,255,0.4); 
+}
+.action-quick-btn.active{
+  background: linear-gradient(135deg, rgba(132,0,255,0.3), rgba(249,64,22,0.3));
+  border-color: rgba(132,0,255,0.6);
+  box-shadow: 0 4px 20px rgba(132,0,255,0.25);
+}
+.action-quick-btn:disabled{
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Mode indicator pill */
+.mode-indicator{
+  display: none;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: linear-gradient(135deg, rgba(132,0,255,0.2), rgba(249,64,22,0.2));
+  border: 1px solid rgba(132,0,255,0.4);
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #fff;
+  margin-right: 8px;
+  white-space: nowrap;
+}
+.mode-clear{
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.7);
+  cursor: pointer;
+  padding: 2px 4px;
+  font-size: 0.9rem;
+  line-height: 1;
+  border-radius: 50%;
+  transition: all 0.15s;
+}
+.mode-clear:hover{
+  color: #fff;
+  background: rgba(255,255,255,0.15);
+}
 
 /* hint inside quick-actions */
 .quick-actions .hint{ font-size:.9rem; color:var(--muted); margin-top:6px; padding-left:4px; }
@@ -301,6 +372,13 @@ html::before {
 .send-btn:hover{ transform: translateY(-3px); opacity:.98; }
 .send-btn:disabled{ transform:none; opacity:.6; cursor:not-allowed }
 
+/* Stop button - hidden by default, shown when loading */
+.stop-btn{ display:none; width:54px;height:54px;border-radius:50%; border:2px solid #ff4444; cursor:pointer; background:transparent; color:#ff4444; font-size:1rem; place-items:center; transition: all .15s ease; }
+.stop-btn:hover{ background:rgba(255,68,68,0.15); transform:scale(1.05); }
+.stop-btn.visible{ display:grid; }
+.chat-input-area.is-busy .send-btn{ display:none; }
+.chat-input-area.is-busy .stop-btn{ display:grid; }
+
 /* spinner */
 .send-btn .loader{ width:18px;height:18px;border-radius:50%; border:2px solid rgba(255,255,255,0.3); border-top-color:#fff; animation:spin .8s linear infinite; }
 @keyframes spin{ to{ transform:rotate(360deg) } }
@@ -309,6 +387,7 @@ html::before {
 @media (max-width: 980px){
   .container{ grid-template-columns: 1fr; grid-template-rows: auto 1fr auto; padding:18px; width: min(980px, 96vw); }
   .quick-title, .quick-actions{ grid-column: 1 / -1; grid-row: 3 / 4; order: 3; margin-top:8px; }
+  .quick-title { text-align: center; }
   .chat-input-area{ grid-row: 4 / 5; margin-top:10px; }
   .headline, .subtitle{ text-align:center; padding-left:0 }
   .chat-window{ order: 2; max-height: calc(100vh - 220px); }
@@ -318,6 +397,7 @@ html::before {
 @media (max-width:560px){
   .bubble{ max-width:92%; padding:10px 12px; font-size:0.96rem }
   .send-btn{ width:48px;height:48px }
+  .stop-btn{ width:48px;height:48px }
   .avatar{ width:30px;height:30px }
 }
 
@@ -331,3 +411,219 @@ html::before {
   white-space: pre-wrap;
   word-break: break-word;
 }
+
+/* ===== Action Preview Styles ===== */
+
+.action-preview-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.action-preview {
+  background: linear-gradient(145deg, rgba(35,35,40,0.95), rgba(25,25,30,0.98));
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+}
+
+.action-preview .preview-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 1rem;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+.action-preview .preview-header .icon {
+  font-size: 1.2rem;
+}
+
+.action-preview .preview-field {
+  margin: 8px 0;
+  font-size: 0.92rem;
+  color: var(--text);
+}
+
+.action-preview .preview-field strong {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.action-preview .preview-body {
+  background: rgba(0,0,0,0.25);
+  border-radius: 8px;
+  padding: 12px;
+  margin-top: 10px;
+  font-size: 0.92rem;
+  line-height: 1.5;
+  border: 1px solid rgba(255,255,255,0.04);
+}
+
+.action-preview ul {
+  margin: 6px 0 6px 16px;
+  padding: 0;
+}
+
+.action-preview ul li {
+  margin: 4px 0;
+  font-size: 0.9rem;
+}
+
+/* Email preview styling */
+.email-preview .preview-header {
+  color: #4db8ff;
+  border-bottom-color: rgba(77, 184, 255, 0.2);
+}
+
+/* Calendar preview styling */
+.calendar-preview .preview-header {
+  color: #50c878;
+  border-bottom-color: rgba(80, 200, 120, 0.2);
+}
+
+/* Slides preview styling */
+.slides-preview .preview-header {
+  color: #ffc107;
+  border-bottom-color: rgba(255, 193, 7, 0.2);
+}
+
+/* Form preview styling */
+.form-preview .preview-header {
+  color: #a78bfa;
+  border-bottom-color: rgba(167, 139, 250, 0.2);
+}
+
+/* Sheets preview styling */
+.sheets-preview .preview-header {
+  color: #34d399;
+  border-bottom-color: rgba(52, 211, 153, 0.2);
+}
+
+/* Content preview styling */
+.content-preview .preview-header {
+  color: #f472b6;
+  border-bottom-color: rgba(244, 114, 182, 0.2);
+}
+
+/* Action buttons in chat */
+.action-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.action-btn {
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: none;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.action-btn.approve-btn {
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  color: white;
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
+}
+
+.action-btn.approve-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(34, 197, 94, 0.4);
+}
+
+.action-btn.cancel-btn {
+  background: rgba(255,255,255,0.08);
+  color: var(--muted);
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.action-btn.cancel-btn:hover {
+  background: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.action-hint {
+  font-size: 0.82rem;
+  color: var(--muted);
+  margin-top: 4px;
+  font-style: italic;
+}
+
+/* Action error state */
+.action-error {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  border-radius: 8px;
+  padding: 12px;
+  color: #fca5a5;
+}
+
+/* Action success state */
+.action-success {
+  background: rgba(34, 197, 94, 0.15);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  border-radius: 8px;
+  padding: 12px;
+  color: #86efac;
+  font-weight: 500;
+}
+
+/* Action success link */
+.action-link {
+  display: inline-block;
+  margin-top: 10px;
+  padding: 8px 16px;
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+  color: white;
+  text-decoration: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+}
+
+.action-link:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+}
+
+/* Multiple events preview */
+.preview-events-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.preview-event-item {
+  background: rgba(255,255,255,0.05);
+  border-radius: 8px;
+  padding: 10px 12px;
+  border-left: 3px solid #60a5fa;
+}
+
+.preview-event-item strong {
+  color: #fff;
+}
+
+.preview-event-item span {
+  color: #9fa1b2;
+  font-size: 0.9rem;
+}
+
+.preview-event-item em {
+  color: #7a7d8c;
+  font-size: 0.85rem;
+}
+

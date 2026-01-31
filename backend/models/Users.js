@@ -152,6 +152,34 @@ const UserSchema = new mongoose.Schema({ //this sets the specific type of data e
       ideaId: String,
     },
     generatedAt: Date,
+  },
+  
+  // Google OAuth Integration
+  googleTokens: {
+    accessToken: {
+      type: String,
+      default: null,
+    },
+    refreshToken: {
+      type: String,
+      default: null,
+    },
+    expiresAt: {
+      type: Date,
+      default: null,
+    },
+    scope: {
+      type: String,
+      default: null,
+    },
+    connectedAt: {
+      type: Date,
+      default: null,
+    },
+    email: {
+      type: String,
+      default: null,
+    },
   }
 }, {
   timestamps: true // Adds createdAt and updatedAt

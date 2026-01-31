@@ -155,13 +155,35 @@ async function syncWithAI() {
       console.log('No market data available');
     }
     
-    // 3. Call AI to update idea
+    // 3. Get most recent cofounder meeting summary
+    let meetingSummary = '';
+    try {
+      const meetingResp = await axios.get(`/api/cofounder/sessions?ideaId=${ideaId}&limit=1`);
+      if (meetingResp.data?.success && meetingResp.data.sessions?.length > 0) {
+        const session = meetingResp.data.sessions[0];
+        // Fetch full session details to get summary
+        const fullSession = await axios.get(`/api/cofounder/sessions/${session.id}`);
+        if (fullSession.data?.success && fullSession.data.session?.summary) {
+          const summary = fullSession.data.session.summary;
+          meetingSummary = `\n\nMOST RECENT CO-FOUNDER MEETING:\n`;
+          if (summary.ideaStanding) meetingSummary += `How idea stands: ${summary.ideaStanding}\n`;
+          if (summary.discussed?.length) meetingSummary += `Discussed: ${summary.discussed.join(', ')}\n`;
+          if (summary.insights?.length) meetingSummary += `Key insights: ${summary.insights.join(', ')}\n`;
+          if (summary.whatsNew?.length) meetingSummary += `What's new: ${summary.whatsNew.join(', ')}\n`;
+          if (summary.nextSteps?.length) meetingSummary += `Next steps: ${summary.nextSteps.map(s => s.text || s).join(', ')}\n`;
+        }
+      }
+    } catch (e) {
+      console.log('No cofounder meeting data available');
+    }
+    
+    // 4. Call AI to update idea
     const oldIdea = currentIdea.idea;
     
     const { data } = await axios.post('/api/idea-hub/sync', {
       ideaId,
       oldIdea,
-      chatLogs,
+      chatLogs: chatLogs + meetingSummary,
       marketData
     });
     

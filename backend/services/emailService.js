@@ -376,6 +376,89 @@ const templates = {
     `,
     text: `${updateTitle}\n\nHi ${name}, we've got exciting news!\n\n${updateContent}\n\nTry it at: ${process.env.FRONTEND_URL}/dashboard.html\n\n© ${new Date().getFullYear()} CoSparq`,
   }),
+
+  // AI Co-Founder Meeting Summary
+  meetingSummary: (name, ideaName, duration, summary) => ({
+    subject: `Your AI Co-Founder Meeting Summary 📋`,
+    html: `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      </head>
+      <body style="margin: 0; padding: 0; background-color: #0f0f10; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+        <div style="max-width: 600px; margin: 0 auto; padding: 40px 20px;">
+          <div style="text-align: center; margin-bottom: 40px;">
+            <h1 style="margin: 0; font-size: 32px; background: linear-gradient(90deg, #8400ff 0%, #f94016 40%, #f96d16 60%, #3b82f6 100%); -webkit-background-clip: text; background-clip: text; color: transparent;">
+              CoSparq
+            </h1>
+          </div>
+          
+          <div style="background: #191a1d; border-radius: 16px; padding: 40px; border: 1px solid rgba(255,255,255,0.08);">
+            <h2 style="color: #e8e8ea; margin: 0 0 8px 0; font-size: 24px;">Meeting Summary</h2>
+            <p style="color: #6b6b75; font-size: 14px; margin: 0 0 24px 0;">
+              ${ideaName ? `Project: ${ideaName}` : ''} ${duration ? `• Duration: ${duration}` : ''}
+            </p>
+            
+            ${summary.ideaStanding ? `
+            <div style="margin-bottom: 24px;">
+              <h3 style="color: #8400ff; font-size: 16px; margin: 0 0 12px 0;">How Your Idea Stands Now</h3>
+              <p style="color: #a5a7ae; font-size: 15px; line-height: 1.6; margin: 0;">${summary.ideaStanding}</p>
+            </div>
+            ` : ''}
+            
+            ${summary.discussed && summary.discussed.length > 0 ? `
+            <div style="margin-bottom: 24px;">
+              <h3 style="color: #22c55e; font-size: 16px; margin: 0 0 12px 0;">What We Discussed</h3>
+              <ul style="color: #a5a7ae; font-size: 14px; line-height: 1.8; margin: 0; padding-left: 20px;">
+                ${summary.discussed.map(item => `<li>${item}</li>`).join('')}
+              </ul>
+            </div>
+            ` : ''}
+            
+            ${summary.insights && summary.insights.length > 0 ? `
+            <div style="margin-bottom: 24px;">
+              <h3 style="color: #f96d16; font-size: 16px; margin: 0 0 12px 0;">Key Insights</h3>
+              <ul style="color: #a5a7ae; font-size: 14px; line-height: 1.8; margin: 0; padding-left: 20px;">
+                ${summary.insights.map(item => `<li>${item}</li>`).join('')}
+              </ul>
+            </div>
+            ` : ''}
+            
+            ${summary.whatsNew && summary.whatsNew.length > 0 ? `
+            <div style="margin-bottom: 24px;">
+              <h3 style="color: #ba0186; font-size: 16px; margin: 0 0 12px 0;">What's New</h3>
+              <ul style="color: #a5a7ae; font-size: 14px; line-height: 1.8; margin: 0; padding-left: 20px;">
+                ${summary.whatsNew.map(item => `<li>${item}</li>`).join('')}
+              </ul>
+            </div>
+            ` : ''}
+            
+            ${summary.nextSteps && summary.nextSteps.length > 0 ? `
+            <div style="margin-bottom: 24px;">
+              <h3 style="color: #8400ff; font-size: 16px; margin: 0 0 12px 0;">Next Steps</h3>
+              <ul style="color: #a5a7ae; font-size: 14px; line-height: 1.8; margin: 0; padding-left: 20px;">
+                ${summary.nextSteps.map(step => `<li>${step.text}${step.priority ? ` <span style="color: ${step.priority === 'high' ? '#ef4444' : '#f96d16'}; font-size: 12px; text-transform: uppercase;">[${step.priority}]</span>` : ''}</li>`).join('')}
+              </ul>
+            </div>
+            ` : ''}
+            
+            <a href="${process.env.FRONTEND_URL}/cofounder-chat.html" 
+               style="display: inline-block; padding: 14px 32px; background: linear-gradient(90deg, #8400ff 0%, #f94016 40%, #f96d16 60%, #3b82f6 100%); color: white; text-decoration: none; border-radius: 50px; font-weight: 600; font-size: 16px;">
+              Start New Meeting
+            </a>
+          </div>
+          
+          <p style="color: #6b6b75; font-size: 12px; text-align: center; margin-top: 32px;">
+            © ${new Date().getFullYear()} CoSparq. All rights reserved.
+          </p>
+        </div>
+      </body>
+      </html>
+    `,
+    text: `AI Co-Founder Meeting Summary\n\n${ideaName ? `Project: ${ideaName}\n` : ''}${duration ? `Duration: ${duration}\n` : ''}\n${summary.ideaStanding ? `How Your Idea Stands Now:\n${summary.ideaStanding}\n\n` : ''}${summary.discussed?.length ? `What We Discussed:\n${summary.discussed.map(i => `- ${i}`).join('\n')}\n\n` : ''}${summary.insights?.length ? `Key Insights:\n${summary.insights.map(i => `- ${i}`).join('\n')}\n\n` : ''}${summary.nextSteps?.length ? `Next Steps:\n${summary.nextSteps.map(s => `- ${s.text}${s.priority ? ` [${s.priority}]` : ''}`).join('\n')}\n\n` : ''}Start a new meeting: ${process.env.FRONTEND_URL}/cofounder-chat.html\n\n© ${new Date().getFullYear()} CoSparq`,
+  }),
 };
 
 /**
@@ -418,6 +501,9 @@ const sendEmail = async (to, templateName, templateData = {}) => {
         break;
       case 'productUpdate':
         emailContent = template(templateData.name, templateData.updateTitle, templateData.updateContent);
+        break;
+      case 'meetingSummary':
+        emailContent = template(templateData.name, templateData.ideaName, templateData.duration, templateData.summary);
         break;
       default:
         throw new Error(`Unknown template: ${templateName}`);
@@ -484,6 +570,13 @@ const sendProductUpdateEmail = (email, name, updateTitle, updateContent) => {
   return sendEmail(email, 'productUpdate', { name, updateTitle, updateContent });
 };
 
+/**
+ * Send AI Co-Founder meeting summary email
+ */
+const sendMeetingSummaryEmail = (email, name, ideaName, duration, summary) => {
+  return sendEmail(email, 'meetingSummary', { name, ideaName, duration, summary });
+};
+
 module.exports = {
   sendEmail,
   sendWelcomeEmail,
@@ -492,5 +585,6 @@ module.exports = {
   sendSubscriptionCanceledEmail,
   sendWeeklySummaryEmail,
   sendProductUpdateEmail,
+  sendMeetingSummaryEmail,
   templates,
 };
