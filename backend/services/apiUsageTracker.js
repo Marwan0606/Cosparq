@@ -35,12 +35,18 @@ const MODEL_PRICING = {
 
 // Audio pricing (TTS and Whisper)
 const AUDIO_PRICING = {
-  // TTS pricing per 1M characters
+  // OpenAI TTS pricing per 1M characters
   'tts-1': 15.00 / 1000000,      // $15 per 1M chars = $0.000015 per char
   'tts-1-hd': 30.00 / 1000000,   // $30 per 1M chars = $0.000030 per char
   
   // Whisper pricing per minute
-  'whisper-1': 0.006             // $0.006 per minute
+  'whisper-1': 0.006,            // $0.006 per minute
+  
+  // ElevenLabs pricing per 1K characters (more expensive, higher quality)
+  // Starter tier: ~$0.30 per 1K characters, Creator: ~$0.24, Pro: ~$0.18
+  // Using average estimate of $0.25 per 1K characters
+  'elevenlabs-turbo-v2.5': 0.25 / 1000,     // ~$0.00025 per char
+  'elevenlabs-multilingual-v2': 0.30 / 1000  // ~$0.00030 per char (slightly more expensive)
 };
 
 /**

@@ -21,7 +21,22 @@
     <div class="call-container idle-state" id="idleState">
       <div class="cofounder-header">
         <h1 class="cofounder-title">AI Co-Founder</h1>
-        <p class="cofounder-subtitle">Your startup thinking partner</p>
+      </div>
+
+      <!-- Voice Provider Toggle -->
+      <div class="voice-provider-toggle" id="voiceProviderToggle">
+        <div class="toggle-label">Voice Quality</div>
+        <div class="toggle-options">
+          <button class="toggle-option active" data-provider="openai" id="openaiOption">
+            <span class="option-name">Standard</span>
+            <span class="option-desc">Fast & efficient</span>
+          </button>
+          <button class="toggle-option" data-provider="elevenlabs" id="elevenlabsOption">
+            <span class="option-name">Premium</span>
+            <span class="option-desc">Ultra-realistic</span>
+            <span class="option-badge">~10× cost</span>
+          </button>
+        </div>
       </div>
 
       <!-- 3D Orb Container -->
@@ -78,6 +93,15 @@
           <div class="transcript-messages" id="transcriptMessages">
             <!-- Messages appear here -->
           </div>
+          <div class="transcript-input-container">
+            <input type="text" class="transcript-input" id="transcriptInput" placeholder="Type a message..." autocomplete="off"/>
+            <button class="transcript-send-btn" id="transcriptSendBtn" title="Send">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="22" y1="2" x2="11" y2="13"/>
+                <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+              </svg>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -106,10 +130,22 @@
           </svg>
         </button>
 
-        <button class="control-btn speaker-btn" id="speakerBtn" title="Speaker">
-          <svg class="speaker-on-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <button class="control-btn ai-voice-btn" id="aiVoiceBtn" title="Mute AI Voice">
+          <svg class="ai-voice-on-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
             <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>
+          </svg>
+          <svg class="ai-voice-off-icon hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+            <line x1="23" y1="9" x2="17" y2="15"/>
+            <line x1="17" y1="9" x2="23" y2="15"/>
+          </svg>
+        </button>
+
+        <button class="control-btn discard-btn" id="discardBtn" title="Discard Meeting">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="3 6 5 6 21 6"/>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
           </svg>
         </button>
       </div>

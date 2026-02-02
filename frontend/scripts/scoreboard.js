@@ -99,51 +99,7 @@ const scoreBoard = async (idea)=>{
 
     //const resultData = JSON.parse(response.result);
 
-    let HTML = ``
-
-    function generateScoreHTML() {
-      HTML += `
-      <div class="tile barrier" data-tooltip="Barrier to Entry">
-        <div class="label">Barrier to Entry</div>
-        <div class="score">${resultData["Barrier to Entry"].score}</div>
-      </div>
-      <div class="tile orig" data-tooltip="Originality">
-        <div class="label">Originality</div>
-        <div class="score">${resultData["Originality"].score}</div>
-      </div>
-      <div class="tile scal" data-tooltip="Scalability">
-        <div class="label">Scalability</div>
-        <div class="score">${resultData["Scalability"].score}</div>
-      </div>
-      <div class="tile overall" data-tooltip="Overall">
-        <div class="label">Overall</div>
-        <div class="score">${resultData["Overall"].score}</div>
-      </div>
-      <div class="tile monet" data-tooltip="Monetization Potential">
-        <div class="label">Monetization Potential</div>
-        <div class="score">${resultData["Monetization Potential"].score}</div>
-      </div>
-      <div class="tile mark" data-tooltip="Market Demand">
-        <div class="label">Market Demand</div>
-        <div class="score">${resultData["Market Demand"].score}</div>
-      </div>
-      <div class="tile tech" data-tooltip="Technical Feasibility">
-        <div class="label">Technical Feasibility</div>
-        <div class="score">${resultData["Technical Feasibility"].score}</div>
-      </div>
-      <div class="tile legal" data-tooltip="Regulatory & Legal Complexity">
-        <div class="label">Regulatory & Legal</div>
-        <div class="score">${resultData["Regulatory & Legal Complexity"].score}</div>
-      </div>
-      `
-      return HTML
-    }
-
-    HTML = generateScoreHTML()
-
-    document.querySelector('.js-scoreboard').innerHTML = HTML;
-    console.log(resultData)
-    tooltip(resultData);
+    renderScoreboard(resultData)
 
 
   } catch(error) {
@@ -151,6 +107,49 @@ const scoreBoard = async (idea)=>{
     console.log(error)
   }
 };
+
+
+// Reusable function to render the scoreboard
+function renderScoreboard(resultData) {
+  let HTML = `
+    <div class="tile barrier" data-tooltip="Barrier to Entry">
+      <div class="label">Barrier to Entry</div>
+      <div class="score">${resultData["Barrier to Entry"].score}</div>
+    </div>
+    <div class="tile orig" data-tooltip="Originality">
+      <div class="label">Originality</div>
+      <div class="score">${resultData["Originality"].score}</div>
+    </div>
+    <div class="tile scal" data-tooltip="Scalability">
+      <div class="label">Scalability</div>
+      <div class="score">${resultData["Scalability"].score}</div>
+    </div>
+    <div class="tile overall" data-tooltip="Overall">
+      <div class="label">Overall</div>
+      <div class="score">${resultData["Overall"].score}</div>
+    </div>
+    <div class="tile monet" data-tooltip="Monetization Potential">
+      <div class="label">Monetization Potential</div>
+      <div class="score">${resultData["Monetization Potential"].score}</div>
+    </div>
+    <div class="tile mark" data-tooltip="Market Demand">
+      <div class="label">Market Demand</div>
+      <div class="score">${resultData["Market Demand"].score}</div>
+    </div>
+    <div class="tile tech" data-tooltip="Technical Feasibility">
+      <div class="label">Technical Feasibility</div>
+      <div class="score">${resultData["Technical Feasibility"].score}</div>
+    </div>
+    <div class="tile legal" data-tooltip="Regulatory & Legal Complexity">
+      <div class="label">Regulatory & Legal</div>
+      <div class="score">${resultData["Regulatory & Legal Complexity"].score}</div>
+    </div>
+  `
+
+  document.querySelector('.js-scoreboard').innerHTML = HTML;
+  console.log('Scoreboard rendered:', resultData)
+  tooltip(resultData);
+}
 
 
 const idea = sessionStorage.getItem('idea');
@@ -198,14 +197,40 @@ function tooltip(resultData) {
 document.querySelector('.js-regenerate-response-btn').addEventListener('click', async ()=>{
   
   let ideaId = JSON.parse(localStorage.getItem('ideaId'))
+  console.log('Re-evaluating scoreboard for ideaId:', ideaId)
+  
+  // Get the current idea
+  let ideaResponse;
+  try {
+    ideaResponse = await axios.get(`/api/save/idea/${ideaId}`)
+  } catch (error) {
+    console.log('Error fetching idea:', error)
+    return
+  }
+  
+  const idea = ideaResponse?.data?.idea?.idea
+  if (!idea) {
+    console.log('No idea found')
+    return
+  }
+  
+  // Get the current scores to pass to AI for reference
+  let previousScores = null
+  try {
+    const scoreResponse = await axios.get(`/api/save/saveScoreResponse/${ideaId}`)
+    if (scoreResponse.data?.scoreResponse?.scoreboardResponse) {
+      previousScores = JSON.parse(scoreResponse.data.scoreResponse.scoreboardResponse)
+    }
+  } catch (error) {
+    console.log('No previous scores found, will generate fresh')
+  }
 
-  console.log(ideaId)
+  // Show loading animation
   const wrap = document.querySelector('.js-scoreboard');
   wrap.innerHTML = `
         <div class="frame">
         <div class="brand-wrap">
-          <div class="brand">Your AI is Making Your Scoreboard</div>
-          <!--<div class="new dotting"></div>-->
+          <div class="brand">Your AI is Re-evaluating Your Idea</div>
         </div>
 
         <div class="viz">
@@ -257,15 +282,31 @@ document.querySelector('.js-regenerate-response-btn').addEventListener('click', 
   `
   const { startLoadingAnimation } = await import('../scripts/loading.js');
   startLoadingAnimation(wrap);
-  let chatLogs = await getChatLogs(ideaId)
-  let newIdea = await renewIdea(ideaId, chatLogs)
-  newIdea = await popup(newIdea)
-  await updateIdea(ideaId, newIdea)
-  await deleteScoreboard(ideaId)
-  //window.location.reload();
-
-  let idea = sessionStorage.getItem('idea');
-  scoreBoard(idea)
+  
+  try {
+    // Call re-evaluate endpoint with the idea and previous scores
+    const response = await axios.post('/api/responses/idea/reevaluate', {
+      idea,
+      ideaId,
+      previousScores
+    })
+    
+    console.log('Re-evaluation response:', response.data)
+    
+    // Re-render the scoreboard with new scores
+    const resultData = JSON.parse(response.data.result)
+    renderScoreboard(resultData)
+    
+  } catch (error) {
+    console.error('Error re-evaluating:', error)
+    wrap.innerHTML = `
+      <div class="empty-message-container">
+        <div class="empty-message">
+          Failed to re-evaluate your idea. Please try again.
+        </div>
+      </div>
+    `
+  }
 })
 
 const getChatLogs = async (ideaId)=>{

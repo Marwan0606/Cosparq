@@ -121,18 +121,89 @@ body {
 }
 
 .cofounder-title {
-  font-size: 2rem;
-  font-weight: 700;
+  font-size: clamp(42px, 5vw, 64px);
+  font-weight: 800;
+  line-height: 1.04;
   background: var(--grad);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  text-shadow: 0 4px 22px #8400ff33, 0 0 36px #f940161f;
   margin-bottom: 8px;
+  letter-spacing: -0.02em;
 }
 
 .cofounder-subtitle {
   color: var(--muted);
   font-size: 1rem;
+}
+
+/* Voice Provider Toggle */
+.voice-provider-toggle {
+  text-align: center;
+  margin-bottom: 15px;
+}
+
+.voice-provider-toggle .toggle-label {
+  font-size: 0.75rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+
+.toggle-options {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.toggle-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px 18px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 110px;
+  position: relative;
+}
+
+.toggle-option:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.toggle-option.active {
+  background: rgba(132, 0, 255, 0.15);
+  border-color: var(--purple);
+}
+
+.toggle-option .option-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.toggle-option .option-desc {
+  font-size: 0.7rem;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+.toggle-option .option-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  font-size: 0.6rem;
+  padding: 2px 6px;
+  background: linear-gradient(135deg, var(--orange), var(--red-orange));
+  color: white;
+  border-radius: 8px;
+  font-weight: 600;
 }
 
 /* Orb Container */
@@ -416,6 +487,14 @@ body {
   border-radius: var(--radius);
   padding: 16px;
   backdrop-filter: blur(10px);
+  
+  /* Hide scrollbar but keep functionality */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+}
+
+.transcript-content::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
 }
 
 .transcript-content.hidden {
@@ -447,6 +526,67 @@ body {
 
 .transcript-message .text {
   color: var(--text);
+}
+
+/* Transcript Input */
+.transcript-input-container {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.transcript-input {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 10px 16px;
+  font-size: 0.85rem;
+  color: var(--text);
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.transcript-input::placeholder {
+  color: var(--muted);
+}
+
+.transcript-input:focus {
+  border-color: var(--purple);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.transcript-send-btn {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--purple);
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.transcript-send-btn:hover {
+  background: var(--purple-hover);
+  transform: scale(1.05);
+}
+
+.transcript-send-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.transcript-send-btn svg {
+  width: 18px;
+  height: 18px;
+  stroke: white;
 }
 
 /* Call Controls */
@@ -483,13 +623,13 @@ body {
 }
 
 .mute-btn,
-.speaker-btn {
+.ai-voice-btn {
   background: var(--panel);
   color: var(--text);
 }
 
 .mute-btn:hover,
-.speaker-btn:hover {
+.ai-voice-btn:hover {
   background: var(--panel-hover);
 }
 
@@ -498,8 +638,15 @@ body {
   color: #ef4444;
 }
 
+.ai-voice-btn.muted {
+  background: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+}
+
 .muted-icon.hidden,
-.unmuted-icon.hidden {
+.unmuted-icon.hidden,
+.ai-voice-on-icon.hidden,
+.ai-voice-off-icon.hidden {
   display: none;
 }
 
@@ -513,6 +660,16 @@ body {
 .end-call-btn:hover {
   background: #dc2626;
   transform: scale(1.05);
+}
+
+.discard-btn {
+  background: rgba(100, 100, 100, 0.3);
+  color: var(--muted);
+}
+
+.discard-btn:hover {
+  background: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
 }
 
 /* ==========================================================================

@@ -17,6 +17,7 @@ const {
   emailSummary,
   syncToIdea,
   textToSpeech,
+  textToSpeechElevenLabs,
   transcribeAudio
 } = require('../controllers/cofounder');
 
@@ -65,10 +66,15 @@ router.post('/email-summary', emailSummary);
 // Body: { sessionId: string }
 router.post('/sync-to-idea', syncToIdea);
 
-// Text-to-Speech - Generate audio from text
+// Text-to-Speech - Generate audio from text (OpenAI TTS - faster, cheaper)
 // POST /api/cofounder/tts
 // Body: { text: string }
 router.post('/tts', textToSpeech);
+
+// Text-to-Speech - Generate audio from text (ElevenLabs - higher quality, more expensive)
+// POST /api/cofounder/tts-elevenlabs
+// Body: { text: string, voiceId?: string }
+router.post('/tts-elevenlabs', textToSpeechElevenLabs);
 
 // Transcribe audio to text using Whisper
 // POST /api/cofounder/transcribe

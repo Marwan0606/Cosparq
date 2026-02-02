@@ -4,7 +4,7 @@ const router = express.Router();
 const { checkApiLimit } = require('../middleware/checkApiLimit');
 const { checkPaidSubscription } = require('../middleware/checkSubscription');
 
-const { rateIdea } = require('../controllers/scoreboard');
+const { rateIdea, reEvaluateIdea } = require('../controllers/scoreboard');
 const { marketResearch } = require('../controllers/marketResearch');
 const { chat } = require('../controllers/chat')
 const { chatWithActions } = require('../controllers/chatWithActions')
@@ -19,6 +19,7 @@ const { codeEditCheap } = require('../controllers/codeCheap')
 // This ensures no AI request can be made if user exceeds their cost limit
 
 router.post('/idea', checkApiLimit, rateIdea);
+router.post('/idea/reevaluate', checkApiLimit, reEvaluateIdea);
 
 router.post('/research', checkApiLimit, marketResearch);
 

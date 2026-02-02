@@ -13,6 +13,7 @@ let callStartTime = null;
 let callTimerInterval = null;
 let transcript = [];
 let isMuted = false;
+let isAiVoiceMuted = false; // Mute AI voice (TTS) while still showing responses
 let isProcessing = false; // Prevents overlapping requests
 let currentUserId = null;
 let currentSessionId = null;
@@ -25,12 +26,16 @@ const summaryState = document.getElementById('summaryState');
 const statusIndicator = document.getElementById('statusIndicator');
 const startCallBtn = document.getElementById('startCallBtn');
 const endCallBtn = document.getElementById('endCallBtn');
+const discardBtn = document.getElementById('discardBtn');
 const muteBtn = document.getElementById('muteBtn');
+const aiVoiceBtn = document.getElementById('aiVoiceBtn');
 const callStatusText = document.getElementById('callStatusText');
 const callTimer = document.getElementById('callTimer');
 const transcriptToggle = document.getElementById('transcriptToggle');
 const transcriptContent = document.getElementById('transcriptContent');
 const transcriptMessages = document.getElementById('transcriptMessages');
+const transcriptInput = document.getElementById('transcriptInput');
+const transcriptSendBtn = document.getElementById('transcriptSendBtn');
 const sessionsList = document.getElementById('sessionsList');
 const summaryLoading = document.getElementById('summaryLoading');
 const summaryContent = document.getElementById('summaryContent');
@@ -110,6 +115,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Initialize voice manager
   initVoiceManager();
 
+  // Initialize voice provider toggle
+  initVoiceProviderToggle();
+
   // Load recent sessions
   loadRecentSessions();
 
@@ -133,7 +141,11 @@ function initVoiceManager() {
     console.warn('Voice features not fully supported in this browser');
   }
 
+  // Load saved TTS provider preference
+  const savedProvider = localStorage.getItem('ttsProvider') || 'openai';
+
   voiceManager = new VoiceManager({
+    ttsProvider: savedProvider,
     onTranscript: handleTranscript,
     onUserSpeechDetected: () => {
       // User started speaking - immediately interrupt AI if it's talking
@@ -172,6 +184,67 @@ function initVoiceManager() {
       console.error('Voice error:', error);
     }
   });
+}
+
+/**
+ * Initialize voice provider toggle UI
+ */
+function initVoiceProviderToggle() {
+  const openaiOption = document.getElementById('openaiOption');
+  const elevenlabsOption = document.getElementById('elevenlabsOption');
+  
+  if (!openaiOption || !elevenlabsOption) {
+    console.warn('[CofounderChat] Voice provider toggle elements not found');
+    return;
+  }
+
+  // Load saved preference and update UI
+  const savedProvider = localStorage.getItem('ttsProvider') || 'openai';
+  updateToggleUI(savedProvider);
+
+  // Handle OpenAI option click
+  openaiOption.addEventListener('click', () => {
+    setTTSProvider('openai');
+  });
+
+  // Handle ElevenLabs option click
+  elevenlabsOption.addEventListener('click', () => {
+    setTTSProvider('elevenlabs');
+  });
+}
+
+/**
+ * Set the TTS provider and update UI
+ */
+function setTTSProvider(provider) {
+  // Update voice manager
+  if (voiceManager) {
+    voiceManager.setTTSProvider(provider);
+  }
+
+  // Save preference
+  localStorage.setItem('ttsProvider', provider);
+
+  // Update UI
+  updateToggleUI(provider);
+
+  console.log(`[CofounderChat] TTS provider set to: ${provider}`);
+}
+
+/**
+ * Update toggle UI to reflect current provider
+ */
+function updateToggleUI(provider) {
+  const openaiOption = document.getElementById('openaiOption');
+  const elevenlabsOption = document.getElementById('elevenlabsOption');
+
+  if (provider === 'elevenlabs') {
+    openaiOption?.classList.remove('active');
+    elevenlabsOption?.classList.add('active');
+  } else {
+    openaiOption?.classList.add('active');
+    elevenlabsOption?.classList.remove('active');
+  }
 }
 
 // Track pending action for voice approval flow
@@ -285,14 +358,18 @@ async function handleTranscript(text, isFinal) {
         addTranscriptMessage('AI', `✅ Action completed! [Open](${response.data.actionResult.url})`);
       }
       
-      // Update orb to speaking state
-      orb?.setState('speaking');
-      callStatusText.textContent = 'Speaking...';
-      
-      // Speak the response
-      console.log('[CofounderChat] Calling voiceManager.speak...');
-      await voiceManager?.speak(aiResponse);
-      console.log('[CofounderChat] TTS finished');
+      // Update orb to speaking state (only if AI voice is not muted)
+      if (!isAiVoiceMuted) {
+        orb?.setState('speaking');
+        callStatusText.textContent = 'Speaking...';
+        
+        // Speak the response
+        console.log('[CofounderChat] Calling voiceManager.speak...');
+        await voiceManager?.speak(aiResponse);
+        console.log('[CofounderChat] TTS finished');
+      } else {
+        console.log('[CofounderChat] AI voice muted, skipping TTS');
+      }
     } else {
       console.warn('[CofounderChat] No response in data:', response.data);
     }
@@ -310,6 +387,28 @@ async function handleTranscript(text, isFinal) {
 }
 
 /**
+ * Send a typed message from the transcript input
+ */
+async function sendTypedMessage() {
+  if (!transcriptInput) return;
+  
+  const text = transcriptInput.value.trim();
+  if (!text) return;
+  
+  // Check if call is active
+  if (callState !== 'active') {
+    console.log('[CofounderChat] Cannot send message - call not active');
+    return;
+  }
+  
+  // Clear input immediately
+  transcriptInput.value = '';
+  
+  // Process the message the same way as voice transcripts
+  await handleTranscript(text, true);
+}
+
+/**
  * Set up all event listeners
  */
 function setupEventListeners() {
@@ -319,8 +418,14 @@ function setupEventListeners() {
   // End call button
   endCallBtn.addEventListener('click', endCall);
 
+  // Discard button - end and delete without summary
+  discardBtn?.addEventListener('click', discardMeeting);
+
   // Mute button
   muteBtn.addEventListener('click', toggleMute);
+
+  // AI voice mute button
+  aiVoiceBtn?.addEventListener('click', toggleAiVoice);
   
   // Keyboard shortcut to interrupt AI (spacebar)
   document.addEventListener('keydown', (e) => {
@@ -336,6 +441,23 @@ function setupEventListeners() {
   // Transcript toggle
   transcriptToggle.addEventListener('click', () => {
     transcriptContent.classList.toggle('hidden');
+    // Focus input when opening transcript
+    if (!transcriptContent.classList.contains('hidden') && transcriptInput) {
+      setTimeout(() => transcriptInput.focus(), 100);
+    }
+  });
+
+  // Transcript text input - send on Enter
+  transcriptInput?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendTypedMessage();
+    }
+  });
+
+  // Transcript send button
+  transcriptSendBtn?.addEventListener('click', () => {
+    sendTypedMessage();
   });
 
   // Summary actions
@@ -508,7 +630,7 @@ async function startCall() {
   callStatusText.textContent = 'Connecting...';
 
   const token = localStorage.getItem('accessToken');
-  let greeting = "Hey! I'm your AI co-founder. What's on your mind today?";
+  let greeting = "Hey! What's on your mind today?";
 
   // Start session with backend (works with or without ideaId)
   try {
@@ -536,7 +658,7 @@ async function startCall() {
   } catch (error) {
     console.error('[CofounderChat] Error starting session:', error);
     // Continue with local-only mode but warn user
-    greeting = "Hey! I'm having trouble connecting to my memory, but I'm still here to help. What's on your mind?";
+    greeting = "Hey! Having a bit of trouble connecting, but I'm still here. What do you want to talk about?";
   }
 
   // Start the call
@@ -609,6 +731,57 @@ async function endCall() {
 }
 
 /**
+ * Discard the current meeting without generating a summary
+ * This saves tokens by skipping summary generation
+ */
+async function discardMeeting() {
+  // Confirm with user
+  if (!confirm('Discard this meeting? The conversation will be deleted and no summary will be generated.')) {
+    return;
+  }
+  
+  callState = 'ending';
+  
+  // Stop voice manager
+  voiceManager?.stopListening();
+  voiceManager?.stopPlayback();
+  
+  // Stop timer
+  stopCallTimer();
+  
+  // Update orb
+  if (orb) {
+    orb.setState('idle');
+    orb.setAudioLevel(0);
+  }
+  
+  callStatusText.textContent = 'Discarding...';
+
+  // Delete the session without generating summary
+  if (currentSessionId) {
+    try {
+      const token = localStorage.getItem('accessToken');
+      await axios.delete(`/api/cofounder/sessions/${currentSessionId}?skipSummary=true`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      console.log('[CofounderChat] Meeting discarded successfully');
+    } catch (error) {
+      console.error('[CofounderChat] Error discarding meeting:', error);
+      // Continue anyway - we still want to reset the UI
+    }
+  }
+
+  // Clean up orb
+  if (orb) {
+    orb.destroy();
+    orb = null;
+  }
+
+  // Reset to idle state
+  resetToIdle();
+}
+
+/**
  * Toggle microphone mute
  */
 function toggleMute() {
@@ -629,6 +802,32 @@ function toggleMute() {
     if (callState === 'active' && !voiceManager?.isPlaying) {
       voiceManager?.startListening();
       orb?.setState('listening');
+      callStatusText.textContent = 'Listening...';
+    }
+  }
+}
+
+/**
+ * Toggle AI voice (TTS) on/off
+ * When muted, AI responses still appear in transcript but aren't spoken
+ */
+function toggleAiVoice() {
+  isAiVoiceMuted = !isAiVoiceMuted;
+  
+  aiVoiceBtn?.classList.toggle('muted', isAiVoiceMuted);
+  aiVoiceBtn?.querySelector('.ai-voice-on-icon')?.classList.toggle('hidden', isAiVoiceMuted);
+  aiVoiceBtn?.querySelector('.ai-voice-off-icon')?.classList.toggle('hidden', !isAiVoiceMuted);
+  
+  // Update tooltip
+  if (aiVoiceBtn) {
+    aiVoiceBtn.title = isAiVoiceMuted ? 'Unmute AI Voice' : 'Mute AI Voice';
+  }
+  
+  // If muting while AI is speaking, stop playback
+  if (isAiVoiceMuted && voiceManager?.isPlaying) {
+    voiceManager.stopPlayback();
+    orb?.setState('listening');
+    if (!isMuted) {
       callStatusText.textContent = 'Listening...';
     }
   }
@@ -670,7 +869,11 @@ function addTranscriptMessage(speaker, text) {
   `;
   
   transcriptMessages.appendChild(messageEl);
-  transcriptMessages.scrollTop = transcriptMessages.scrollHeight;
+  
+  // Auto-scroll the container to bottom
+  if (transcriptContent) {
+    transcriptContent.scrollTop = transcriptContent.scrollHeight;
+  }
 }
 
 /**

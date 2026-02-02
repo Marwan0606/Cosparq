@@ -3,7 +3,7 @@
  * 
  * Handles:
  * - Speech recognition (Web Speech API)
- * - Text-to-speech playback (OpenAI TTS via backend)
+ * - Text-to-speech playback (OpenAI TTS or ElevenLabs via backend)
  * - Audio level analysis for orb visualization
  */
 
@@ -16,6 +16,10 @@ class VoiceManager {
     this.onError = options.onError || console.error;
     this.onListeningChange = options.onListeningChange || (() => {});
     this.onUserSpeechDetected = options.onUserSpeechDetected || (() => {});
+
+    // TTS Provider: 'openai' (default, faster, cheaper) or 'elevenlabs' (higher quality, more expensive)
+    this.ttsProvider = options.ttsProvider || 'openai';
+    this.elevenLabsVoiceId = options.elevenLabsVoiceId || null; // Use default if not specified
 
     // Speech recognition
     this.recognition = null;
@@ -42,6 +46,35 @@ class VoiceManager {
 
     // Initialize
     this.initSpeechRecognition();
+  }
+
+  /**
+   * Set the TTS provider
+   * @param {string} provider - 'openai' or 'elevenlabs'
+   */
+  setTTSProvider(provider) {
+    if (provider === 'openai' || provider === 'elevenlabs') {
+      this.ttsProvider = provider;
+      console.log(`[VoiceManager] TTS provider set to: ${provider}`);
+    } else {
+      console.warn(`[VoiceManager] Unknown TTS provider: ${provider}`);
+    }
+  }
+
+  /**
+   * Set the ElevenLabs voice ID
+   * @param {string} voiceId - ElevenLabs voice ID
+   */
+  setElevenLabsVoice(voiceId) {
+    this.elevenLabsVoiceId = voiceId;
+    console.log(`[VoiceManager] ElevenLabs voice set to: ${voiceId}`);
+  }
+
+  /**
+   * Get current TTS provider
+   */
+  getTTSProvider() {
+    return this.ttsProvider;
   }
 
   /**
@@ -241,7 +274,7 @@ class VoiceManager {
   }
 
   /**
-   * Speak text using OpenAI TTS
+   * Speak text using the configured TTS provider (OpenAI or ElevenLabs)
    */
   async speak(text, sessionId = null) {
     if (!text) {
@@ -249,7 +282,7 @@ class VoiceManager {
       return;
     }
 
-    console.log('[VoiceManager] Speaking:', text.substring(0, 50) + '...');
+    console.log(`[VoiceManager] Speaking with ${this.ttsProvider}:`, text.substring(0, 50) + '...');
 
     // STOP listening while AI speaks to prevent feedback loop
     // (AI hearing itself and getting stuck in a loop)
@@ -261,16 +294,25 @@ class VoiceManager {
     try {
       const token = localStorage.getItem('accessToken');
       
-      console.log('[VoiceManager] Fetching TTS audio...');
+      // Choose endpoint based on provider
+      const endpoint = this.ttsProvider === 'elevenlabs' 
+        ? '/api/cofounder/tts-elevenlabs' 
+        : '/api/cofounder/tts';
+      
+      const body = this.ttsProvider === 'elevenlabs' && this.elevenLabsVoiceId
+        ? JSON.stringify({ text, voiceId: this.elevenLabsVoiceId })
+        : JSON.stringify({ text });
+
+      console.log(`[VoiceManager] Fetching TTS audio from ${endpoint}...`);
       
       // Fetch TTS audio from backend
-      const response = await fetch('/api/cofounder/tts', {
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({ text })
+        body: body
       });
 
       if (!response.ok) {

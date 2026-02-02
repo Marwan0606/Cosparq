@@ -283,16 +283,16 @@ const startSession = async (req, res) => {
  * Generate personalized greeting based on context
  */
 const generateGreeting = async (contextSnapshot) => {
-  let greeting = "Hey! I'm your AI co-founder. ";
+  let greeting = "Hey! ";
 
   if (contextSnapshot.idea?.name) {
-    greeting += `I see you're working on "${contextSnapshot.idea.name}". `;
+    greeting += `So you're working on ${contextSnapshot.idea.name}. `;
     
     if (contextSnapshot.pendingTasks > 0) {
-      greeting += `You've got ${contextSnapshot.pendingTasks} tasks on your plate. `;
+      greeting += `Looks like you've got ${contextSnapshot.pendingTasks} tasks lined up. `;
     }
     
-    greeting += "What's on your mind today? Let's talk through it.";
+    greeting += "What do you want to dig into today?";
   } else {
     greeting += "What's on your mind? We can brainstorm ideas, work through challenges, or plan your next moves.";
   }
@@ -1172,6 +1172,106 @@ const deleteSession = async (req, res) => {
   }
 };
 
+
+/**
+ * Generate Text-to-Speech audio using ElevenLabs
+ * POST /api/cofounder/tts-elevenlabs
+ * 
+ * ElevenLabs provides higher quality, more natural voices but is more expensive.
+ * Uses streaming for low latency.
+ */
+const textToSpeechElevenLabs = async (req, res) => {
+  try {
+    const userId = req.user?.userId;
+    const { text, voiceId } = req.body;
+
+    console.log('[ElevenLabs TTS] Request received, text length:', text?.length);
+
+    if (!text) {
+      return res.status(400).json({ error: 'text is required' });
+    }
+
+    const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY;
+    if (!ELEVENLABS_API_KEY) {
+      console.error('[ElevenLabs TTS] ELEVENLABS_API_KEY not configured');
+      return res.status(500).json({ error: 'ElevenLabs not configured' });
+    }
+    
+    console.log('[ElevenLabs TTS] API key found, length:', ELEVENLABS_API_KEY.length);
+
+    // Default voice if not specified
+    // Free voices available: Rachel, Domi, Bella, Antoni, Elli, Josh, Arnold, Adam, Sam
+    // Library voices (paid only): 4e32WqNVWRquDa1OcRYZ
+    const selectedVoiceId = voiceId || '21m00Tcm4TlvDq8ikWAM'; // Rachel - warm female (free)
+
+    console.log('[ElevenLabs TTS] Using voice:', selectedVoiceId);
+
+    // ElevenLabs streaming TTS endpoint
+    const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${selectedVoiceId}/stream`, {
+      method: 'POST',
+      headers: {
+        'Accept': 'audio/mpeg',
+        'Content-Type': 'application/json',
+        'xi-api-key': ELEVENLABS_API_KEY
+      },
+      body: JSON.stringify({
+        text: text,
+        model_id: 'eleven_turbo_v2_5', // Fastest model with good quality
+        voice_settings: {
+          stability: 0.5,
+          similarity_boost: 0.75,
+          style: 0.0,
+          use_speaker_boost: true
+        }
+      })
+    });
+
+    console.log('[ElevenLabs TTS] Response status:', response.status);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('[ElevenLabs TTS] Error:', response.status, errorText);
+      return res.status(response.status).json({ error: 'ElevenLabs TTS failed', details: errorText });
+    }
+
+    console.log('[ElevenLabs TTS] Success, streaming audio...');
+
+    // Set headers for streaming audio
+    res.set({
+      'Content-Type': 'audio/mpeg',
+      'Transfer-Encoding': 'chunked',
+      'Cache-Control': 'no-cache'
+    });
+
+    // Stream the response directly to the client
+    const reader = response.body.getReader();
+    
+    const pump = async () => {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        res.write(value);
+      }
+      res.end();
+    };
+    
+    await pump();
+    
+    // Track ElevenLabs usage (billed by character count)
+    if (userId) {
+      // ElevenLabs charges per character - track in background
+      trackAudioUsage(userId, 'elevenlabs-turbo-v2.5', { characters: text.length }, 'cofounder-tts-elevenlabs');
+    }
+
+  } catch (error) {
+    console.error('Error generating ElevenLabs TTS:', error);
+    if (!res.headersSent) {
+      res.status(500).json({ error: 'Failed to generate speech' });
+    }
+  }
+};
+
+
 module.exports = {
   startSession,
   sendMessage,
@@ -1181,6 +1281,7 @@ module.exports = {
   deleteSession,
   emailSummary,
   textToSpeech,
+  textToSpeechElevenLabs,
   transcribeAudio,
   syncToIdea,
   aggregateContext // Exported for testing
