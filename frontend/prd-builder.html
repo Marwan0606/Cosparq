@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>PRD & Prompt Builder — CoSparq</title>
+  <link rel="stylesheet" href="styles/prd-builder.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+</head>
+<body>
+  <div id="sidebar-placeholder"></div>
+  
+  <div class="container">
+    <!-- Header -->
+    <header class="header">
+      <h1 class="headline">
+        <span class="gradient-text">Build It</span>
+      </h1>
+      <p class="subtitle">Generate PRDs and AI-optimized prompts to build your app with any AI coding tool</p>
+    </header>
+
+    <!-- Tab Navigation -->
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="prd">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+          <line x1="16" y1="13" x2="8" y2="13"/>
+          <line x1="16" y1="17" x2="8" y2="17"/>
+          <polyline points="10 9 9 9 8 9"/>
+        </svg>
+        PRD Generator
+      </button>
+      <button class="tab-btn" data-tab="prompts">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="16 18 22 12 16 6"/>
+          <polyline points="8 6 2 12 8 18"/>
+        </svg>
+        AI Prompt Generator
+      </button>
+    </div>
+
+    <!-- PRD Tab Content -->
+    <div class="tab-content active" id="prd-tab">
+      <div class="generator-card">
+        <div class="card-header">
+          <h2>Product Requirements Document</h2>
+          <p>Generate a comprehensive PRD that developers can actually build from</p>
+        </div>
+        
+        <div class="card-body">
+          <div class="prd-features">
+            <div class="feature-item">
+              <svg class="feature-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                <path d="M9 14h.01M13 14h.01M9 18h.01M13 18h.01"/>
+              </svg>
+              <span>Executive Summary & Problem Statement</span>
+            </div>
+            <div class="feature-item">
+              <svg class="feature-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/>
+                <path d="M23 21v-2a4 4 0 00-3-3.87"/>
+                <path d="M16 3.13a4 4 0 010 7.75"/>
+              </svg>
+              <span>Target Users & Personas</span>
+            </div>
+            <div class="feature-item">
+              <svg class="feature-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+              </svg>
+              <span>Core Features & User Stories</span>
+            </div>
+            <div class="feature-item">
+              <svg class="feature-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/>
+              </svg>
+              <span>Technical Requirements & Data Models</span>
+            </div>
+            <div class="feature-item">
+              <svg class="feature-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="20" x2="18" y2="10"/>
+                <line x1="12" y1="20" x2="12" y2="4"/>
+                <line x1="6" y1="20" x2="6" y2="14"/>
+              </svg>
+              <span>Success Metrics & MVP Scope</span>
+            </div>
+            <div class="feature-item">
+              <svg class="feature-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <polyline points="12 6 12 12 16 14"/>
+              </svg>
+              <span>Timeline & Risk Assessment</span>
+            </div>
+          </div>
+
+          <button class="generate-btn js-generate-prd">
+            <span class="btn-text">Generate PRD</span>
+            <span class="btn-loader"></span>
+          </button>
+        </div>
+
+        <!-- PRD Output -->
+        <div class="output-section js-prd-output hidden">
+          <div class="output-header">
+            <h3>Your PRD</h3>
+            <div class="output-actions">
+              <button class="action-btn js-copy-prd" title="Copy to clipboard">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                </svg>
+                Copy
+              </button>
+              <button class="action-btn js-download-prd" title="Download as Markdown">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                  <polyline points="7 10 12 15 17 10"/>
+                  <line x1="12" y1="15" x2="12" y2="3"/>
+                </svg>
+                Download
+              </button>
+            </div>
+          </div>
+          <div class="output-content js-prd-content"></div>
+        </div>
+      </div>
+
+      <!-- PRD History Section -->
+      <div class="history-section js-prd-history-section hidden">
+        <div class="history-header">
+          <h3>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <polyline points="12 6 12 12 16 14"/>
+            </svg>
+            Recent PRDs
+          </h3>
+          <span class="history-count js-prd-history-count">0 of 3</span>
+        </div>
+        <div class="history-list js-prd-history-list">
+          <!-- PRD history items will be rendered here -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Prompts Tab Content -->
+    <div class="tab-content" id="prompts-tab">
+      <div class="generator-card">
+        <div class="card-header">
+          <h2>AI Coding Prompt Generator</h2>
+          <p>Generate optimized prompts tailored for your favorite AI coding tool</p>
+        </div>
+        
+        <div class="card-body">
+          <!-- Platform Selection -->
+          <div class="form-section">
+            <label class="form-label">Select AI Platform</label>
+            <div class="platform-grid js-platform-grid">
+              <!-- Platforms will be loaded dynamically -->
+            </div>
+          </div>
+
+          <!-- Prompt Type -->
+          <div class="form-section">
+            <label class="form-label">Prompt Type</label>
+            <div class="prompt-type-grid js-prompt-type-grid">
+              <!-- Prompt types will be loaded dynamically -->
+            </div>
+          </div>
+
+          <!-- Customization Options -->
+          <div class="form-section">
+            <label class="form-label">Customization (Optional)</label>
+            <div class="customization-grid">
+              <div class="custom-field">
+                <label for="tech-stack">Tech Stack</label>
+                <select id="tech-stack" class="custom-select js-tech-stack">
+                  <option value="">Auto (Best for project)</option>
+                  <option value="react-node">React + Node.js</option>
+                  <option value="nextjs">Next.js (Full Stack)</option>
+                  <option value="vue-express">Vue + Express</option>
+                  <option value="svelte-kit">SvelteKit</option>
+                  <option value="react-native">React Native (Mobile)</option>
+                  <option value="flutter">Flutter (Mobile)</option>
+                </select>
+              </div>
+              <div class="custom-field">
+                <label for="styling">Styling</label>
+                <select id="styling" class="custom-select js-styling">
+                  <option value="">Auto (Modern default)</option>
+                  <option value="tailwind">Tailwind CSS</option>
+                  <option value="shadcn">shadcn/ui + Tailwind</option>
+                  <option value="css-modules">CSS Modules</option>
+                  <option value="styled-components">Styled Components</option>
+                  <option value="material-ui">Material UI</option>
+                </select>
+              </div>
+              <div class="custom-field">
+                <label for="database">Database</label>
+                <select id="database" class="custom-select js-database">
+                  <option value="">Auto (Best for project)</option>
+                  <option value="mongodb">MongoDB</option>
+                  <option value="postgresql">PostgreSQL</option>
+                  <option value="supabase">Supabase</option>
+                  <option value="firebase">Firebase</option>
+                  <option value="prisma-postgres">Prisma + PostgreSQL</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <button class="generate-btn js-generate-prompt" disabled>
+            <span class="btn-text">Select a Platform First</span>
+            <span class="btn-loader"></span>
+          </button>
+        </div>
+
+        <!-- Prompt Output -->
+        <div class="output-section js-prompt-output hidden">
+          <div class="output-header">
+            <h3>Your <span class="js-platform-name">AI</span> Prompt</h3>
+            <div class="output-actions">
+              <button class="action-btn js-copy-prompt" title="Copy to clipboard">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                </svg>
+                Copy
+              </button>
+            </div>
+          </div>
+          <div class="output-content prompt-output js-prompt-content"></div>
+          <div class="prompt-tip">
+            <svg class="tip-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="16" x2="12" y2="12"/>
+              <line x1="12" y1="8" x2="12.01" y2="8"/>
+            </svg>
+            <span>Tip: Paste this prompt directly into <span class="js-platform-name-tip">the AI tool</span> to get started!</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Prompt History Section -->
+      <div class="history-section js-prompt-history-section hidden">
+        <div class="history-header">
+          <h3>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <polyline points="12 6 12 12 16 14"/>
+            </svg>
+            Recent Prompts
+          </h3>
+          <span class="history-count js-prompt-history-count">0 of 5</span>
+        </div>
+        <div class="history-list js-prompt-history-list">
+          <!-- Prompt history items will be rendered here -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div class="toast js-toast">
+    <span class="toast-message"></span>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.21.1/axios.min.js"
+    integrity="sha512-bZS47S7sPOxkjU/4Bt0zrhEtWx0y0CRkhEp8IckzK+ltifIIE9EMIMTuT/mEzoIMewUINruDBIR/jJnbguonqQ=="
+    crossorigin="anonymous"
+    referrerpolicy="no-referrer"></script>
+  <script src="./scripts/apiLimitHandler.js"></script>
+  <script src="./scripts/subscriptionHandler.js"></script>
+  <script src="scripts/prd-builder.js"></script>
+
+  <script type="module">
+  async function loadSidebar() {
+    const res  = await fetch('sidebar.html');
+    const html = await res.text();
+    document.getElementById('sidebar-placeholder').innerHTML = html;
+
+    const { initSidebar } = await import('./scripts/sidebar.js');
+    await initSidebar();
+  }
+  loadSidebar();
+  </script>
+</body>
+</html>

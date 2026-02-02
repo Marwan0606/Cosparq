@@ -270,18 +270,29 @@ document.querySelector('.js-regenerate-response-btn').addEventListener('click', 
 
 const getChatLogs = async (ideaId)=>{
   try {
-    let resp = await axios.get(`/api/save/getAllChats/${ideaId}`);
-    const chatLogs  = Array.isArray(resp.data?.savedChat) ? resp.data.savedChat : [];
-    console.log(chatLogs)
+    // Use getAllChatsRaw to get actual chat history (not summaries)
+    let resp = await axios.get(`/api/save/getAllChatsRaw/${ideaId}`);
+    const chatLogs = Array.isArray(resp.data?.savedChat) ? resp.data.savedChat : [];
+    console.log('Chat logs retrieved:', chatLogs.length, 'messages');
+    
+    // Sort by createdAt descending and take last 15 interactions
+    const sortedLogs = chatLogs
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+      .slice(0, 15)
+      .reverse(); // Reverse to get chronological order
+    
     let listOfChats = ''
-    chatLogs.forEach((chatLog)=>{
-      listOfChats += chatLog.userMessage
-      listOfChats += chatLog.AiResponse
+    sortedLogs.forEach((chatLog, index)=>{
+      listOfChats += `\n--- Message ${index + 1} ---\n`
+      listOfChats += `User: ${chatLog.userMessage || ''}\n`
+      listOfChats += `AI: ${chatLog.AiResponse || ''}\n`
     })
-    //console.log(listOfChats)
+    
+    console.log('Formatted chat logs for resync:', listOfChats.substring(0, 500) + '...');
     return listOfChats
   } catch (error) {
-    console.log(error)
+    console.log('Error fetching chat logs:', error)
+    return ''
   }
 }
 

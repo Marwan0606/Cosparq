@@ -23,6 +23,7 @@ const ideaHub = require('./routes/ideaHub.js')
 const dashboard = require('./routes/dashboard.js')
 const cofounder = require('./routes/cofounder.js')
 const actionsRoutes = require('./routes/actions.js')
+const prdBuilder = require('./routes/prd-builder.js')
 
 const authenticateToken = require('./middleware/authenticateToken.js')
 const { captureRawBody, verifyStripeSignature } = require('./middleware/stripeWebhook.js');
@@ -98,6 +99,9 @@ app.use('/api/cofounder', cofounder);
 
 // Actions routes (Google OAuth + Email/Calendar/Content)
 app.use('/api', actionsRoutes);
+
+// PRD & AI Prompt Builder routes
+app.use('/api/prd', prdBuilder);
 
 const port = process.env.PORT || 5004
 

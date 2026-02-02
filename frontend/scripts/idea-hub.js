@@ -232,16 +232,32 @@ async function syncWithAI() {
 
 async function getChatLogs(ideaId) {
   try {
-    const resp = await axios.get(`/api/save/getAllChats/${ideaId}`);
+    // Use getAllChatsRaw to get actual chat messages (not summaries)
+    const resp = await axios.get(`/api/save/getAllChatsRaw/${ideaId}`);
+    console.log('getChatLogs raw response:', resp.data);
+    
     const chatLogs = Array.isArray(resp.data?.savedChat) ? resp.data.savedChat : [];
+    console.log('getChatLogs found', chatLogs.length, 'messages');
+    
+    if (chatLogs.length === 0) {
+      return '';
+    }
+    
+    // Sort by createdAt and take last 15 messages
+    const sortedChats = chatLogs
+      .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
+      .slice(-15);
+    
     let listOfChats = '';
-    chatLogs.forEach((chatLog) => {
+    sortedChats.forEach((chatLog) => {
       listOfChats += `User: ${chatLog.userMessage}\n`;
       listOfChats += `AI: ${chatLog.AiResponse}\n\n`;
     });
+    
+    console.log('getChatLogs returning:', listOfChats.substring(0, 200) + '...');
     return listOfChats;
   } catch (error) {
-    console.log('No chat logs found');
+    console.log('No chat logs found:', error.message);
     return '';
   }
 }

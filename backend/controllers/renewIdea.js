@@ -6,21 +6,30 @@ const renewIdea = async (req, res) => {
 
   const userId = req.user.userId
   const { oldIdea, chatLogs, ideaId } = req.body;
+  
+  console.log('RenewIdea called - chatLogs length:', chatLogs ? chatLogs.length : 0);
+  console.log('RenewIdea - chatLogs preview:', chatLogs ? chatLogs.substring(0, 300) : 'EMPTY');
+  
   const renewResponse = await renewIdeaRes.create({userId, ideaId})
   console.log(renewResponse)
 
+  // Build prompt based on whether we have chat logs
+  const hasChatLogs = chatLogs && chatLogs.trim().length > 10;
+  
   const messages = [
     {
       role: "system",
-      content: `
-      You will receive the old idea and a summary of the last 20 chatlogs you had with the user, you will probably notice that within the chatlogs you and the user discussed a number of new features and developments of the idea essentially making the initial idea better and developing the idea. Your whole job is to just rewrite the idea again but it should be way better and more developed and the developments should be based on what the AI and the user discussed in the chatlogs, YOU SHOULDN'T COME UP WITH ENTIRELY NEW IDEAS NOT DISCUSSED WITH USER. You MUST ANSWER IN VALID JSON OBJECT, ONLY WRITING THE IDEA AND NO EXTRA TEXT OR EXPLANATIONS.
-
+      content: hasChatLogs ? `
+      You will receive the old idea and the chat history between you and the user. In the chat history, you and the user discussed features, improvements, and developments for the idea. Your job is to rewrite the idea incorporating ALL the improvements and features discussed in the chat logs.
+      
+      IMPORTANT: You MUST incorporate the changes from the chat logs. The new idea should reflect the discussions and improvements mentioned.
+      
       You must return ONLY a valid JSON object. 
       Do not include markdown fences, code blocks, or any extra text.
 
       Required shape:
       {
-        "idea": "<a single improved, well-written idea as one string>"
+        "idea": "<the improved, well-written idea incorporating all discussed changes as one string>"
       }
 
       Rules:
@@ -28,6 +37,16 @@ const renewIdea = async (req, res) => {
       - The value is a single string (no nested objects or arrays).
       - No trailing commas.
       - No explanations or comments outside the JSON.
+      - ALWAYS make meaningful improvements based on the chat logs.
+      ` : `
+      The user wants to improve their idea but has no chat history yet. Simply clean up and improve the writing of the idea, making it more professional and clear. Keep the core concept the same but enhance how it's expressed.
+      
+      You must return ONLY a valid JSON object.
+
+      Required shape:
+      {
+        "idea": "<the polished, well-written idea as one string>"
+      }
       `
     },
     {
@@ -37,8 +56,8 @@ const renewIdea = async (req, res) => {
         ### OLD_IDEA
         ${typeof oldIdea === 'string' ? oldIdea : JSON.stringify(oldIdea)}
 
-        ### CHAT_LOGS_SUMMARY (last 20 turns)
-        ${typeof chatLogs === 'string' ? chatLogs : JSON.stringify(chatLogs)}
+        ${hasChatLogs ? `### CHAT_HISTORY (last 15 interactions)
+        ${chatLogs}` : '### NO CHAT HISTORY - Just polish the existing idea'}
       `
     },
   ];
