@@ -24,6 +24,7 @@ const dashboard = require('./routes/dashboard.js')
 const cofounder = require('./routes/cofounder.js')
 const actionsRoutes = require('./routes/actions.js')
 const prdBuilder = require('./routes/prd-builder.js')
+const trends = require('./routes/trends.js')
 
 const authenticateToken = require('./middleware/authenticateToken.js')
 const { captureRawBody, verifyStripeSignature } = require('./middleware/stripeWebhook.js');
@@ -103,11 +104,21 @@ app.use('/api', actionsRoutes);
 // PRD & AI Prompt Builder routes
 app.use('/api/prd', prdBuilder);
 
+// Trend Map routes
+app.use('/api/trends', trends);
+
+// Initialize trend cron jobs
+const { initCronJobs } = require('./services/trendCron');
+
 const port = process.env.PORT || 5004
 
 const start = async ()=>{
   try {
     await database(process.env.MONGO_URI)
+    
+    // Initialize trend scraping cron jobs
+    initCronJobs();
+    
     app.listen(port, console.log(`server is listening on port ${port}...`))
   } catch (error) {
     console.log(error)

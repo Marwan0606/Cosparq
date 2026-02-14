@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trend Lab - CoSparq</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background: #0a0a0f;
+            color: #e0e0e0;
+            min-height: 100vh;
+            display: flex;
+        }
+
+        .sidebar-placeholder { width: 220px; flex-shrink: 0; }
+
+        .main {
+            flex: 1;
+            padding: 24px;
+            max-width: 1400px;
+            overflow-y: auto;
+            height: 100vh;
+        }
+
+        h1 {
+            font-size: 24px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        h1 i { color: #a855f7; }
+
+        .subtitle {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 24px;
+        }
+
+        /* Stats Row */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: #111118;
+            border: 1px solid #222;
+            border-radius: 12px;
+            padding: 16px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 4px;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .stat-value.purple { color: #a855f7; }
+        .stat-value.blue { color: #3b82f6; }
+        .stat-value.green { color: #22c55e; }
+        .stat-value.orange { color: #f97316; }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #222;
+            padding-bottom: 12px;
+        }
+
+        .tab {
+            background: transparent;
+            border: 1px solid #333;
+            color: #888;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .tab:hover { border-color: #555; color: #fff; }
+        .tab.active {
+            background: #a855f7;
+            border-color: #a855f7;
+            color: #fff;
+        }
+
+        /* Content Panels */
+        .panel { display: none; }
+        .panel.active { display: block; }
+
+        /* Table Styles */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        .data-table th {
+            text-align: left;
+            padding: 12px;
+            background: #161620;
+            color: #888;
+            font-weight: 500;
+            border-bottom: 1px solid #222;
+        }
+
+        .data-table td {
+            padding: 12px;
+            border-bottom: 1px solid #1a1a24;
+            vertical-align: top;
+        }
+
+        .data-table tr:hover { background: #111118; }
+
+        .tag {
+            display: inline-block;
+            background: #222;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            margin: 2px;
+        }
+
+        .tag.ai-ml { background: #7c3aed33; color: #a78bfa; }
+        .tag.saas { background: #2563eb33; color: #60a5fa; }
+        .tag.devtools { background: #16a34a33; color: #4ade80; }
+        .tag.other { background: #52525b33; color: #a1a1aa; }
+
+        .demand-bar {
+            width: 60px;
+            height: 8px;
+            background: #222;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .demand-fill {
+            height: 100%;
+            border-radius: 4px;
+        }
+
+        .source-badge {
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            background: #f9731633;
+            color: #fb923c;
+        }
+
+        .source-badge.hn { background: #f9731633; color: #fb923c; }
+        .source-badge.reddit { background: #ef444433; color: #f87171; }
+
+        /* Trends Panel */
+        .trends-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 16px;
+        }
+
+        .trend-card {
+            background: #111118;
+            border: 1px solid #222;
+            border-radius: 12px;
+            padding: 16px;
+        }
+
+        .trend-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .trend-name {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .trend-score {
+            font-size: 20px;
+            font-weight: 700;
+            color: #a855f7;
+        }
+
+        .trend-mentions {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 12px;
+        }
+
+        .pain-points-list {
+            font-size: 12px;
+        }
+
+        .pain-point {
+            padding: 6px 0;
+            border-bottom: 1px solid #1a1a24;
+            color: #aaa;
+        }
+
+        .pain-point:last-child { border-bottom: none; }
+
+        .topics-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            margin-top: 12px;
+        }
+
+        /* Chat Panel */
+        .chat-container {
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 280px);
+            background: #111118;
+            border: 1px solid #222;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .message {
+            margin-bottom: 16px;
+            max-width: 80%;
+        }
+
+        .message.user {
+            margin-left: auto;
+            text-align: right;
+        }
+
+        .message-content {
+            display: inline-block;
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .message.user .message-content {
+            background: #a855f7;
+            color: #fff;
+        }
+
+        .message.ai .message-content {
+            background: #1a1a24;
+            color: #e0e0e0;
+            text-align: left;
+        }
+
+        .chat-input-row {
+            display: flex;
+            gap: 12px;
+            padding: 16px;
+            background: #0a0a0f;
+            border-top: 1px solid #222;
+        }
+
+        .chat-input {
+            flex: 1;
+            background: #1a1a24;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 12px 16px;
+            color: #fff;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .chat-input:focus { border-color: #a855f7; }
+
+        .chat-send {
+            background: #a855f7;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 24px;
+            color: #fff;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .chat-send:hover { background: #9333ea; }
+        .chat-send:disabled { background: #444; cursor: not-allowed; }
+
+        /* Actions */
+        .actions-row {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .action-btn {
+            background: #1a1a24;
+            border: 1px solid #333;
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+
+        .action-btn:hover { border-color: #a855f7; }
+        .action-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .action-btn i { color: #a855f7; }
+
+        .status-msg {
+            padding: 12px 16px;
+            background: #1a1a24;
+            border-radius: 8px;
+            font-size: 13px;
+            margin-bottom: 16px;
+            display: none;
+        }
+
+        .status-msg.visible { display: block; }
+        .status-msg.success { border-left: 3px solid #22c55e; }
+        .status-msg.error { border-left: 3px solid #ef4444; }
+        .status-msg.loading { border-left: 3px solid #3b82f6; }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+
+        .empty-state i {
+            font-size: 48px;
+            margin-bottom: 16px;
+            color: #333;
+        }
+
+        .empty-state h3 {
+            font-size: 18px;
+            color: #888;
+            margin-bottom: 8px;
+        }
+
+        /* Loading */
+        .loading-spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #333;
+            border-top-color: #a855f7;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #111; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <div class="sidebar-placeholder" id="sidebar-container"></div>
+
+    <div class="main">
+        <h1><i class="fas fa-flask"></i> Trend Lab</h1>
+        <p class="subtitle">Test and explore market trend data collection & AI analysis</p>
+
+        <!-- Stats -->
+        <div class="stats-row">
+            <div class="stat-card">
+                <div class="stat-label">Total Posts Collected</div>
+                <div class="stat-value purple" id="stat-total">-</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">AI Analyzed</div>
+                <div class="stat-value blue" id="stat-analyzed">-</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Categories Tracked</div>
+                <div class="stat-value green" id="stat-categories">-</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Pain Points Found</div>
+                <div class="stat-value orange" id="stat-painpoints">-</div>
+            </div>
+        </div>
+
+        <!-- Status Message -->
+        <div class="status-msg" id="status-msg"></div>
+
+        <!-- Actions -->
+        <div class="actions-row">
+            <button class="action-btn" onclick="runScrape()" id="btn-scrape">
+                <i class="fas fa-download"></i> Scrape New Data
+            </button>
+            <button class="action-btn" onclick="runAnalysis()" id="btn-analyze">
+                <i class="fas fa-brain"></i> Run AI Analysis
+            </button>
+            <button class="action-btn" onclick="refreshData()">
+                <i class="fas fa-sync-alt"></i> Refresh
+            </button>
+            <button class="action-btn" onclick="downloadRawData()">
+                <i class="fas fa-file-export"></i> Export Raw Data
+            </button>
+            <button class="action-btn" onclick="viewAllRawData()">
+                <i class="fas fa-database"></i> View All Data
+            </button>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab active" data-tab="posts">Raw Data</button>
+            <button class="tab" data-tab="trends">Trends & Pain Points</button>
+            <button class="tab" data-tab="chat">Ask AI</button>
+        </div>
+
+        <!-- Raw Data Panel -->
+        <div class="panel active" id="panel-posts">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Title</th>
+                        <th>Source</th>
+                        <th>Category</th>
+                        <th>Demand</th>
+                        <th>Topics</th>
+                        <th>Pain Points</th>
+                    </tr>
+                </thead>
+                <tbody id="posts-table">
+                    <tr><td colspan="6" class="empty-state">
+                        <i class="fas fa-database"></i>
+                        <h3>No data yet</h3>
+                        <p>Click "Scrape New Data" to collect posts</p>
+                    </td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Trends Panel -->
+        <div class="panel" id="panel-trends">
+            <div class="trends-grid" id="trends-grid">
+                <div class="empty-state">
+                    <i class="fas fa-chart-line"></i>
+                    <h3>No trends yet</h3>
+                    <p>Run AI analysis to see aggregated trends</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chat Panel -->
+        <div class="panel" id="panel-chat">
+            <div class="chat-container">
+                <div class="chat-messages" id="chat-messages">
+                    <div class="message ai">
+                        <div class="message-content">
+                            Hi! I can help you analyze the market trend data. Ask me things like:
+                            <br><br>
+                            • "What are the top pain points right now?"<br>
+                            • "What startup ideas do you see from this data?"<br>
+                            • "Which category has the most demand?"<br>
+                            • "Summarize the AI/ML trends"
+                        </div>
+                    </div>
+                </div>
+                <div class="chat-input-row">
+                    <input type="text" class="chat-input" id="chat-input" placeholder="Ask about the trend data..." onkeypress="if(event.key==='Enter')sendChat()">
+                    <button class="chat-send" onclick="sendChat()" id="btn-chat">Send</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        fetch('sidebar.html').then(r => r.text()).then(html => {
+            document.getElementById('sidebar-container').innerHTML = html;
+        });
+
+        const API = '/api/trends';
+        let token = localStorage.getItem('accessToken');
+
+        // Check if logged in
+        if (!token) {
+            window.location.href = '/auth.html';
+        }
+
+        async function apiFetch(endpoint, options = {}) {
+            // Refresh token from storage in case it was updated
+            token = localStorage.getItem('accessToken');
+            
+            const res = await fetch(`${API}${endpoint}`, {
+                ...options,
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                    ...options.headers
+                }
+            });
+            
+            if (res.status === 401) {
+                // Token expired, try to refresh or redirect to login
+                console.log('Token expired, redirecting to login...');
+                window.location.href = '/auth.html';
+                throw new Error('Session expired. Please log in again.');
+            }
+            
+            if (!res.ok) throw new Error(`API error: ${res.status}`);
+            return res.json();
+        }
+
+        // Tab switching
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+                tab.classList.add('active');
+                document.getElementById(`panel-${tab.dataset.tab}`).classList.add('active');
+            });
+        });
+
+        function showStatus(msg, type = 'loading') {
+            const el = document.getElementById('status-msg');
+            el.textContent = msg;
+            el.className = `status-msg visible ${type}`;
+        }
+
+        function hideStatus() {
+            document.getElementById('status-msg').classList.remove('visible');
+        }
+
+        async function loadStats() {
+            try {
+                const stats = await apiFetch('/stats');
+                document.getElementById('stat-total').textContent = stats.posts?.total || 0;
+                document.getElementById('stat-analyzed').textContent = stats.posts?.processed || 0;
+                document.getElementById('stat-categories').textContent = stats.categories?.length || 0;
+                
+                // Count pain points from top trends
+                const painCount = stats.topTrends?.reduce((sum, t) => sum + (t.mentions || 0), 0) || 0;
+                document.getElementById('stat-painpoints').textContent = painCount;
+            } catch (err) {
+                console.error('Failed to load stats:', err);
+            }
+        }
+
+        async function loadPosts() {
+            try {
+                // Use category endpoint to get posts since search requires a query
+                const mapData = await apiFetch('/map');
+                const tbody = document.getElementById('posts-table');
+                
+                // Get posts from a category or fetch all
+                let posts = [];
+                if (mapData.trends && mapData.trends.length > 0) {
+                    // Fetch posts from first few categories
+                    const categoryPromises = mapData.trends.slice(0, 3).map(t => 
+                        apiFetch(`/category/${t.category}`).catch(() => ({ recentPosts: [] }))
+                    );
+                    const categoryData = await Promise.all(categoryPromises);
+                    posts = categoryData.flatMap(c => c.recentPosts || []);
+                }
+                
+                if (!posts || posts.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="6" class="empty-state">
+                        <i class="fas fa-database"></i>
+                        <h3>No data yet</h3>
+                        <p>Click "Scrape New Data" to collect posts</p>
+                    </td></tr>`;
+                    return;
+                }
+
+                tbody.innerHTML = posts.map(post => `
+                    <tr>
+                        <td>
+                            <a href="${post.url}" target="_blank" style="color:#fff;text-decoration:none;">
+                                ${post.title?.slice(0, 60) || 'Untitled'}${post.title?.length > 60 ? '...' : ''}
+                            </a>
+                        </td>
+                        <td>
+                            <span class="source-badge ${post.source}">${post.source}</span>
+                            ${post.subreddit ? `<br><small style="color:#666">r/${post.subreddit}</small>` : ''}
+                        </td>
+                        <td><span class="tag ${post.category || 'other'}">${post.category || 'unanalyzed'}</span></td>
+                        <td>
+                            ${post.demandSignal ? `
+                                <div style="display:flex;align-items:center;gap:8px;">
+                                    <div class="demand-bar">
+                                        <div class="demand-fill" style="width:${post.demandSignal}%;background:${getDemandColor(post.demandSignal)}"></div>
+                                    </div>
+                                    <span style="font-size:12px;">${post.demandSignal}</span>
+                                </div>
+                            ` : '-'}
+                        </td>
+                        <td>${(post.topics || []).slice(0, 3).map(t => `<span class="tag">${t}</span>`).join('') || '-'}</td>
+                        <td style="font-size:12px;color:#888;">${(post.painPoints || []).slice(0, 2).join(', ') || '-'}</td>
+                    </tr>
+                `).join('');
+            } catch (err) {
+                console.error('Failed to load posts:', err);
+            }
+        }
+
+        async function loadTrends() {
+            try {
+                const [mapData, painPoints] = await Promise.all([
+                    apiFetch('/map'),
+                    apiFetch('/pain-points?limit=30')
+                ]);
+
+                const grid = document.getElementById('trends-grid');
+
+                if (!mapData.trends || mapData.trends.length === 0) {
+                    grid.innerHTML = `<div class="empty-state">
+                        <i class="fas fa-chart-line"></i>
+                        <h3>No trends yet</h3>
+                        <p>Run AI analysis to see aggregated trends</p>
+                    </div>`;
+                    return;
+                }
+
+                grid.innerHTML = mapData.trends.map(trend => `
+                    <div class="trend-card">
+                        <div class="trend-header">
+                            <span class="trend-name">${trend.displayName}</span>
+                            <span class="trend-score">${trend.score}</span>
+                        </div>
+                        <div class="trend-mentions">${trend.mentions} mentions • Velocity: ${trend.velocity > 0 ? '+' : ''}${trend.velocity || 0}%</div>
+                        
+                        <div style="font-size:12px;color:#888;margin-bottom:8px;">Top Pain Points:</div>
+                        <div class="pain-points-list">
+                            ${(trend.topPainPoints || []).slice(0, 4).map(p => {
+                                const painText = typeof p === 'string' ? p : (p.painPoint || 'Unknown');
+                                const mentions = typeof p === 'object' ? p.mentions : '?';
+                                return `<div class="pain-point">• ${painText} <span style="color:#666">(${mentions})</span></div>`;
+                            }).join('') || '<div class="pain-point">No pain points extracted</div>'}
+                        </div>
+                        
+                        <div class="topics-row">
+                            ${(trend.relatedTopics || []).slice(0, 5).map(t => {
+                                const topicText = typeof t === 'string' ? t : (t.topic || 'Unknown');
+                                return `<span class="tag">${topicText}</span>`;
+                            }).join('')}
+                        </div>
+                    </div>
+                `).join('');
+            } catch (err) {
+                console.error('Failed to load trends:', err);
+            }
+        }
+
+        function getDemandColor(score) {
+            if (score >= 80) return '#ef4444';
+            if (score >= 60) return '#f97316';
+            if (score >= 40) return '#eab308';
+            return '#22c55e';
+        }
+
+        async function runScrape() {
+            const btn = document.getElementById('btn-scrape');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading-spinner"></span> Scraping...';
+            showStatus('Scraping Hacker News for new posts...', 'loading');
+
+            try {
+                await apiFetch('/run', {
+                    method: 'POST',
+                    body: JSON.stringify({ quick: true })
+                });
+                showStatus('Scraping started! Refresh in a minute to see new data.', 'success');
+                setTimeout(() => {
+                    refreshData();
+                    hideStatus();
+                }, 3000);
+            } catch (err) {
+                showStatus('Scraping failed: ' + err.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-download"></i> Scrape New Data';
+            }
+        }
+
+        async function runAnalysis() {
+            const btn = document.getElementById('btn-analyze');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading-spinner"></span> Analyzing...';
+            showStatus('Running AI analysis on unprocessed posts...', 'loading');
+
+            try {
+                await apiFetch('/run', {
+                    method: 'POST',
+                    body: JSON.stringify({ quick: true })
+                });
+                showStatus('Analysis started! This may take a minute.', 'success');
+                setTimeout(() => {
+                    refreshData();
+                    hideStatus();
+                }, 5000);
+            } catch (err) {
+                showStatus('Analysis failed: ' + err.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-brain"></i> Run AI Analysis';
+            }
+        }
+
+        async function refreshData() {
+            await Promise.all([loadStats(), loadPosts(), loadTrends()]);
+        }
+
+        // Chat functionality
+        async function sendChat() {
+            const input = document.getElementById('chat-input');
+            const message = input.value.trim();
+            if (!message) return;
+
+            const messagesEl = document.getElementById('chat-messages');
+            const btn = document.getElementById('btn-chat');
+
+            // Add user message
+            messagesEl.innerHTML += `<div class="message user"><div class="message-content">${escapeHtml(message)}</div></div>`;
+            input.value = '';
+            btn.disabled = true;
+            messagesEl.scrollTop = messagesEl.scrollHeight;
+
+            // Add loading indicator
+            const loadingId = 'loading-' + Date.now();
+            messagesEl.innerHTML += `<div class="message ai" id="${loadingId}"><div class="message-content"><span class="loading-spinner"></span> Thinking...</div></div>`;
+            messagesEl.scrollTop = messagesEl.scrollHeight;
+
+            try {
+                // Call the trends chat API
+                const response = await fetch('/api/trends/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ message })
+                });
+
+                const data = await response.json();
+                document.getElementById(loadingId).remove();
+
+                if (data.error) {
+                    messagesEl.innerHTML += `<div class="message ai"><div class="message-content">Error: ${data.error}</div></div>`;
+                } else {
+                    messagesEl.innerHTML += `<div class="message ai"><div class="message-content">${formatResponse(data.response || 'No response')}</div></div>`;
+                }
+            } catch (err) {
+                document.getElementById(loadingId).remove();
+                messagesEl.innerHTML += `<div class="message ai"><div class="message-content">Error: ${err.message}</div></div>`;
+            }
+
+            btn.disabled = false;
+            messagesEl.scrollTop = messagesEl.scrollHeight;
+        }
+
+        function buildContext(stats, trends, painPoints) {
+            let ctx = `MARKET TREND DATA SUMMARY:\n`;
+            ctx += `- Total posts collected: ${stats.posts?.total || 0}\n`;
+            ctx += `- Posts analyzed by AI: ${stats.posts?.processed || 0}\n\n`;
+
+            if (trends.trends?.length) {
+                ctx += `TOP CATEGORIES BY SCORE:\n`;
+                trends.trends.slice(0, 8).forEach(t => {
+                    ctx += `- ${t.displayName}: Score ${t.score}, ${t.mentions} mentions, velocity ${t.velocity}%\n`;
+                    if (t.topPainPoints?.length) {
+                        ctx += `  Pain points: ${t.topPainPoints.slice(0, 3).map(p => p.painPoint || p).join(', ')}\n`;
+                    }
+                });
+            }
+
+            if (painPoints.painPoints?.length) {
+                ctx += `\nTOP PAIN POINTS ACROSS ALL DATA:\n`;
+                painPoints.painPoints.slice(0, 10).forEach(p => {
+                    ctx += `- "${p.painPoint}" (${p.mentions} mentions, demand signal: ${p.avgDemandSignal}/100)\n`;
+                });
+            }
+
+            return ctx;
+        }
+
+        function formatResponse(text) {
+            return text
+                .replace(/\n/g, '<br>')
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*(.*?)\*/g, '<em>$1</em>');
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Download raw data as JSON
+        async function downloadRawData() {
+            showStatus('Fetching all raw data...', 'loading');
+            try {
+                const data = await apiFetch('/export');
+                
+                // Create downloadable JSON file
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `trend-data-${new Date().toISOString().split('T')[0]}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                showStatus(`Downloaded ${data.posts?.length || 0} posts!`, 'success');
+                setTimeout(hideStatus, 3000);
+            } catch (err) {
+                showStatus('Export failed: ' + err.message, 'error');
+            }
+        }
+
+        // View all raw data in table
+        async function viewAllRawData() {
+            showStatus('Loading all raw data...', 'loading');
+            try {
+                const data = await apiFetch('/export?limit=500');
+                const tbody = document.getElementById('posts-table');
+                
+                if (!data.posts || data.posts.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="6" class="empty-state">
+                        <i class="fas fa-database"></i>
+                        <h3>No data yet</h3>
+                        <p>Click "Scrape New Data" to collect posts</p>
+                    </td></tr>`;
+                    hideStatus();
+                    return;
+                }
+
+                tbody.innerHTML = data.posts.map(post => `
+                    <tr>
+                        <td>
+                            <a href="${post.url}" target="_blank" style="color:#fff;text-decoration:none;">
+                                ${post.title?.slice(0, 80) || 'Untitled'}${post.title?.length > 80 ? '...' : ''}
+                            </a>
+                            <br><small style="color:#555">${post.content?.slice(0, 100) || ''}${post.content?.length > 100 ? '...' : ''}</small>
+                        </td>
+                        <td>
+                            <span class="source-badge ${post.source}">${post.source}</span>
+                            ${post.subreddit ? `<br><small style="color:#666">r/${post.subreddit}</small>` : ''}
+                        </td>
+                        <td><span class="tag ${post.category || 'other'}">${post.category || 'unanalyzed'}</span></td>
+                        <td>
+                            ${post.demandSignal ? `
+                                <div style="display:flex;align-items:center;gap:8px;">
+                                    <div class="demand-bar">
+                                        <div class="demand-fill" style="width:${post.demandSignal}%;background:${getDemandColor(post.demandSignal)}"></div>
+                                    </div>
+                                    <span style="font-size:12px;">${post.demandSignal}</span>
+                                </div>
+                            ` : '<span style="color:#444">-</span>'}
+                        </td>
+                        <td>${(post.topics || []).slice(0, 3).map(t => `<span class="tag">${t}</span>`).join('') || '<span style="color:#444">-</span>'}</td>
+                        <td style="font-size:12px;color:#888;max-width:200px;overflow:hidden;text-overflow:ellipsis;">
+                            ${(post.painPoints || []).slice(0, 2).join(', ') || '<span style="color:#444">-</span>'}
+                        </td>
+                    </tr>
+                `).join('');
+                
+                // Switch to Raw Data tab
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+                document.querySelector('[data-tab="posts"]').classList.add('active');
+                document.getElementById('panel-posts').classList.add('active');
+                
+                showStatus(`Showing ${data.posts.length} posts`, 'success');
+                setTimeout(hideStatus, 2000);
+            } catch (err) {
+                showStatus('Failed to load data: ' + err.message, 'error');
+            }
+        }
+
+        // Init
+        refreshData();
+    </script>
+</body>
+</html>
