@@ -14,6 +14,7 @@ const { tasksAi } = require('../controllers/tasksAi')
 const { codePage } = require('../controllers/code')
 const { codeEdit } = require('../controllers/codeEdit')
 const { codeEditCheap } = require('../controllers/codeCheap')
+const { cobuilder2Generate, cobuilder2Edit } = require('../controllers/cobuilder2')
 
 // Apply checkApiLimit middleware to ALL routes that make OpenAI calls
 // This ensures no AI request can be made if user exceeds their cost limit
@@ -40,5 +41,9 @@ router.post('/code', checkPaidSubscription, checkApiLimit, codePage);
 router.post('/codeEdit', checkPaidSubscription, checkApiLimit, codeEdit);
 
 router.post('/codeEditCheap', checkPaidSubscription, checkApiLimit, codeEditCheap);
+
+// CoBuilder 2 routes (Kimi K2.5)
+router.post('/cobuilder2', checkPaidSubscription, checkApiLimit, cobuilder2Generate);
+router.post('/cobuilder2Edit', checkPaidSubscription, checkApiLimit, cobuilder2Edit);
 
 module.exports = router;

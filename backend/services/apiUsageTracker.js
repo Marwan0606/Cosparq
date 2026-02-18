@@ -26,6 +26,13 @@ const MODEL_PRICING = {
   'gpt-5-nano': { input: 0.0001, output: 0.0004 },
   'gpt-5': { input: 0.01, output: 0.03 },
   
+  // Kimi / Moonshot models (prices converted from CNY to USD at ~7.2 CNY/USD)
+  // kimi-k2.5: ¥4/M input, ¥21/M output → per 1K: $0.000556 input, $0.00292 output
+  'kimi-k2.5': { input: 0.000556, output: 0.00292 },
+  // moonshot-v1-8k: ¥2/M input, ¥10/M output → per 1K: $0.000278 input, $0.00139 output
+  'moonshot-v1-8k': { input: 0.000278, output: 0.00139 },
+  'moonshot-v1-32k': { input: 0.000694, output: 0.00278 },
+  
   // Fine-tuned models - use base model pricing or custom
   // Add your fine-tuned model IDs here with their pricing
   

@@ -15,6 +15,7 @@ const saveRawChat = require('./routes/save-raw-chats.js')
 const saveAction = require('./routes/save-action.js')
 const tasks = require('./routes/tasks-page.js')
 const saveCode = require('./routes/save-code.js')
+const saveCobuilder2 = require('./routes/save-cobuilder2.js')
 const saveRenew = require('./routes/save-renew.js')
 const payments = require('./routes/payments.js')
 const marketplace = require('./routes/marketplace.js')
@@ -24,6 +25,7 @@ const dashboard = require('./routes/dashboard.js')
 const cofounder = require('./routes/cofounder.js')
 const actionsRoutes = require('./routes/actions.js')
 const prdBuilder = require('./routes/prd-builder.js')
+const waitlistRoutes = require('./routes/waitlist.js')
 
 const authenticateToken = require('./middleware/authenticateToken.js')
 const { captureRawBody, verifyStripeSignature } = require('./middleware/stripeWebhook.js');
@@ -54,6 +56,8 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use(cookieParser());
 
+// PUBLIC waitlist endpoint — no auth (visitors on generated landing pages submit here)
+app.use('/api/waitlist', waitlistRoutes.publicRouter);
 
 app.use('/api', authenticateToken);
 
@@ -76,6 +80,11 @@ app.use('/api/save', saveAction);
 app.use('/api/v1/tasks', tasks);
 
 app.use('/api/save', saveCode);
+
+app.use('/api/save', saveCobuilder2);
+
+// Protected waitlist routes (auth required — CoSparq user views their waitlist)
+app.use('/api/waitlist', waitlistRoutes.protectedRouter);
 
 app.use('/api/save', saveRenew);
 
