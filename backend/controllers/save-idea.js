@@ -40,11 +40,42 @@ const updateIdea = async (req, res)=>{
 const getIdeas = async (req,res)=>{
   try {
     const userId = req.user.userId
-    //console.log(userId)
-    const idea = await Idea.find({userId})
+    const includeArchived = req.query.includeArchived === 'true';
+    const filter = { userId };
+    if (!includeArchived) filter.archived = { $ne: true };
+    const idea = await Idea.find(filter)
     res.status(200).json({idea})
   } catch (error) {
     res.status(500).json({msg: error})
+  }
+}
+
+const archiveIdea = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { ideaId } = req.params;
+    const { archived } = req.body;
+    const idea = await Idea.findOneAndUpdate(
+      { userId, _id: ideaId },
+      { archived: !!archived },
+      { new: true }
+    );
+    if (!idea) return res.status(404).json({ msg: 'Idea not found' });
+    res.status(200).json({ idea });
+  } catch (error) {
+    res.status(500).json({ msg: error });
+  }
+}
+
+const deleteIdea = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { ideaId } = req.params;
+    const idea = await Idea.findOneAndDelete({ userId, _id: ideaId });
+    if (!idea) return res.status(404).json({ msg: 'Idea not found' });
+    res.status(200).json({ msg: 'Idea permanently deleted' });
+  } catch (error) {
+    res.status(500).json({ msg: error });
   }
 }
 
@@ -64,5 +95,7 @@ module.exports = {
   saveIdea,
   getIdea,
   updateIdea,
-  getIdeas
+  getIdeas,
+  archiveIdea,
+  deleteIdea
 }

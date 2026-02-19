@@ -42,6 +42,10 @@ const UserIdeaSchema = new mongoose.Schema({ //this sets the specific type of da
   lastSyncedAt: {
     type: Date,
     default: null,
+  },
+  archived: {
+    type: Boolean,
+    default: false,
   }
 }, {collection: 'user-ideas', timestamps: true});
 

@@ -33,7 +33,7 @@ async function populateIdeas() {
     // 1) Fetch _all_ ideas for the authenticated user; no userId in the path
     const { data } = await axios.get('/api/save/ideas');
     console.log(data)
-    const ideas = Array.isArray(data.idea) ? data.idea : [];
+    const ideas = Array.isArray(data.idea) ? data.idea.filter(i => !i.archived) : [];
 
     // 2) Render into the sidebar menu
     const menu = document.querySelector('#sidebar .js-menu');
@@ -42,18 +42,49 @@ async function populateIdeas() {
       return;
     }
 
-    menu.innerHTML = ideas
-    
-      .map(i => `
-        <a 
-          href="/dashboard.html" 
-          data-product-id="${i._id}" 
-          class="menu-item menu-item-ideas"
-        >
-          ${i.ideaName}
-        </a>
-      `)
+    // Determine which idea is currently selected
+    const selectedId = JSON.parse(localStorage.getItem('ideaId') || 'null');
+
+    // Sort: selected idea first
+    const sorted = [...ideas].sort((a, b) => {
+      if (a._id === selectedId) return -1;
+      if (b._id === selectedId) return 1;
+      return 0;
+    });
+
+    menu.innerHTML = sorted
+      .map((i, idx) => {
+        const isSelected = i._id === selectedId;
+        const hidden = !isSelected; // only selected idea visible by default
+        return `
+          <a 
+            href="/dashboard.html" 
+            data-product-id="${i._id}" 
+            class="menu-item menu-item-ideas${hidden ? ' idea-hidden' : ''}"
+          >
+            ${i.ideaName}
+          </a>
+        `;
+      })
       .join('');
+
+    // Add show more/less toggle if there are other ideas besides the selected one
+    const hiddenCount = sorted.filter(i => i._id !== selectedId).length;
+    if (hiddenCount > 0) {
+      const toggle = document.createElement('button');
+      toggle.className = 'ideas-toggle';
+      toggle.textContent = `Show more (${hiddenCount})`;
+      toggle.addEventListener('click', () => {
+        const hidden = menu.querySelectorAll('.idea-hidden');
+        const isExpanded = toggle.dataset.expanded === 'true';
+        hidden.forEach(el => el.style.display = isExpanded ? 'none' : '');
+        toggle.dataset.expanded = isExpanded ? 'false' : 'true';
+        toggle.textContent = isExpanded ? `Show more (${hiddenCount})` : 'Show less';
+      });
+      menu.appendChild(toggle);
+      // Hide extras by default
+      menu.querySelectorAll('.idea-hidden').forEach(el => el.style.display = 'none');
+    }
 
     // 3) Hook up click handlers & highlight
     document.querySelectorAll('.menu-item-ideas').forEach((link) => {

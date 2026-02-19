@@ -1,5 +1,7 @@
 import { marked } from 'marked';
 
+const BOT_AVATAR = `<div class="avatar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="7" width="18" height="13" rx="3"/><path d="M12 3v4"/><path d="M8 2h8"/><circle cx="9" cy="13" r="1.2"/><circle cx="15" cy="13" r="1.2"/><path d="M9 17h6"/></svg></div>`;
+
 axios.defaults.baseURL = 'http://localhost:5004';
 axios.defaults.withCredentials = true;   // ← send & receive cookies
 
@@ -51,7 +53,7 @@ function stopGeneration() {
   if (typingBubble) {
     typingBubble.outerHTML = `
       <div class="message bot">
-        <div class="avatar">🤖</div>
+        ${BOT_AVATAR}
         <div class="bubble" style="color: #9fa1b2; font-style: italic;">Message cancelled</div>
       </div>
     `;
@@ -135,7 +137,7 @@ let chatResponse = async ()=>{
         <div class="bubble">${userInput}</div>
       </div>
       <div class="message bot typing-container" id="ai-typing">
-        <div class="avatar">🤖</div>
+        ${BOT_AVATAR}
         <div class="bubble typing">
           <span class="typing-dot"></span>
           <span class="typing-dot"></span>
@@ -243,7 +245,7 @@ let chatResponse = async ()=>{
     if (typingBubble) {
       typingBubble.outerHTML = `
         <div class="message bot">
-          <div class="avatar">🤖</div>
+          ${BOT_AVATAR}
           <div class="bubble">${replyHtml}</div>
         </div>
       `;
@@ -287,7 +289,7 @@ let chatResponse = async ()=>{
       }
       typingBubble.outerHTML = `
         <div class="message bot">
-          <div class="avatar">🤖</div>
+          ${BOT_AVATAR}
           <div class="bubble action-error">${errorMsg}</div>
         </div>
       `;
@@ -356,7 +358,7 @@ async function loadChatHistory() {
             </div>
           </div>
           <div class="message bot">
-            <div class="avatar">🤖</div>
+            ${BOT_AVATAR}
             <div class="bubble">
               ${chat.AiResponse}
             </div>
@@ -371,7 +373,7 @@ async function loadChatHistory() {
             </div>
           </div>
           <div class="message bot">
-            <div class="avatar">🤖</div>
+            ${BOT_AVATAR}
             <div class="bubble">
               <div class="loading-animation">
                 <div class="loading-dot"></div>
@@ -390,7 +392,7 @@ async function loadChatHistory() {
             </div>
           </div>
           <div class="message bot">
-            <div class="avatar">🤖</div>
+            ${BOT_AVATAR}
             <div class="bubble" style="color: #9fa1b2; font-style: italic;">
               (Response not saved - please resend your message)
             </div>

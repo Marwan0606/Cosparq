@@ -441,6 +441,9 @@ function setupEventListeners() {
     });
   });
   
+  // Edit idea name
+  document.getElementById('editNameBtn').addEventListener('click', startEditingName);
+
   // Save edit button
   document.getElementById('saveEditBtn').addEventListener('click', saveEdit);
   
@@ -471,6 +474,60 @@ function setupEventListeners() {
       document.querySelectorAll('.modal-overlay:not(.hidden)').forEach(closeModal);
     }
   });
+}
+
+// ============================================
+// EDIT IDEA NAME (inline)
+// ============================================
+
+function startEditingName() {
+  const badge = document.getElementById('ideaName');
+  const wrapper = badge.parentElement;
+  const editBtn = document.getElementById('editNameBtn');
+  const currentName = badge.textContent.trim();
+
+  badge.classList.add('editing');
+  editBtn.classList.add('hidden');
+
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.className = 'idea-name-input';
+  input.value = currentName;
+  input.maxLength = 80;
+  wrapper.insertBefore(input, editBtn);
+  input.focus();
+  input.select();
+
+  const save = async () => {
+    const newName = input.value.trim();
+    if (!newName || newName === currentName) {
+      // No change — just cancel
+      input.remove();
+      badge.classList.remove('editing');
+      editBtn.classList.remove('hidden');
+      return;
+    }
+
+    try {
+      await axios.patch(`/api/save/idea/${ideaId}`, { ideaName: newName });
+      badge.textContent = newName;
+      if (currentIdea) currentIdea.ideaName = newName;
+      showToast('Idea renamed successfully', 'success');
+    } catch (err) {
+      console.error('Failed to rename idea:', err);
+      showToast('Failed to rename idea', 'error');
+    }
+
+    input.remove();
+    badge.classList.remove('editing');
+    editBtn.classList.remove('hidden');
+  };
+
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); save(); }
+    if (e.key === 'Escape') { input.value = currentName; save(); }
+  });
+  input.addEventListener('blur', save);
 }
 
 function toggleHistory() {

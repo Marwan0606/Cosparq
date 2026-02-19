@@ -94,14 +94,12 @@ body {
 /* ---------- NAVIGATION TABS ---------- */
 .settings-nav {
   display: flex;
-  gap: 6px;
+  gap: 0;
   margin-bottom: 32px;
-  padding: 6px;
+  padding: 5px;
   background: var(--bg-elevated);
   border-radius: var(--radius-lg);
   border: 1px solid var(--border-light);
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
 }
 
 .settings-nav::-webkit-scrollbar {
@@ -109,15 +107,17 @@ body {
 }
 
 .nav-tab {
+  flex: 1;
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 12px 18px;
+  justify-content: center;
+  gap: 7px;
+  padding: 11px 8px;
   background: transparent;
   border: none;
   border-radius: var(--radius-md);
   color: var(--text-muted);
-  font-size: 0.9rem;
+  font-size: 0.87rem;
   font-weight: 500;
   cursor: pointer;
   transition: all var(--transition-fast);
@@ -1449,4 +1449,233 @@ body {
   background: rgba(132, 0, 255, 0.1);
   color: #8400ff;
   border-color: rgba(132, 0, 255, 0.3);
+}
+
+/* ============================================
+   IDEAS MANAGEMENT TAB
+   ============================================ */
+
+.ideas-filter-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.ideas-filter-btn {
+  padding: 8px 18px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+.ideas-filter-btn:hover {
+  border-color: rgba(255,255,255,0.15);
+  color: var(--text);
+}
+.ideas-filter-btn.active {
+  background: var(--bg-card-hover);
+  border-color: rgba(255,255,255,0.15);
+  color: var(--text);
+}
+
+.ideas-mgmt-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ideas-mgmt-loading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--text-muted);
+  padding: 24px 0;
+}
+.ideas-mgmt-loading .spinner {
+  width: 20px;
+  height: 20px;
+  animation: spin 1s linear infinite;
+}
+
+.ideas-mgmt-empty {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-muted);
+}
+.ideas-mgmt-empty svg {
+  width: 40px;
+  height: 40px;
+  margin-bottom: 12px;
+  opacity: 0.4;
+}
+.ideas-mgmt-empty h4 {
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+
+.idea-mgmt-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  transition: border-color var(--transition-fast);
+}
+.idea-mgmt-item:hover {
+  border-color: rgba(255,255,255,0.12);
+}
+
+.idea-mgmt-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+.idea-mgmt-name {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.idea-mgmt-date {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.idea-mgmt-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+  margin-left: 16px;
+}
+
+.idea-action-btn {
+  padding: 6px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.idea-action-btn:hover {
+  border-color: rgba(255,255,255,0.15);
+  color: var(--text);
+  background: var(--bg-card-hover);
+}
+.idea-action-btn svg {
+  width: 14px;
+  height: 14px;
+}
+.idea-action-btn.archive:hover {
+  background: rgba(245, 158, 11, 0.1);
+  color: #f59e0b;
+  border-color: rgba(245, 158, 11, 0.3);
+}
+.idea-action-btn.unarchive:hover {
+  background: rgba(34, 197, 94, 0.1);
+  color: #22c55e;
+  border-color: rgba(34, 197, 94, 0.3);
+}
+.idea-action-btn.delete:hover {
+  background: rgba(255, 74, 74, 0.1);
+  color: var(--danger);
+  border-color: rgba(255, 74, 74, 0.3);
+}
+
+/* Confirmation Modal */
+.confirm-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.2s ease;
+}
+.confirm-modal-overlay.visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+.confirm-modal {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 28px;
+  max-width: 420px;
+  width: 90%;
+  box-shadow: var(--shadow-lg);
+}
+.confirm-modal h3 {
+  color: var(--text);
+  font-size: 1.1rem;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.confirm-modal h3 svg {
+  color: var(--danger);
+}
+.confirm-modal p {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.6;
+  margin-bottom: 20px;
+}
+.confirm-modal-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+.confirm-modal .btn-cancel {
+  padding: 8px 18px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+.confirm-modal .btn-cancel:hover {
+  color: var(--text);
+  border-color: rgba(255,255,255,0.15);
+}
+.confirm-modal .btn-danger {
+  padding: 8px 18px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(255, 74, 74, 0.3);
+  background: rgba(255, 74, 74, 0.15);
+  color: var(--danger);
+  font-family: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all var(--transition-fast);
+}
+.confirm-modal .btn-danger:hover {
+  background: rgba(255, 74, 74, 0.25);
+  border-color: rgba(255, 74, 74, 0.5);
 }

@@ -179,6 +179,12 @@ body {
   stroke: var(--purple);
 }
 
+.idea-name-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .idea-name-badge {
   background: var(--panel);
   border: 1px solid var(--border);
@@ -186,6 +192,46 @@ body {
   border-radius: 20px;
   font-size: 0.85rem;
   color: var(--muted);
+}
+
+.idea-name-badge.editing {
+  display: none;
+}
+
+.idea-name-input {
+  background: var(--panel);
+  border: 1px solid var(--accent);
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  color: var(--text);
+  font-family: inherit;
+  outline: none;
+  min-width: 120px;
+  max-width: 280px;
+}
+
+.idea-name-edit-btn {
+  background: none;
+  border: 1px solid transparent;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.idea-name-edit-btn:hover {
+  color: var(--text);
+  border-color: var(--border);
+  background: var(--panel);
+}
+
+.idea-name-edit-btn.hidden {
+  display: none;
 }
 
 /* ============================================

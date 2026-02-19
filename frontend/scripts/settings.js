@@ -1027,6 +1027,228 @@
   }
 
   // ============================================
+  // IDEAS MANAGEMENT
+  // ============================================
+
+  let allIdeas = [];
+  let ideasFilter = 'active'; // 'active' or 'archived'
+
+  async function loadAllIdeas() {
+    try {
+      const data = await apiRequest('/save/ideas?includeArchived=true');
+      allIdeas = Array.isArray(data?.idea) ? data.idea : [];
+      renderIdeasList();
+    } catch (err) {
+      console.error('Failed to load ideas:', err);
+      showToast('Failed to load ideas', 'error');
+    }
+  }
+
+  function renderIdeasList() {
+    const container = document.getElementById('ideasMgmtList');
+    if (!container) return;
+
+    const filtered = allIdeas.filter(i =>
+      ideasFilter === 'archived' ? i.archived : !i.archived
+    );
+
+    if (filtered.length === 0) {
+      const label = ideasFilter === 'archived' ? 'archived' : 'active';
+      container.innerHTML = `
+        <div class="ideas-mgmt-empty">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 1 1 7.072 0l-.548.547A3.374 3.374 0 0 0 14 18.469V19a2 2 0 1 1-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+          </svg>
+          <h4>No ${label} ideas</h4>
+          <p>${ideasFilter === 'archived' ? 'Ideas you archive will appear here.' : 'Create a new idea to get started.'}</p>
+        </div>
+      `;
+      return;
+    }
+
+    container.innerHTML = filtered.map(idea => {
+      const date = new Date(idea.updatedAt || idea.createdAt);
+      const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      const isArchived = idea.archived;
+
+      return `
+        <div class="idea-mgmt-item" data-idea-id="${idea._id}">
+          <div class="idea-mgmt-info">
+            <span class="idea-mgmt-name">${idea.ideaName || 'Untitled Idea'}</span>
+            <span class="idea-mgmt-date">Last updated ${dateStr}</span>
+          </div>
+          <div class="idea-mgmt-actions">
+            ${isArchived ? `
+              <button class="idea-action-btn unarchive" data-idea-id="${idea._id}" title="Unarchive">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="1 4 1 10 7 10"/>
+                  <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>
+                </svg>
+                Unarchive
+              </button>
+            ` : `
+              <button class="idea-action-btn archive" data-idea-id="${idea._id}" title="Archive">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="21 8 21 21 3 21 3 8"/>
+                  <rect x="1" y="3" width="22" height="5"/>
+                  <line x1="10" y1="12" x2="14" y2="12"/>
+                </svg>
+                Archive
+              </button>
+            `}
+            <button class="idea-action-btn delete" data-idea-id="${idea._id}" data-idea-name="${(idea.ideaName || 'Untitled Idea').replace(/"/g, '&quot;')}" title="Delete permanently">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="3 6 5 6 21 6"/>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                <line x1="10" y1="11" x2="10" y2="17"/>
+                <line x1="14" y1="11" x2="14" y2="17"/>
+              </svg>
+              Delete
+            </button>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    // Attach event listeners
+    container.querySelectorAll('.idea-action-btn.archive').forEach(btn => {
+      btn.addEventListener('click', () => archiveIdea(btn.dataset.ideaId, true));
+    });
+    container.querySelectorAll('.idea-action-btn.unarchive').forEach(btn => {
+      btn.addEventListener('click', () => archiveIdea(btn.dataset.ideaId, false));
+    });
+    container.querySelectorAll('.idea-action-btn.delete').forEach(btn => {
+      btn.addEventListener('click', () => startDeleteIdea(btn.dataset.ideaId, btn.dataset.ideaName));
+    });
+  }
+
+  async function archiveIdea(ideaId, archive) {
+    try {
+      await apiRequest(`/save/idea/${ideaId}/archive`, {
+        method: 'PATCH',
+        body: JSON.stringify({ archived: archive })
+      });
+      // Update local state
+      const idea = allIdeas.find(i => i._id === ideaId);
+      if (idea) idea.archived = archive;
+      renderIdeasList();
+      showToast(archive ? 'Idea archived' : 'Idea unarchived', 'success');
+    } catch (err) {
+      console.error('Failed to archive idea:', err);
+      showToast('Failed to update idea', 'error');
+    }
+  }
+
+  function startDeleteIdea(ideaId, ideaName) {
+    // First confirmation
+    showConfirmModal(
+      'Delete Idea?',
+      `Are you sure you want to permanently delete <strong>"${ideaName}"</strong>? This will remove the idea and all associated data. This action cannot be undone.`,
+      'Delete',
+      () => {
+        // Second confirmation
+        showConfirmModal(
+          'Are you absolutely sure?',
+          `This is your final warning. <strong>"${ideaName}"</strong> will be permanently deleted and you will not be able to recover it. All associated data (scoreboard, market research, chats, etc.) linked to this idea will be lost.`,
+          'Yes, permanently delete',
+          () => performDeleteIdea(ideaId)
+        );
+      }
+    );
+  }
+
+  async function performDeleteIdea(ideaId) {
+    try {
+      await apiRequest(`/save/idea/${ideaId}`, { method: 'DELETE' });
+      allIdeas = allIdeas.filter(i => i._id !== ideaId);
+      renderIdeasList();
+      showToast('Idea permanently deleted', 'success');
+
+      // If the deleted idea was selected, clear selection
+      const selectedId = JSON.parse(localStorage.getItem('ideaId') || 'null');
+      if (selectedId === ideaId) {
+        localStorage.removeItem('ideaId');
+      }
+    } catch (err) {
+      console.error('Failed to delete idea:', err);
+      showToast('Failed to delete idea', 'error');
+    }
+  }
+
+  // Reusable confirmation modal
+  function showConfirmModal(title, message, confirmText, onConfirm) {
+    // Remove any existing modal
+    const existing = document.querySelector('.confirm-modal-overlay');
+    if (existing) existing.remove();
+
+    const overlay = document.createElement('div');
+    overlay.className = 'confirm-modal-overlay';
+    overlay.innerHTML = `
+      <div class="confirm-modal">
+        <h3>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+            <line x1="12" y1="9" x2="12" y2="13"/>
+            <line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+          ${title}
+        </h3>
+        <p>${message}</p>
+        <div class="confirm-modal-actions">
+          <button class="btn-cancel">Cancel</button>
+          <button class="btn-danger">${confirmText}</button>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(overlay);
+    // Trigger transition
+    requestAnimationFrame(() => overlay.classList.add('visible'));
+
+    const close = () => {
+      overlay.classList.remove('visible');
+      setTimeout(() => overlay.remove(), 200);
+    };
+
+    overlay.querySelector('.btn-cancel').addEventListener('click', close);
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+    overlay.querySelector('.btn-danger').addEventListener('click', () => {
+      close();
+      onConfirm();
+    });
+  }
+
+  let ideasMgmtLoaded = false;
+
+  function initIdeasManagement() {
+    // Filter tabs
+    document.querySelectorAll('.ideas-filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.ideas-filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        ideasFilter = btn.dataset.filter;
+        renderIdeasList();
+      });
+    });
+
+    // Load when tab becomes active
+    const tabs = document.querySelectorAll('.nav-tab');
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        if (tab.dataset.tab === 'ideas') {
+          loadAllIdeas();
+        }
+      });
+    });
+
+    // Also check if ideas tab is already active (from saved preference)
+    const savedTab = localStorage.getItem('settingsTab');
+    if (savedTab === 'ideas') {
+      setTimeout(loadAllIdeas, 100);
+    }
+  }
+
+  // ============================================
   // INITIALIZE
   // ============================================
 
@@ -1042,6 +1264,7 @@
     initDangerZone();
     initMarketplacePosts();
     initEditPostModal();
+    initIdeasManagement();
   }
 
   // Run on DOM ready

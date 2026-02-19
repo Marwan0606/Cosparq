@@ -1,5 +1,7 @@
 :root {
-  --gradient: linear-gradient(90deg,#6301be 0%, #9d01c0 50%, #cf114a 100%);
+  --gradient: linear-gradient(90deg, #7400e2 0%, #df3611 80%, #e85f11 100%);
+  --primary: #8400ff;
+  --primary-soft: rgba(132, 0, 255, 0.18);
   --dark-bg: #121212;
   --card-bg: #1f1f1f;
   --border: #2c2c2c;
@@ -38,7 +40,7 @@ body {
 
 /* — Brand Side — */
 .brand-side {
-  background: linear-gradient(90deg,#6301be 0%, #9d01c0 50%, #cf114a 100%);
+  background: var(--gradient);
   color: #fff;
   padding: 48px 32px;
   display: flex;
@@ -72,7 +74,7 @@ body {
 }
 .switcher button.active {
   background: #fff;
-  color: #8400ff;
+  color: var(--primary);
 }
 
 /* — Form Side — */
@@ -127,8 +129,8 @@ body {
   transition: var(--transition);
 }
 .field input:focus {
-  border-color: #8400ff;
-  box-shadow: 0 0 0 3px rgba(132,0,255,0.15);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-soft);
 }
 
 /* — Helper & Divider — */
@@ -140,7 +142,7 @@ body {
   margin-bottom: 16px;
 }
 .helper a {
-  color: #8400ff;
+  color: var(--primary);
   text-decoration: none;
 }
 .divider {
@@ -187,9 +189,9 @@ body {
 .btn-outline {
   flex: 1;
   padding: 12px 18px;
-  border: 1px solid #8400ff;
+  border: 1px solid var(--primary);
   background: transparent;
-  color: #8400ff;
+  color: var(--primary);
 }
 
 /* — Utility — */
