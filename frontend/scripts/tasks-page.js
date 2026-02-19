@@ -10,18 +10,59 @@ async function checkPending() {
     const pending = res?.data?.tasks?.[0];
     if (!pending) return false;
 
-    // ONLY act if AI response is ready
+    // AI response is ready — process it immediately
     if (pending.title) {
       await generateAiTasks(pending.title);
       return true;
     }
 
-    // Otherwise do NOTHING (no loader, no polling)
-    return false;
+    // Placeholder exists but AI hasn't finished yet — show loader and poll
+    addLoading();
+    pollForAiTasks(ideaId);
+    return true; // return true so getAllTasks doesn't overwrite the loader
   } catch (error) {
     console.error('Error checking pending tasks:', error);
     return false; // Fall through to getAllTasks
   }
+}
+
+function pollForAiTasks(ideaId) {
+  const POLL_INTERVAL = 3000; // check every 3 seconds
+  const MAX_POLLS = 60;       // give up after ~3 minutes
+  let polls = 0;
+
+  const timer = setInterval(async () => {
+    polls++;
+    try {
+      const res = await axios.get(`/api/v1/tasks/pending/${ideaId}`);
+      const pending = res?.data?.tasks?.[0];
+
+      if (!pending) {
+        // Placeholder was cleaned up (maybe an error) — just load tasks
+        clearInterval(timer);
+        await getAllTasks();
+        return;
+      }
+
+      if (pending.title) {
+        // AI finished — process the tasks
+        clearInterval(timer);
+        await generateAiTasks(pending.title);
+        return;
+      }
+
+      if (polls >= MAX_POLLS) {
+        // Timed out — stop polling and show whatever tasks exist
+        clearInterval(timer);
+        console.warn('AI task generation timed out, loading existing tasks');
+        await getAllTasks();
+      }
+    } catch (err) {
+      console.error('Polling error:', err);
+      clearInterval(timer);
+      await getAllTasks();
+    }
+  }, POLL_INTERVAL);
 }
 
 checkPending().then((hasPending) => {
@@ -395,22 +436,32 @@ addLoading = ()=>{
 
 
 document.getElementById('aiTaskBtn').addEventListener('click', async ()=>{
-  userRequest = await popup()
-  addLoading()
-  tasksAI(userRequest)
+  try {
+    const userRequest = await popup();
+    addLoading();
+    tasksAI(userRequest);
+  } catch (e) {
+    // User cancelled — do nothing
+  }
 })
 
 function popup() {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     const popupOverlay = document.getElementById('popupOverlay2');
     const confirmBtn = document.getElementById('confirmBtn2');
+    const cancelBtn = document.getElementById('cancelBtn2');
     const popupInput = document.getElementById('popupInput2');
 
     popupOverlay.classList.add('active');
 
     confirmBtn.onclick = () => {
-      popupOverlay.classList.remove('active')
-      resolve(popupInput.value); // return the final input value
+      popupOverlay.classList.remove('active');
+      resolve(popupInput.value);
+    };
+
+    cancelBtn.onclick = () => {
+      popupOverlay.classList.remove('active');
+      reject('cancelled');
     };
   });
 }

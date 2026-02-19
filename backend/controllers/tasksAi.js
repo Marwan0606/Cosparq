@@ -6,7 +6,7 @@ const tasksAi = async (req, res) => {
 
   const userId = req.user.userId
   const { idea, userRequest, ideaId } = req.body;
-  const taskAiResponse = await taskAiResponseModel.create({userId, ideaId})
+  const taskAiResponse = await taskAiResponseModel.create({userId, ideaId, status: 'ai-placeholder'})
   console.log(taskAiResponse)
 
   const messages = [
@@ -102,7 +102,7 @@ for example if you want to create 3 tasks then you need to answer like this:
     }
     */
     
-    const taskAiUpdate = await taskAiResponseModel.findOneAndUpdate({userId, ideaId}, {title:reply, status:'pending'}, {
+    const taskAiUpdate = await taskAiResponseModel.findOneAndUpdate({_id: taskAiResponse._id}, {title:reply, status:'ai-placeholder'}, {
       new: true,
       runValidators: true,
     })

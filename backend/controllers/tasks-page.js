@@ -5,7 +5,7 @@ const getAllTasks = async (req, res)=>{
   try {
     const userId = req.user.userId
     const {ideaId} = req.params
-    const tasks = await Task.find({userId, ideaId})
+    const tasks = await Task.find({userId, ideaId, status: { $ne: 'ai-placeholder' }})
     res.status(200).json({tasks: tasks})
   } catch (error) {
     res.status(500).json({msg: error})
@@ -85,7 +85,7 @@ const getAllPendingTasks = async (req, res)=>{
   try {
     const userId = req.user.userId
     const {ideaId} = req.params
-    const tasks = await Task.find({userId, ideaId, status: 'pending'})
+    const tasks = await Task.find({userId, ideaId, status: 'ai-placeholder'})
     res.status(200).json({tasks: tasks})
   } catch (error) {
     res.status(500).json({msg: error})
@@ -96,7 +96,7 @@ const deletePendingTask = async (req, res)=>{
   try {
     const userId = req.user.userId
     const {ideaId} = req.params
-    const tasks = await Task.deleteMany({userId, ideaId, status: 'pending'})
+    const tasks = await Task.deleteMany({userId, ideaId, status: 'ai-placeholder'})
     res.status(200).json({tasks: tasks})
   } catch (error) {
     res.status(500).json({msg: error})
