@@ -14,7 +14,7 @@ const ActionLogSchema = new mongoose.Schema({
   },
   type: {
     type: String,
-    enum: ['email', 'calendar', 'content', 'slides', 'form', 'sheets'],
+    enum: ['email', 'calendar', 'content', 'slides', 'form', 'sheets', 'task'],
     required: true,
   },
   title: {

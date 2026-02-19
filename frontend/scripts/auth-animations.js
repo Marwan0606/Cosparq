@@ -1,25 +1,48 @@
-// Cache elements
-const tabs      = document.querySelectorAll('.tab-btn');
-const forms     = {
-  login:  document.getElementById('login-form'),
-  signup: document.getElementById('signup-form')
-};
-const switches = document.querySelectorAll('.switcher button');
+// Auth sliding-panel controller
+const wrapper    = document.querySelector('.auth-wrapper');
+const loginPanel = document.querySelector('.form-panel--login');
+const signupPanel = document.querySelector('.form-panel--signup');
+const switchLinks = document.querySelectorAll('.switch-link');
 
-// Show view
+// Password-show toggles
+document.querySelectorAll('.toggle-pw').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const input = btn.previousElementSibling;
+    const isPassword = input.type === 'password';
+    input.type = isPassword ? 'text' : 'password';
+    btn.setAttribute('aria-label', isPassword ? 'Hide password' : 'Show password');
+  });
+});
+
 function show(view) {
-  // Tabs
-  tabs.forEach(t => t.classList.toggle('active', t.dataset.view === view));
-  // Switch buttons
-  switches.forEach(b => b.classList.toggle('active', b.dataset.target === view));
-  // Forms
-  forms.login.style.display  = view === 'login'  ? 'block' : 'none';
-  forms.signup.style.display = view === 'signup' ? 'block' : 'none';
+  if (view === 'signup') {
+    wrapper.classList.add('signup-mode');
+    loginPanel.classList.remove('active');
+    signupPanel.classList.add('active');
+  } else {
+    wrapper.classList.remove('signup-mode');
+    signupPanel.classList.remove('active');
+    loginPanel.classList.add('active');
+  }
 }
 
-// Events
-tabs.forEach(t => t.addEventListener('click', () => show(t.dataset.view)));
-switches.forEach(b => b.addEventListener('click', () => show(b.dataset.target)));
+// Overlay toggle tabs
+const overlayTabs = document.querySelectorAll('.overlay-tab');
 
-// Initialize
+// Wire up all switch links (inside forms and overlay)
+switchLinks.forEach(link => {
+  link.addEventListener('click', (e) => {
+    e.preventDefault();
+    show(link.dataset.target);
+  });
+});
+
+// Wire up overlay toggle tabs
+overlayTabs.forEach(tab => {
+  tab.addEventListener('click', () => {
+    show(tab.dataset.target);
+  });
+});
+
+// Initialize — login view
 show('login');

@@ -391,7 +391,13 @@ const aiComposeEmail = async (req, res) => {
       return res.status(400).json({ message: 'Prompt is required' });
     }
     
+    // Fetch user's name for email sign-off
+    const userDoc = await Users.findById(req.user.userId).select('name displayName').lean();
+    const userName = userDoc?.displayName || userDoc?.name || '';
+
     const systemPrompt = `You are an AI email composer for a startup founder. Based on the user's natural language request and their startup idea, compose a complete email.
+${userName ? `
+The sender's name is ${userName}. Always sign off the email using their name.` : ''}
 
 ${idea ? `The user's startup idea: ${idea}` : ''}
 

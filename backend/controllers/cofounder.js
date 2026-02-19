@@ -109,6 +109,50 @@ const ACTION_TOOLS = [
         required: ["title", "purpose"]
       }
     }
+  },
+  {
+    type: "function",
+    function: {
+      name: "create_task",
+      description: "Create a single task on the user's task board. Use when the user asks to add, create, or note down a task, to-do, or action item.",
+      parameters: {
+        type: "object",
+        properties: {
+          title: { type: "string", description: "The task title" },
+          description: { type: "string", description: "Detailed description of what to do" },
+          assignedToName: { type: "string", description: "A short label for this task group (1-4 words)" },
+          urgency: { type: "string", enum: ["low", "medium", "high"], description: "The urgency level" }
+        },
+        required: ["title"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "create_multiple_tasks",
+      description: "Create MULTIPLE tasks on the user's task board at once. Use when the user asks to add several tasks, break something into steps, or create a list of to-dos.",
+      parameters: {
+        type: "object",
+        properties: {
+          tasks: {
+            type: "array",
+            description: "Array of tasks to create",
+            items: {
+              type: "object",
+              properties: {
+                title: { type: "string", description: "The task title" },
+                description: { type: "string", description: "Detailed description of what to do" },
+                assignedToName: { type: "string", description: "A short label for this task group (1-4 words)" },
+                urgency: { type: "string", enum: ["low", "medium", "high"], description: "The urgency level" }
+              },
+              required: ["title"]
+            }
+          }
+        },
+        required: ["tasks"]
+      }
+    }
   }
 ];
 
@@ -313,6 +357,10 @@ const sendMessage = async (req, res) => {
       return res.status(400).json({ error: 'sessionId and message are required' });
     }
 
+    // Fetch user's name for personalized responses (emails, etc.)
+    const userDoc = await User.findById(userId).select('name displayName').lean();
+    const userName = userDoc?.displayName || userDoc?.name || '';
+
     // Find the active session
     const session = await CofounderSession.findOne({
       _id: sessionId,
@@ -339,7 +387,8 @@ const sendMessage = async (req, res) => {
     // Build conversation history for AI
     const messages = [
       { role: 'system', content: COFOUNDER_SYSTEM_PROMPT + buildContextPrompt(session.contextSnapshot) + `
-
+${userName ? `
+The user's name is ${userName}. When composing any emails or written communications, sign off using their name.` : ''}
 You can also help the user take actions like sending emails, scheduling calendar events, creating presentations, forms, or spreadsheets. When they ask for these, use the appropriate tool.` }
     ];
 
@@ -451,6 +500,14 @@ const generateVoiceActionPreview = (actionType, args) => {
     create_spreadsheet: {
       voiceResponse: `I'll create a spreadsheet called "${args.title}" for ${args.purpose}. Ready to create it?`,
       displayText: `📈 Spreadsheet: ${args.title}\nPurpose: ${args.purpose}`
+    },
+    create_task: {
+      voiceResponse: `I'll add a task: "${args.title}"${args.urgency ? ` with ${args.urgency} urgency` : ''}. Should I add it?`,
+      displayText: `✅ Task: ${args.title}${args.urgency ? ` [${args.urgency}]` : ''}`
+    },
+    create_multiple_tasks: {
+      voiceResponse: `I'll add ${(args.tasks || []).length} tasks to your board. Should I add them?`,
+      displayText: `✅ ${(args.tasks || []).length} tasks to add`
     }
   };
   
@@ -539,6 +596,10 @@ const executeVoiceAction = async (userId, actionType, actionData, ideaId) => {
       return await executeVoiceForm(userId, actionData, ideaId);
     case 'create_spreadsheet':
       return await executeVoiceSpreadsheet(userId, actionData, ideaId);
+    case 'create_task':
+      return await executeVoiceCreateTask(userId, actionData, ideaId);
+    case 'create_multiple_tasks':
+      return await executeVoiceCreateMultipleTasks(userId, actionData, ideaId);
     default:
       throw new Error('Unknown action type');
   }
@@ -704,6 +765,70 @@ const executeVoiceSpreadsheet = async (userId, data, ideaId) => {
     success: true, 
     voiceResponse: `Done! I've created your spreadsheet "${data.title}". You can find it in Google Sheets.`,
     url
+  };
+};
+
+// Execute single task creation from voice
+const executeVoiceCreateTask = async (userId, data, ideaId) => {
+  const task = await Task.create({
+    userId,
+    ideaId,
+    title: data.title,
+    description: data.description || '',
+    assignedToName: data.assignedToName || '',
+    urgency: data.urgency || '',
+    status: 'success'
+  });
+
+  await ActionLog.create({
+    userId,
+    ideaId: ideaId || 'general',
+    type: 'task',
+    title: `Task: ${data.title.substring(0, 50)}`,
+    status: 'success',
+    data: { taskId: task._id }
+  });
+
+  return {
+    success: true,
+    voiceResponse: `Done! I've added the task "${data.title}" to your board.`
+  };
+};
+
+// Execute multiple task creation from voice
+const executeVoiceCreateMultipleTasks = async (userId, data, ideaId) => {
+  const tasks = data.tasks || [];
+  const batchKey = `ai-voice-${Date.now()}`;
+  const created = [];
+
+  for (let i = 0; i < tasks.length; i++) {
+    const t = tasks[i];
+    const task = await Task.create({
+      userId,
+      ideaId,
+      title: t.title,
+      description: t.description || '',
+      assignedToName: t.assignedToName || '',
+      urgency: t.urgency || '',
+      order: i,
+      status: 'success',
+      statusBatch: batchKey
+    });
+    created.push(task);
+  }
+
+  await ActionLog.create({
+    userId,
+    ideaId: ideaId || 'general',
+    type: 'task',
+    title: `${created.length} tasks created`,
+    status: 'success',
+    data: { taskIds: created.map(t => t._id), batchKey }
+  });
+
+  return {
+    success: true,
+    voiceResponse: `Done! I've added ${created.length} tasks to your board.`
   };
 };
 

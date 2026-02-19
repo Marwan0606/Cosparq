@@ -732,6 +732,12 @@ body {
   margin-bottom: 24px;
   max-height: 65vh;
   overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.summary-content::-webkit-scrollbar {
+  display: none;
 }
 
 .summary-content.hidden {

@@ -217,6 +217,63 @@ const ACTION_TOOLS = [
         required: ["contentType", "topic"]
       }
     }
+  },
+  {
+    type: "function",
+    function: {
+      name: "create_task",
+      description: "Create a single task on the user's task board. Use when the user asks to add, create, or note down a task, to-do, or action item.",
+      parameters: {
+        type: "object",
+        properties: {
+          title: {
+            type: "string",
+            description: "The task title"
+          },
+          description: {
+            type: "string",
+            description: "Detailed description of what to do"
+          },
+          assignedToName: {
+            type: "string",
+            description: "A short label for this task group (1-4 words, e.g. 'MVP Backend', 'Marketing')"
+          },
+          urgency: {
+            type: "string",
+            enum: ["low", "medium", "high"],
+            description: "The urgency level of the task"
+          }
+        },
+        required: ["title"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "create_multiple_tasks",
+      description: "Create MULTIPLE tasks on the user's task board at once. Use when the user asks to add several tasks, break something into steps, or create a list of to-dos.",
+      parameters: {
+        type: "object",
+        properties: {
+          tasks: {
+            type: "array",
+            description: "Array of tasks to create",
+            items: {
+              type: "object",
+              properties: {
+                title: { type: "string", description: "The task title" },
+                description: { type: "string", description: "Detailed description of what to do" },
+                assignedToName: { type: "string", description: "A short label for this task group (1-4 words)" },
+                urgency: { type: "string", enum: ["low", "medium", "high"], description: "The urgency level" }
+              },
+              required: ["title"]
+            }
+          }
+        },
+        required: ["tasks"]
+      }
+    }
   }
 ];
 
@@ -224,6 +281,11 @@ const ACTION_TOOLS = [
 const chatWithActions = async (req, res) => {
   try {
     const userId = req.user.userId;
+
+    // Fetch user's name for personalized responses (emails, letters, etc.)
+    const userDoc = await Users.findById(userId).select('name displayName').lean();
+    const userName = userDoc?.displayName || userDoc?.name || '';
+
     const { 
       scoreboard, 
       idea, 
@@ -287,6 +349,7 @@ CRITICAL INSTRUCTIONS:
 2. You have ALL the context you need - DO NOT ask for details you can generate yourself
 3. If the user says "generate it for me" or "you decide" - USE YOUR JUDGMENT and create something great
 4. Only ask for information you CANNOT determine from context (like a specific email address if not mentioned)
+${userName ? `5. The user's name is ${userName}. When composing emails or written communications, sign off using their name.` : ''}
 
 CONTEXT YOU HAVE ACCESS TO:
 === STARTUP IDEA ===
@@ -333,6 +396,8 @@ Remember: BE AUTONOMOUS. Generate what the user needs. Only ask if something is 
     } else {
       // Regular chat mode - no action tools, just helpful advice
       systemPrompt = `You are CoSparq, an AI startup co-founder assistant. You help users think through their startup ideas, strategy, features, and implementation.
+${userName ? `
+The user's name is ${userName}. When composing any emails, letters, or written communications, sign off using their name.` : ''}
 
 CONTEXT YOU HAVE ACCESS TO:
 === STARTUP IDEA ===
@@ -354,6 +419,8 @@ You provide advice on:
 
 If the user asks to perform an action like sending an email, creating a calendar event, etc., tell them:
 "To perform actions like sending emails or creating documents, click one of the action buttons above the chat (📧 Email, 📅 Calendar, etc.) and then describe what you need!"
+
+However, if the user asks to add, create, or note down a task or to-do item, you CAN do that directly using the create_task or create_multiple_tasks tools. Do not redirect them to action buttons for task requests.
 
 Be helpful, concise, and actionable with your advice.`;
     }
@@ -385,11 +452,18 @@ Be helpful, concise, and actionable with your advice.`;
       temperature: 0.7
     };
 
-    // Add tools only when in action mode
+    // Add tools only when in action mode, but always include task tools
     if (actionMode && actionModeToTool[actionMode]) {
       completionOptions.tools = ACTION_TOOLS;
       completionOptions.tool_choice = 'auto';
       completionOptions.temperature = 0.5;  // Lower temperature for more reliable tool calling
+    } else {
+      // Regular chat mode - still allow task creation
+      const TASK_TOOLS = ACTION_TOOLS.filter(t => 
+        t.function.name === 'create_task' || t.function.name === 'create_multiple_tasks'
+      );
+      completionOptions.tools = TASK_TOOLS;
+      completionOptions.tool_choice = 'auto';
     }
 
     // Call OpenAI
@@ -583,7 +657,38 @@ const generateActionPreview = async (actionType, args, idea) => {
           ${safeArgs.tone ? `<div class="preview-field"><strong>Tone:</strong> ${safeArgs.tone}</div>` : ''}
         </div>
       `
-    }
+    },
+    create_task: {
+      previewMessage: `✅ **I'll add this task to your board:**\n\n**Task:** ${safeArgs.title}\n${safeArgs.description ? `**Details:** ${safeArgs.description}` : ''}\n${safeArgs.urgency ? `**Urgency:** ${safeArgs.urgency}` : ''}\n${safeArgs.assignedToName ? `**Group:** ${safeArgs.assignedToName}` : ''}\n\n---\n*Say "Add it" to create the task, "Change [something]" to modify, or "Cancel" to abort.*`,
+      previewHtml: `
+        <div class="action-preview task-preview">
+          <div class="preview-header"><span class="icon">✅</span> Task Preview</div>
+          <div class="preview-field"><strong>Task:</strong> ${safeArgs.title}</div>
+          ${safeArgs.description ? `<div class="preview-field"><strong>Details:</strong> ${safeArgs.description}</div>` : ''}
+          ${safeArgs.urgency ? `<div class="preview-field"><strong>Urgency:</strong> ${safeArgs.urgency}</div>` : ''}
+          ${safeArgs.assignedToName ? `<div class="preview-field"><strong>Group:</strong> ${safeArgs.assignedToName}</div>` : ''}
+        </div>
+      `
+    },
+    create_multiple_tasks: (() => {
+      const tasksList = (args.tasks || []).map((t, i) => `${i+1}. **${t.title}**${t.urgency ? ` [${t.urgency}]` : ''}`).join('\n');
+      const tasksHtml = (args.tasks || []).map(t => `
+        <div class="preview-event-item">
+          <strong>${t.title || 'Task'}</strong>
+          ${t.description ? `<br><em>${t.description}</em>` : ''}
+          ${t.urgency ? `<br><span class="tm-badge">${t.urgency}</span>` : ''}
+        </div>
+      `).join('');
+      return {
+        previewMessage: `✅ **I'll add ${(args.tasks || []).length} tasks to your board:**\n\n${tasksList}\n\n---\n*Say "Add them" to create all tasks, or "Cancel" to abort.*`,
+        previewHtml: `
+          <div class="action-preview task-preview">
+            <div class="preview-header"><span class="icon">✅</span> ${(args.tasks || []).length} Tasks</div>
+            <div class="preview-events-list">${tasksHtml}</div>
+          </div>
+        `
+      };
+    })()
   };
 
   return previews[actionType] || {
@@ -676,6 +781,10 @@ const executeAction = async (userId, actionType, actionData, ideaId) => {
       return await executeCreateSpreadsheet(userId, actionData, ideaId);
     case 'generate_content':
       return await executeGenerateContent(userId, actionData, ideaId);
+    case 'create_task':
+      return await executeCreateTask(userId, actionData, ideaId);
+    case 'create_multiple_tasks':
+      return await executeCreateMultipleTasks(userId, actionData, ideaId);
     default:
       throw new Error('Unknown action type');
   }
@@ -1235,6 +1344,71 @@ const executeGenerateContent = async (userId, data, ideaId) => {
     success: true,
     message: `✍️ Here's your ${data.contentType} content:\n\n${content}`,
     content
+  };
+};
+
+// Execute single task creation
+const executeCreateTask = async (userId, data, ideaId) => {
+  const task = await Task.create({
+    userId,
+    ideaId,
+    title: data.title,
+    description: data.description || '',
+    assignedToName: data.assignedToName || '',
+    urgency: data.urgency || '',
+    status: 'success'
+  });
+
+  await ActionLog.create({
+    userId,
+    ideaId: ideaId || 'general',
+    type: 'task',
+    title: `Task: ${data.title.substring(0, 50)}`,
+    status: 'success',
+    data: { taskId: task._id }
+  });
+
+  return {
+    success: true,
+    message: `✅ Task added: **${data.title}**${data.urgency ? ` [${data.urgency}]` : ''}`
+  };
+};
+
+// Execute multiple task creation
+const executeCreateMultipleTasks = async (userId, data, ideaId) => {
+  const tasks = data.tasks || [];
+  const batchKey = `ai-chat-${Date.now()}`;
+  const created = [];
+
+  for (let i = 0; i < tasks.length; i++) {
+    const t = tasks[i];
+    const task = await Task.create({
+      userId,
+      ideaId,
+      title: t.title,
+      description: t.description || '',
+      assignedToName: t.assignedToName || '',
+      urgency: t.urgency || '',
+      order: i,
+      status: 'success',
+      statusBatch: batchKey
+    });
+    created.push(task);
+  }
+
+  await ActionLog.create({
+    userId,
+    ideaId: ideaId || 'general',
+    type: 'task',
+    title: `${created.length} tasks created`,
+    status: 'success',
+    data: { taskIds: created.map(t => t._id), batchKey }
+  });
+
+  const taskList = created.map((t, i) => `${i+1}. ${t.title}`).join('\n');
+  return {
+    success: true,
+    message: `✅ Added ${created.length} tasks to your board:\n\n${taskList}`
   };
 };
 

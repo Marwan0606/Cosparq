@@ -510,6 +510,12 @@ html, body {
   max-height: 90vh;
   overflow-y: auto;
   position: relative;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.modal::-webkit-scrollbar {
+  display: none;
 }
 
 .modal-close {
@@ -593,6 +599,12 @@ html, body {
 .form-textarea {
   min-height: 120px;
   resize: vertical;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.form-textarea::-webkit-scrollbar {
+  display: none;
 }
 
 .form-select {

@@ -5,64 +5,96 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Your AI Cofounder — Auth</title>
   <link rel="stylesheet" href="styles/auth.css"/>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
 </head>
 <body>
-  <div class="auth-container">
-    <!-- Brand Panel -->
-    <div class="brand-side" aria-hidden="true">
-      <h1>Welcome to Your AI Cofounder</h1>
-      <p>Log in to manage your ideas or sign up to start building with AI.</p>
-      <div class="switcher">
-        <button type="button" class="active" data-target="login">Log In</button>
-        <button type="button" data-target="signup">Sign Up</button>
+  <div class="auth-wrapper">
+
+    <!-- ===== FORMS LAYER (stays in place, forms swap via opacity) ===== -->
+    <div class="forms-layer">
+
+      <!-- LOGIN (left side by default) -->
+      <div class="form-panel form-panel--login active">
+        <div class="form-inner">
+          <h2>Log in</h2>
+          <p class="form-subtitle">Don't have an account? <a href="#" class="switch-link" data-target="signup">Create an Account</a></p>
+
+          <form id="login-form" autocomplete="on">
+            <div class="field">
+              <label for="login-email">Email Address</label>
+              <input id="login-email" class="js-login-email" type="email" placeholder="you@example.com" required/>
+            </div>
+            <div class="field">
+              <label for="login-password">Password</label>
+              <div class="password-wrap">
+                <input id="login-password" class="js-login-password" type="password" placeholder="••••••••" required/>
+                <button type="button" class="toggle-pw" tabindex="-1" aria-label="Show password">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                </button>
+              </div>
+              <div class="field-helper"><a href="forgot-password.html">Forgot Password?</a></div>
+            </div>
+            <div class="problem js-problem"></div>
+            <button type="submit" class="btn btn-primary js-login">Log In</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- SIGN UP (right side by default, hidden) -->
+      <div class="form-panel form-panel--signup">
+        <div class="form-inner">
+          <h2>Create Account</h2>
+          <p class="form-subtitle">Already have an account? <a href="#" class="switch-link" data-target="login">Log In</a></p>
+
+          <form id="signup-form" autocomplete="on">
+            <div class="field">
+              <label for="signup-name">Full Name</label>
+              <input class="js-signup-name" id="signup-name" type="text" placeholder="Jane Doe" required/>
+            </div>
+            <div class="field">
+              <label for="signup-email">Email Address</label>
+              <input class="js-signup-email" id="signup-email" type="email" placeholder="you@example.com" required/>
+            </div>
+            <div class="field">
+              <label for="signup-password">Password</label>
+              <div class="password-wrap">
+                <input class="js-signup-password" id="signup-password" type="password" placeholder="••••••••" required minlength="6"/>
+                <button type="button" class="toggle-pw" tabindex="-1" aria-label="Show password">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                </button>
+              </div>
+            </div>
+            <div class="js-error-message" style="color: #f94016; margin-top: 4px; margin-bottom: 10px; font-weight: 600; font-size: 0.875rem;"></div>
+            <button type="submit" class="btn btn-primary js-create-account">Create Account</button>
+          </form>
+        </div>
       </div>
     </div>
 
-    <!-- Form Panel -->
-    <div class="form-side">
-      <div class="tabs">
-        <div class="tab-btn active" data-view="login">Log In</div>
-        <div class="tab-btn" data-view="signup">Sign Up</div>
+    <!-- ===== OVERLAY / IMAGE PANEL (slides left ↔ right) ===== -->
+    <div class="overlay-panel" id="overlayPanel">
+      <div class="overlay-content">
+        <div class="overlay-logo">
+          <!-- Simple abstract logo -->
+          <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+            <path d="M24 4C12.95 4 4 12.95 4 24s8.95 20 20 20 20-8.95 20-20S35.05 4 24 4z" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="1.5"/>
+            <path d="M16 20c0-4.42 3.58-8 8-8s8 3.58 8 8" stroke="white" stroke-width="2" stroke-linecap="round"/>
+            <path d="M32 28c0 4.42-3.58 8-8 8s-8-3.58-8-8" stroke="white" stroke-width="2" stroke-linecap="round"/>
+            <circle cx="24" cy="24" r="3" fill="white"/>
+          </svg>
+        </div>
+        <h1 class="overlay-title">Welcome to CoSparq</h1>
+        <p class="overlay-text">Your AI co-founder that helps you validate, build, and launch your startup idea.</p>
+
+        <div class="overlay-toggle">
+          <button class="overlay-tab active" data-target="login">Log In</button>
+          <button class="overlay-tab" data-target="signup">Sign Up</button>
+        </div>
       </div>
-
-      <!-- LOGIN FORM -->
-      <form id="login-form">
-        <div class="field">
-          <label for="login-email">Email</label>
-          <input id="login-email" class="js-login-email" type="email" placeholder="you@example.com" required/>
-        </div>
-        <div class="field">
-          <label for="login-password">Password</label>
-          <input id="login-password" class="js-login-password" type="password" placeholder="••••••••" required/>
-        </div>
-        <div class="helper">
-          <label><input type="checkbox"/> Remember me</label>
-          <a href="forgot-password.html">Forgot password?</a>
-        </div>
-        <div class="problem js-problem"></div>
-        <button type="submit" class="btn btn-primary js-login">Log In</button>
-      </form>
-
-      <!-- SIGN UP FORM -->
-      <form id="signup-form" class="hidden">
-        <div class="field">
-          <label for="signup-name">Full Name</label>
-          <input class="js-signup-name" id="signup-name" type="text" placeholder="Jane Doe" required/>
-        </div>
-        <div class="field">
-          <label for="signup-email">Email</label>
-          <input class="js-signup-email" id="signup-email" type="email" placeholder="you@example.com" required/>
-        </div>
-        <div class="field">
-          <label for="signup-password">Password</label>
-          <input class="js-signup-password" id="signup-password" type="password" placeholder="••••••••" required minlength="6"/>
-        </div>
-        <div class="js-error-message" style="color: rgb(248, 78, 11); margin-top: 8px; margin-bottom: 10px; font-weight: 700;"></div>
-        <button type="submit" class="btn btn-primary js-create-account">Create Account</button>
-      </form>
     </div>
+
   </div>
+
   <script
     src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.21.1/axios.min.js"
     integrity="sha512-bZS47S7sPOxkjU/4Bt0zrhEtWx0y0CRkhEp8IckzK+ltifIIE9EMIMTuT/mEzoIMewUINruDBIR/jJnbguonqQ=="
