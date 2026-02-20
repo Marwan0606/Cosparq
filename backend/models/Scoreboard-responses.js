@@ -17,7 +17,11 @@ const ScoreboardResponse = new mongoose.Schema({ //this sets the specific type o
   ideaId: {
     type:String,
     required:[true, 'must provide ideaId']
+  },
+  lastReEvaluatedAt: {
+    type: Date,
+    default: null
   }
-}, {collection: 'scoreboard-responses'});
+}, {collection: 'scoreboard-responses', timestamps: true});
 
 module.exports = mongoose.model('ScoreboardResponse', ScoreboardResponse);

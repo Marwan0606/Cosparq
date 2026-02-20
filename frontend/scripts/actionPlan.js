@@ -195,10 +195,10 @@ const actionBoard = async ()=>{
   </div>
 
   <!-- CTA Buttons -->
-  <div class="cta-buttons">
-    <button class="cta primary">Start Building with AI</button>
-    <button class="cta secondary">Share Plan</button>
-  </div>
+  <!--<div class="cta-buttons">-->
+    <!--<button class="cta primary">Start Building with AI</button>-->
+    <!--<button class="cta secondary">Share Plan</button>-->
+  <!--</div>-->
 `;
       return HTML
     }

@@ -17,6 +17,7 @@ const { trackApiUsage } = require('../services/apiUsageTracker');
 const ActionLog = require('../models/ActionLog');
 const Users = require('../models/Users');
 const RawChatResponseModel = require('../models/RawChat-responses');
+const ChatResponseModel = require('../models/Chat-response');
 const Task = require('../models/Task');
 const { marked } = require('marked');
 
@@ -349,7 +350,7 @@ CRITICAL INSTRUCTIONS:
 2. You have ALL the context you need - DO NOT ask for details you can generate yourself
 3. If the user says "generate it for me" or "you decide" - USE YOUR JUDGMENT and create something great
 4. Only ask for information you CANNOT determine from context (like a specific email address if not mentioned)
-${userName ? `5. The user's name is ${userName}. When composing emails or written communications, sign off using their name.` : ''}
+${userName ? `5. The user's name is ${userName}. ONLY sign off with their name when composing emails or letters via tools — NEVER sign off regular chat replies with "Best, ${userName}" or similar.` : ''}
 
 CONTEXT YOU HAVE ACCESS TO:
 === STARTUP IDEA ===
@@ -397,7 +398,7 @@ Remember: BE AUTONOMOUS. Generate what the user needs. Only ask if something is 
       // Regular chat mode - no action tools, just helpful advice
       systemPrompt = `You are CoSparq, an AI startup co-founder assistant. You help users think through their startup ideas, strategy, features, and implementation.
 ${userName ? `
-The user's name is ${userName}. When composing any emails, letters, or written communications, sign off using their name.` : ''}
+The user's name is ${userName}. You may address them by name occasionally. However, do NOT end your chat messages with sign-offs like "Best, ${userName}" or "Regards, ${userName}" — those are only appropriate when drafting emails or letters, not in conversation.` : ''}
 
 CONTEXT YOU HAVE ACCESS TO:
 === STARTUP IDEA ===
@@ -514,6 +515,13 @@ Be helpful, concise, and actionable with your advice.`;
         { new: true, runValidators: true, sort: { createdAt: -1 } }
       );
 
+      // Save summaries to Chat-response so next message has memory
+      await ChatResponseModel.findOneAndUpdate(
+        { userId, ideaId },
+        { userMessage: userInput.substring(0, 200), AiResponse: (preview.previewMessage || '').substring(0, 200), status: 'success' },
+        { new: true, upsert: true, runValidators: true, sort: { createdAt: -1 } }
+      );
+
       return res.json({
         type: 'action_preview',
         actionType: functionName,
@@ -532,6 +540,13 @@ Be helpful, concise, and actionable with your advice.`;
       { userId, ideaId, status: 'pending' },
       { AiResponse: marked(reply), status: 'success' },
       { new: true, runValidators: true, sort: { createdAt: -1 } }
+    );
+
+    // Save summaries to Chat-response so next message has memory
+    await ChatResponseModel.findOneAndUpdate(
+      { userId, ideaId },
+      { userMessage: userInput.substring(0, 200), AiResponse: reply.substring(0, 200), status: 'success' },
+      { new: true, upsert: true, runValidators: true, sort: { createdAt: -1 } }
     );
 
     res.json({

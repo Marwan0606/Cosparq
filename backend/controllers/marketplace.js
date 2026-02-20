@@ -443,9 +443,9 @@ const autofillListing = async (req, res) => {
       context += `Additional Analysis: ${scoreboardSnippet}\n`;
     }
     
-    // Call OpenAI with a cheap model (gpt-3.5-turbo)
+    // Call OpenAI with a cheap model
     const completion = await openai.chat.completions.create({
-      model: 'gpt-3.5-turbo',
+      model: 'gpt-5-nano',
       messages: [
         {
           role: 'system',
@@ -465,16 +465,16 @@ Only return valid JSON, no markdown or explanation.`
           content: context
         }
       ],
-      temperature: 0.7,
-      max_tokens: 500
+      response_format: { type: 'json_object' }
     });
     
     // Parse the response
     let autofillData;
     try {
-      const responseText = completion.choices[0].message.content.trim();
+      const responseText = (completion.choices[0].message.content || '').trim();
       // Remove potential markdown code blocks
       const cleanedResponse = responseText.replace(/```json\n?|\n?```/g, '').trim();
+      console.log('AI autofill raw response:', cleanedResponse);
       autofillData = JSON.parse(cleanedResponse);
     } catch (parseError) {
       console.error('Error parsing AI response:', parseError);
@@ -491,30 +491,32 @@ Only return valid JSON, no markdown or explanation.`
       category: validCategories.includes(autofillData.category) ? autofillData.category : ''
     };
     
-    // Save to user's marketplaceAutofills array (per-idea storage)
-    user.marketplaceAutofills.push({
-      ideaId: ideaId,
-      data: cleanedData,
-      generatedAt: new Date()
-    });
-    await user.save();
-    
-    // Track API usage (cost estimation for gpt-3.5-turbo is very low)
+    // Save autofill and track API usage in one update (skip full validation)
     const promptTokens = completion.usage?.prompt_tokens || 0;
     const completionTokens = completion.usage?.completion_tokens || 0;
-    const cost = (promptTokens * 0.0000005) + (completionTokens * 0.0000015); // gpt-3.5-turbo pricing
+    const cost = (promptTokens * 0.00000005) + (completionTokens * 0.0000004); // gpt-5-nano pricing
     
-    user.totalApiRequests = (user.totalApiRequests || 0) + 1;
-    user.totalApiCost = (user.totalApiCost || 0) + cost;
-    user.apiUsageHistory.push({
-      endpoint: 'marketplace-autofill',
-      model: 'gpt-3.5-turbo',
-      promptTokens,
-      completionTokens,
-      totalTokens: promptTokens + completionTokens,
-      cost
+    await User.findByIdAndUpdate(userId, {
+      $push: {
+        marketplaceAutofills: {
+          ideaId: ideaId,
+          data: cleanedData,
+          generatedAt: new Date()
+        },
+        apiUsageHistory: {
+          endpoint: 'marketplace-autofill',
+          model: 'gpt-5-nano',
+          promptTokens,
+          completionTokens,
+          totalTokens: promptTokens + completionTokens,
+          cost
+        }
+      },
+      $inc: {
+        totalApiRequests: 1,
+        totalApiCost: cost
+      }
     });
-    await user.save();
     
     res.json({
       success: true,

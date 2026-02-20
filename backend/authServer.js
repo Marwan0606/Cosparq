@@ -77,10 +77,24 @@ app.post('/register', async (req, res) => {
   try {
     const email = req.body.email
     const name = req.body.name
+    const phoneNumber = req.body.phoneNumber
     const hashedPassword = await bcrypt.hash(req.body.password, 10)
-    //console.log(salt)
-    //console.log(hashedPassword)
-    const user = await User.create({email, name, password: hashedPassword});
+
+    // Validate phone number is provided
+    if (!phoneNumber) {
+      return res.status(400).json({ msg: 'Phone number is required' })
+    }
+
+    // Normalize phone number (strip spaces, dashes, parens)
+    const normalizedPhone = phoneNumber.replace(/[\s\-\(\)]/g, '')
+
+    // Check if phone number is already in use
+    const existingPhone = await User.findOne({ phoneNumber: normalizedPhone })
+    if (existingPhone) {
+      return res.status(409).json({ msg: 'Phone number is already linked to an existing account' })
+    }
+
+    const user = await User.create({email, name, password: hashedPassword, phoneNumber: normalizedPhone});
     
     // Send welcome email (non-blocking)
     sendWelcomeEmail(email, name).catch(err => {
@@ -90,7 +104,15 @@ app.post('/register', async (req, res) => {
     res.status(201).json(user)
   } catch (error) {
     console.log(error)
-    res.status(500).json('Email already linked to an existing account')
+    if (error.code === 11000) {
+      // Duplicate key error — figure out which field
+      const field = Object.keys(error.keyPattern)[0]
+      if (field === 'phoneNumber') {
+        return res.status(409).json({ msg: 'Phone number is already linked to an existing account' })
+      }
+      return res.status(409).json({ msg: 'Email already linked to an existing account' })
+    }
+    res.status(500).json({ msg: 'Email already linked to an existing account' })
   }
 })
 

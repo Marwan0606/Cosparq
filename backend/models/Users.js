@@ -16,6 +16,12 @@ const UserSchema = new mongoose.Schema({ //this sets the specific type of data e
     type:String,
     required:[true, 'must provide name']
   },
+  phoneNumber: {
+    type: String,
+    required: [true, 'must provide phone number'],
+    unique: true,
+    trim: true,
+  },
   displayName: {
     type: String,
     trim: true,

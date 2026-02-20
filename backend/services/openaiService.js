@@ -11,7 +11,7 @@ const openai = new OpenAI({
 const sendChatPrompt = async (messages) => {
   try {
     const chatCompletion = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo-0125",
+      model: "gpt-5-nano",
       messages,
     });
 

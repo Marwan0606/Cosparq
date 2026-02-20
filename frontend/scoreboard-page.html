@@ -84,7 +84,7 @@
     </div>
     <div class="bottom-btns">
       <button class="regenerate-response-btn js-regenerate-response-btn">Get A New Scoring</button>
-      <button class="next-button">Next</button>
+      <!--<button class="next-button">Next</button> -->
     </div>
 
     <div id="popupOverlay">
@@ -107,18 +107,50 @@
   <div id="tooltip"></div>
 
   <!-- Score Key toggle icon -->
-  <div id="score-key-toggle" class="score-key-icon">🔑</div>
+  <div id="score-key-toggle" class="score-key-icon">
+    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+  </div>
   <!-- Hidden Score Key panel -->
   <div id="score-key-panel" class="score-key-panel hidden">
+    <div class="score-key-header">
+      <h3>Scoring Rubric</h3>
+      <span id="score-key-close" class="score-key-close">&times;</span>
+    </div>
 
-    <h3>Score Key</h3>
-    <ul>
-      <li><strong>0–20:</strong> Very Poor — idea has major flaws requiring a full rethink.</li>
-      <li><strong>21–40:</strong> Below Average — needs significant improvement in core areas.</li>
-      <li><strong>41–60:</strong> Average — solid foundation but several gaps remain.</li>
-      <li><strong>61–80:</strong> Good — idea shows promise, just fine‐tuning needed.</li>
-      <li><strong>81–100:</strong> Excellent — strong concept, well‐validated on key metrics.</li>
-    </ul>
+    <div class="score-key-section">
+      <h4>Score Bands</h4>
+      <ul>
+        <li><span class="band band-excellent">85–100</span> Exceptional — top-tier in its category.</li>
+        <li><span class="band band-good">70–84</span> Strong — clear strengths with minor gaps.</li>
+        <li><span class="band band-average">50–69</span> Average — solid foundation, notable weaknesses.</li>
+        <li><span class="band band-below">30–49</span> Below Average — significant concerns.</li>
+        <li><span class="band band-poor">0–29</span> Poor — fundamental issues, needs full rethink.</li>
+      </ul>
+    </div>
+
+    <div class="score-key-section">
+      <h4>Criteria</h4>
+      <ul class="criteria-list">
+        <li><strong>Originality</strong> — How novel is the idea? Are there direct competitors or is this a new category?</li>
+        <li><strong>Market Demand</strong> — Is there real, validated demand? Considers TAM size and pain point urgency.</li>
+        <li><strong>Technical Feasibility</strong> — How hard is it to build? Evaluates tech stack complexity, timeline, and risk.</li>
+        <li><strong>Barrier to Entry</strong> — How defensible is the business? Looks at moats, network effects, and IP.</li>
+        <li><strong>Monetization Potential</strong> — Can this make money? Assesses revenue models and willingness to pay.</li>
+        <li><strong>Scalability</strong> — Can it grow efficiently? Considers marginal costs and growth loops.</li>
+        <li><strong>Regulatory &amp; Legal</strong> — How complex is compliance? Higher score means fewer hurdles.</li>
+      </ul>
+    </div>
+
+    <div class="score-key-section">
+      <h4>Overall Score</h4>
+      <p>The Overall score is <strong>not a simple average</strong>. It's weighted by real-world startup success factors:</p>
+      <ul class="weight-list">
+        <li><span class="weight-pct">~40%</span> Market Demand + Monetization</li>
+        <li><span class="weight-pct">~30%</span> Technical Feasibility + Barrier to Entry</li>
+        <li><span class="weight-pct">~20%</span> Originality + Scalability</li>
+        <li><span class="weight-pct">~10%</span> Regulatory &amp; Legal Complexity</li>
+      </ul>
+    </div>
   </div>
 <script>
 (function () {
@@ -145,8 +177,12 @@
     // Score Key toggle logic
     const keyToggle = document.getElementById('score-key-toggle');
     const keyPanel  = document.getElementById('score-key-panel');
+    const keyClose  = document.getElementById('score-key-close');
     keyToggle.addEventListener('click', () => {
       keyPanel.classList.toggle('hidden');
+    });
+    keyClose.addEventListener('click', () => {
+      keyPanel.classList.add('hidden');
     });
   </script>
 

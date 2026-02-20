@@ -235,6 +235,99 @@ body {
   font-size: 0.875rem;
 }
 
+/* ===== FIELD HINT ===== */
+.field-hint {
+  font-size: 0.75rem;
+  color: var(--muted);
+  margin-top: 4px;
+  display: block;
+}
+
+/* ===== SIGNUP STEPS (info → OTP) ===== */
+.signup-step {
+  display: none;
+}
+.signup-step.active {
+  display: block;
+}
+
+/* ===== OTP VERIFICATION STEP ===== */
+.otp-header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+.otp-header svg {
+  margin-bottom: 12px;
+}
+.otp-header h3 {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 8px;
+}
+.otp-subtitle {
+  font-size: 0.9rem;
+  color: var(--muted);
+  line-height: 1.5;
+}
+.otp-subtitle strong {
+  color: #f96d16;
+}
+
+.otp-inputs {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+.otp-digit {
+  width: 48px;
+  height: 56px;
+  text-align: center;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--text);
+  background: var(--field-bg);
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  outline: none;
+  transition: border 0.25s ease, box-shadow 0.25s ease;
+  font-family: inherit;
+  caret-color: #f96d16;
+}
+.otp-digit:focus {
+  border-color: #f96d16;
+  box-shadow: 0 0 0 3px rgba(249, 109, 22, 0.18);
+}
+
+.otp-resend {
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin-top: 16px;
+}
+.otp-resend a {
+  color: #f96d16;
+  text-decoration: none;
+  font-weight: 600;
+}
+.otp-resend a:hover {
+  text-decoration: underline;
+}
+
+.otp-back {
+  text-align: center;
+  margin-top: 10px;
+}
+.otp-back a {
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+.otp-back a:hover {
+  color: var(--text);
+}
+
 /* ===== OVERLAY PANEL — the sliding image/brand side ===== */
 .overlay-panel {
   position: absolute;

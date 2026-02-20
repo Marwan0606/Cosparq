@@ -53,13 +53,13 @@ Return ONLY a JSON array of 5 strings, no explanation:
 ["feature 1", "feature 2", "feature 3", "feature 4", "feature 5"]`;
 
     const completion = await openai.chat.completions.create({
-      model: 'gpt-3.5-turbo', // Using cheaper model for suggestions
+      model: 'gpt-5-nano',
       messages: [
         { role: 'system', content: `You are a product feature brainstorming assistant.${focusCategory ? ` Focus exclusively on "${focusCategory}" category features.` : ''} Return only valid JSON arrays of feature suggestions.` },
         { role: 'user', content: prompt }
       ],
-      temperature: 0.9,
-      max_tokens: 300 // Reduced token limit
+      response_format: { type: 'json_object' },
+      max_completion_tokens: 300
     });
 
     // Track API usage
@@ -151,13 +151,13 @@ Return ONLY valid JSON in this exact format:
 }`;
 
     const completion = await openai.chat.completions.create({
-      model: 'gpt-3.5-turbo', // Using cheaper model for organization
+      model: 'gpt-5-nano',
       messages: [
         { role: 'system', content: 'You are a categorization expert. Return only valid JSON.' },
         { role: 'user', content: prompt }
       ],
-      temperature: 0.7,
-      max_tokens: 600 // Reduced token limit
+      response_format: { type: 'json_object' },
+      max_completion_tokens: 600
     });
 
     // Track API usage
@@ -411,13 +411,13 @@ Return ONLY valid JSON:
 Positions to use for new branches (in order): top-left, top-right, bottom-left, bottom-right`;
 
     const completion = await openai.chat.completions.create({
-      model: 'gpt-3.5-turbo',
+      model: 'gpt-5-nano',
       messages: [
         { role: 'system', content: 'You are a categorization expert. Return only valid JSON.' },
         { role: 'user', content: prompt }
       ],
-      temperature: 0.5,
-      max_tokens: 200
+      response_format: { type: 'json_object' },
+      max_completion_tokens: 200
     });
 
     // Track API usage

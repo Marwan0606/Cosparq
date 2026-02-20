@@ -299,6 +299,22 @@ document.querySelector('.js-regenerate-response-btn').addEventListener('click', 
     
   } catch (error) {
     console.error('Error re-evaluating:', error)
+    
+    // Handle 429 rate limit
+    if (error.response && error.response.status === 429) {
+      const { hoursRemaining } = error.response.data
+      wrap.innerHTML = `
+        <div class="empty-message-container">
+          <div class="empty-message">
+            You can only re-evaluate once every 24 hours. Try again in ${hoursRemaining} hour${hoursRemaining === 1 ? '' : 's'}.
+          </div>
+        </div>
+      `
+      // Reload previous scores after a moment
+      setTimeout(() => location.reload(), 3000)
+      return
+    }
+
     wrap.innerHTML = `
       <div class="empty-message-container">
         <div class="empty-message">
