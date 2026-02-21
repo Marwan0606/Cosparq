@@ -20,6 +20,7 @@ const { trackApiUsage, trackAudioUsage } = require('../services/apiUsageTracker'
 const { sendMeetingSummaryEmail } = require('../services/emailService');
 const { getAuthenticatedClient } = require('./google');
 const ActionLog = require('../models/ActionLog');
+const { sanitizeString, maxLength, ensureString, ensureBoolean, isValidEmail, stripNewlines, isOneOf } = require('../middleware/sanitize');
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
@@ -351,7 +352,9 @@ const generateGreeting = async (contextSnapshot) => {
 const sendMessage = async (req, res) => {
   try {
     const userId = req.user?.userId;
-    const { sessionId, message, pendingAction, actionApproved } = req.body;
+    const sessionId = ensureString(req.body.sessionId);
+    const message = sanitizeString(maxLength(ensureString(req.body.message), 5000));
+    const { pendingAction, actionApproved } = req.body;
 
     if (!sessionId || !message) {
       return res.status(400).json({ error: 'sessionId and message are required' });
@@ -374,6 +377,18 @@ const sendMessage = async (req, res) => {
 
     // Handle action approval flow
     if (pendingAction && actionApproved !== undefined) {
+      // Server-side validation of action data
+      const validActionTypes = ['send_email', 'create_calendar_event', 'create_slides', 'create_form', 'create_spreadsheet', 'create_task', 'create_multiple_tasks'];
+      if (!pendingAction.actionType || !validActionTypes.includes(pendingAction.actionType)) {
+        return res.status(400).json({ error: 'Invalid action type' });
+      }
+      if (pendingAction.actionType === 'send_email' && pendingAction.actionData) {
+        if (!isValidEmail(ensureString(pendingAction.actionData.to))) {
+          return res.status(400).json({ error: 'Invalid recipient email address' });
+        }
+        pendingAction.actionData.subject = stripNewlines(sanitizeString(maxLength(ensureString(pendingAction.actionData.subject), 500)));
+        pendingAction.actionData.body = sanitizeString(maxLength(ensureString(pendingAction.actionData.body), 10000));
+      }
       return handleVoiceActionApproval(req, res, userId, session, pendingAction, actionApproved, message);
     }
 
@@ -1103,7 +1118,7 @@ const emailSummary = async (req, res) => {
 const textToSpeech = async (req, res) => {
   try {
     const userId = req.user?.userId;
-    const { text } = req.body;
+    const text = maxLength(ensureString(req.body.text), 5000); // Limit to 5000 chars to prevent cost abuse
 
     if (!text) {
       return res.status(400).json({ error: 'text is required' });
@@ -1166,6 +1181,11 @@ const transcribeAudio = async (req, res) => {
     
     if (!req.file) {
       return res.status(400).json({ error: 'Audio file is required' });
+    }
+
+    // Limit audio file size to 10MB to prevent cost abuse
+    if (req.file.size > 10 * 1024 * 1024) {
+      return res.status(400).json({ error: 'Audio file too large (max 10MB)' });
     }
 
     // Create a file object from the buffer
@@ -1308,7 +1328,8 @@ const deleteSession = async (req, res) => {
 const textToSpeechElevenLabs = async (req, res) => {
   try {
     const userId = req.user?.userId;
-    const { text, voiceId } = req.body;
+    const text = maxLength(ensureString(req.body.text), 5000); // Limit to 5000 chars to prevent cost abuse
+    const rawVoiceId = ensureString(req.body.voiceId);
 
     console.log('[ElevenLabs TTS] Request received, text length:', text?.length);
 
@@ -1324,10 +1345,32 @@ const textToSpeechElevenLabs = async (req, res) => {
     
     console.log('[ElevenLabs TTS] API key found, length:', ELEVENLABS_API_KEY.length);
 
-    // Default voice if not specified
-    // Free voices available: Rachel, Domi, Bella, Antoni, Elli, Josh, Arnold, Adam, Sam
-    // Library voices (paid only): 4e32WqNVWRquDa1OcRYZ
-    const selectedVoiceId = voiceId || '21m00Tcm4TlvDq8ikWAM'; // Rachel - warm female (free)
+    // Allowlist of valid ElevenLabs voice IDs to prevent SSRF
+    const ALLOWED_VOICES = {
+      'rachel': '21m00Tcm4TlvDq8ikWAM',
+      'domi': 'AZnzlk1XvdvUeBnXmlld',
+      'bella': 'EXAVITQu4vr4xnSDxMaL',
+      'antoni': 'ErXwobaYiN019PkySvjV',
+      'elli': 'MF3mGyEYCl7XYWbV9V6O',
+      'josh': 'TxGEqnHWrfWFTfGW9XjX',
+      'arnold': 'VR6AewLTigWG4xSOukaG',
+      'adam': 'pNInz6obpgDQGcFmaJgB',
+      'sam': 'yoZ06aMxZJJ28mfd3POQ',
+    };
+    // Validate voiceId: must be a known voice ID or map from name
+    let selectedVoiceId = ALLOWED_VOICES['rachel']; // default
+    if (rawVoiceId) {
+      // Check if it's a direct allowed ID
+      const isAllowedId = Object.values(ALLOWED_VOICES).includes(rawVoiceId);
+      // Check if it's a name key
+      const mappedId = ALLOWED_VOICES[rawVoiceId.toLowerCase()];
+      if (isAllowedId) {
+        selectedVoiceId = rawVoiceId;
+      } else if (mappedId) {
+        selectedVoiceId = mappedId;
+      }
+      // If neither, fall back to default (prevents SSRF via arbitrary URL path)
+    }
 
     console.log('[ElevenLabs TTS] Using voice:', selectedVoiceId);
 

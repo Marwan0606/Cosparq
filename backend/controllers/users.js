@@ -3,6 +3,7 @@ const { get } = require('../routes/gpt-responses.js')
 const { getUserApiStats } = require('../services/apiUsageTracker')
 const { syncSubscriptionFromStripe } = require('../services/subscriptionService')
 const bcrypt = require('bcrypt')
+const { sanitizeString, maxLength, ensureString, isStrongPassword } = require('../middleware/sanitize');
 
 /*
 const createUser = async (req, res) => {
@@ -58,9 +59,17 @@ const getUser = async (req, res) => {
 
 const getAllUsersEmail = async (req, res) => {
   try {
-    const users = await User.find({}, 'email'); // only return email field
-    const emails = users.map(user => user.email); // make it an array of emails
-    res.status(200).json({ emails });
+    // Only allow admin users or internal calls
+    // For now, restrict to the authenticated user's own email
+    const userId = req.user?.userId;
+    if (!userId) {
+      return res.status(401).json({ msg: 'Unauthorized' });
+    }
+    const user = await User.findById(userId, 'email');
+    if (!user) {
+      return res.status(404).json({ msg: 'User not found' });
+    }
+    res.status(200).json({ emails: [user.email] });
   } catch (error) {
     res.status(500).json({ msg: error.message || error });
   }
@@ -189,10 +198,14 @@ const getProfile = async (req, res) => {
 const updateProfile = async (req, res) => {
   try {
     const userId = req.user?.userId;
-    const { displayName } = req.body;
+    const displayName = sanitizeString(maxLength(ensureString(req.body.displayName), 100));
     
     if (!userId) {
       return res.status(401).json({ msg: 'Unauthorized' });
+    }
+    
+    if (!displayName || displayName.trim().length < 1) {
+      return res.status(400).json({ msg: 'Display name is required' });
     }
     
     const user = await User.findByIdAndUpdate(
@@ -218,7 +231,8 @@ const updateProfile = async (req, res) => {
 const changePassword = async (req, res) => {
   try {
     const userId = req.user?.userId;
-    const { currentPassword, newPassword } = req.body;
+    const currentPassword = ensureString(req.body.currentPassword);
+    const newPassword = ensureString(req.body.newPassword);
     
     if (!userId) {
       return res.status(401).json({ msg: 'Unauthorized' });
@@ -228,8 +242,8 @@ const changePassword = async (req, res) => {
       return res.status(400).json({ msg: 'Current and new password required' });
     }
     
-    if (newPassword.length < 8) {
-      return res.status(400).json({ msg: 'Password must be at least 8 characters' });
+    if (!isStrongPassword(newPassword)) {
+      return res.status(400).json({ msg: 'Password must be at least 8 characters with 1 uppercase, 1 lowercase, and 1 number' });
     }
     
     const user = await User.findById(userId);

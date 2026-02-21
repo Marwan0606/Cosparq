@@ -3,12 +3,18 @@ const { trackApiUsage } = require('../services/apiUsageTracker');
 const ChatResponseModel = require('../models/Chat-response')
 const RawChatResponseModel = require('../models/RawChat-responses')
 const Users = require('../models/Users')
+const { sanitizeString, maxLength, ensureString } = require('../middleware/sanitize');
 
 const { marked } = require('marked');
 
 const chat = async (req, res) => {
 
-  const { userInput, lastUserResponse, lastAiResponse, scoreboard, idea, ideaId } = req.body;
+  const userInput = sanitizeString(maxLength(ensureString(req.body.userInput), 5000));
+  const lastUserResponse = maxLength(ensureString(req.body.lastUserResponse), 10000);
+  const lastAiResponse = maxLength(ensureString(req.body.lastAiResponse), 10000);
+  const scoreboard = ensureString(req.body.scoreboard);
+  const idea = maxLength(ensureString(req.body.idea), 10000);
+  const ideaId = ensureString(req.body.ideaId);
   const userId = req.user.userId
 
   // Fetch user's name for personalized responses

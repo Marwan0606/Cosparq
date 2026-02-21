@@ -4,6 +4,7 @@ const Idea = require('../models/Idea-pitch-responses');
 const ScoreboardResponse = require('../models/Scoreboard-responses');
 const OpenAI = require('openai');
 const sharp = require('sharp');
+const { escapeRegex, sanitizeString, maxLength, ensureString, sanitizePagination, isValidUrl, isOneOf } = require('../middleware/sanitize');
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
@@ -50,24 +51,27 @@ async function createThumbnail(base64Image, width = 400, quality = 60) {
 const getListings = async (req, res) => {
   console.log('[Marketplace] getListings called with query:', req.query);
   try {
-    const { category, sort, search, page = 1, limit = 20 } = req.query;
+    const { category, sort, search } = req.query;
+    const { page, limit } = sanitizePagination(req.query.page, req.query.limit, 50);
     
     // Build query
     let query = { status: 'approved' };
     console.log('[Marketplace] Using query:', JSON.stringify(query));
     
-    // Category filter
-    if (category && category !== 'all') {
+    // Category filter — validate against allowlist
+    const validCategories = ['all', 'productivity', 'dev-tools', 'marketing', 'finance', 'design', 'ai-ml', 'e-commerce', 'education', 'other'];
+    if (category && category !== 'all' && validCategories.includes(category)) {
       query.category = category;
     }
     
-    // Search filter
-    if (search) {
+    // Search filter — escape regex special chars to prevent ReDoS
+    if (search && typeof search === 'string' && search.trim()) {
+      const safeSearch = escapeRegex(search.trim().substring(0, 200));
       query.$or = [
-        { name: { $regex: search, $options: 'i' } },
-        { tagline: { $regex: search, $options: 'i' } },
-        { description: { $regex: search, $options: 'i' } },
-        { category: { $regex: search, $options: 'i' } }
+        { name: { $regex: safeSearch, $options: 'i' } },
+        { tagline: { $regex: safeSearch, $options: 'i' } },
+        { description: { $regex: safeSearch, $options: 'i' } },
+        { category: { $regex: safeSearch, $options: 'i' } }
       ];
     }
     
@@ -93,8 +97,8 @@ const getListings = async (req, res) => {
           }
         },
         { $sort: { recentUpvotes: -1, upvotes: -1, createdAt: -1 } },
-        { $skip: (parseInt(page) - 1) * parseInt(limit) },
-        { $limit: parseInt(limit) },
+        { $skip: (page - 1) * limit },
+        { $limit: limit },
         {
           $project: {
             name: 1,
@@ -122,10 +126,10 @@ const getListings = async (req, res) => {
         success: true,
         listings,
         pagination: {
-          page: parseInt(page),
-          limit: parseInt(limit),
+          page: page,
+          limit: limit,
           total,
-          pages: Math.ceil(total / parseInt(limit))
+          pages: Math.ceil(total / limit)
         }
       });
     }
@@ -143,7 +147,7 @@ const getListings = async (req, res) => {
     }
     
     // Pagination
-    const skip = (parseInt(page) - 1) * parseInt(limit);
+    const skip = (page - 1) * limit;
     
     console.log('[Marketplace] Executing find query...');
     // Use aggregation to only get first image as thumbnail (reduces payload significantly)
@@ -151,7 +155,7 @@ const getListings = async (req, res) => {
       { $match: query },
       { $sort: sortOption },
       { $skip: skip },
-      { $limit: parseInt(limit) },
+      { $limit: limit },
       {
         $project: {
           name: 1,
@@ -180,10 +184,10 @@ const getListings = async (req, res) => {
       success: true,
       listings,
       pagination: {
-        page: parseInt(page),
-        limit: parseInt(limit),
+        page: page,
+        limit: limit,
         total,
-        pages: Math.ceil(total / parseInt(limit))
+        pages: Math.ceil(total / limit)
       }
     });
   } catch (error) {
@@ -216,12 +220,34 @@ const getListing = async (req, res) => {
 // Create a new listing
 const createListing = async (req, res) => {
   try {
-    const { name, tagline, description, appUrl, images, category } = req.body;
     const userId = req.user.userId;
+    
+    // Sanitize all text inputs
+    const name = sanitizeString(maxLength(ensureString(req.body.name), 100));
+    const tagline = sanitizeString(maxLength(ensureString(req.body.tagline), 200));
+    const description = sanitizeString(maxLength(ensureString(req.body.description), 2000));
+    const category = isOneOf(ensureString(req.body.category), ['productivity', 'dev-tools', 'marketing', 'finance', 'design', 'ai-ml', 'e-commerce', 'education', 'other'], 'other');
+    const { images } = req.body;
+    
+    // Validate appUrl if provided — must be http/https (prevents javascript: XSS)
+    let appUrl = ensureString(req.body.appUrl);
+    if (appUrl && !isValidUrl(appUrl)) {
+      return res.status(400).json({ success: false, message: 'App URL must be a valid http or https URL' });
+    }
+    
+    // Validate required fields
+    if (!name || !tagline) {
+      return res.status(400).json({ success: false, message: 'Name and tagline are required' });
+    }
     
     // Validate at least one image
     if (!images || !Array.isArray(images) || images.length === 0) {
       return res.status(400).json({ success: false, message: 'At least one image is required' });
+    }
+    
+    // Limit number of images
+    if (images.length > 5) {
+      return res.status(400).json({ success: false, message: 'Maximum 5 images allowed' });
     }
     
     // Get user info for author name
@@ -261,7 +287,6 @@ const createListing = async (req, res) => {
 const updateListing = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, tagline, description, appUrl, images, category } = req.body;
     const userId = req.user.userId;
     
     const listing = await MarketplaceListing.findById(id);
@@ -275,18 +300,29 @@ const updateListing = async (req, res) => {
       return res.status(403).json({ success: false, message: 'Not authorized to update this listing' });
     }
     
-    // Update fields
-    if (name) listing.name = name;
-    if (tagline) listing.tagline = tagline;
-    if (description !== undefined) listing.description = description;
-    if (appUrl) listing.appUrl = appUrl;
-    if (images && Array.isArray(images) && images.length > 0) {
-      listing.images = images;
+    // Sanitize and update fields
+    if (req.body.name) listing.name = sanitizeString(maxLength(ensureString(req.body.name), 100));
+    if (req.body.tagline) listing.tagline = sanitizeString(maxLength(ensureString(req.body.tagline), 200));
+    if (req.body.description !== undefined) listing.description = sanitizeString(maxLength(ensureString(req.body.description), 2000));
+    if (req.body.appUrl) {
+      const appUrl = ensureString(req.body.appUrl);
+      if (!isValidUrl(appUrl)) {
+        return res.status(400).json({ success: false, message: 'App URL must be a valid http or https URL' });
+      }
+      listing.appUrl = appUrl;
+    }
+    if (req.body.images && Array.isArray(req.body.images) && req.body.images.length > 0) {
+      if (req.body.images.length > 5) {
+        return res.status(400).json({ success: false, message: 'Maximum 5 images allowed' });
+      }
+      listing.images = req.body.images;
       // Regenerate thumbnail when images are updated
       console.log('[Marketplace] Regenerating thumbnail for updated listing...');
-      listing.thumbnail = await createThumbnail(images[0]);
+      listing.thumbnail = await createThumbnail(req.body.images[0]);
     }
-    if (category) listing.category = category;
+    if (req.body.category) {
+      listing.category = isOneOf(ensureString(req.body.category), ['productivity', 'dev-tools', 'marketing', 'finance', 'design', 'ai-ml', 'e-commerce', 'education', 'other'], listing.category);
+    }
     
     await listing.save();
     
@@ -575,11 +611,12 @@ const getAutofill = async (req, res) => {
 const addReview = async (req, res) => {
   try {
     const { id } = req.params;
-    const { rating, comment } = req.body;
+    const rating = parseInt(req.body.rating);
+    const comment = ensureString(req.body.comment);
     const userId = req.user.userId;
 
     // Validate rating
-    if (!rating || rating < 1 || rating > 5) {
+    if (!rating || isNaN(rating) || rating < 1 || rating > 5) {
       return res.status(400).json({ success: false, message: 'Rating must be between 1 and 5' });
     }
 
@@ -611,9 +648,9 @@ const addReview = async (req, res) => {
     // Add the review
     const newReview = {
       userId,
-      userName,
-      rating: parseInt(rating),
-      comment: comment ? comment.trim() : '',
+      userName: sanitizeString(maxLength(userName, 100)),
+      rating: rating,
+      comment: comment ? sanitizeString(maxLength(comment.trim(), 2000)) : '',
       createdAt: new Date(),
       helpful: 0,
       helpfulBy: []
@@ -696,7 +733,8 @@ const getReviews = async (req, res) => {
 const updateReview = async (req, res) => {
   try {
     const { id, reviewId } = req.params;
-    const { rating, comment } = req.body;
+    const rating = req.body.rating ? parseInt(req.body.rating) : undefined;
+    const comment = req.body.comment !== undefined ? ensureString(req.body.comment) : undefined;
     const userId = req.user.userId;
 
     const listing = await MarketplaceListing.findById(id);
@@ -717,8 +755,8 @@ const updateReview = async (req, res) => {
     }
 
     // Update review
-    if (rating) review.rating = parseInt(rating);
-    if (comment !== undefined) review.comment = comment.trim();
+    if (rating && !isNaN(rating) && rating >= 1 && rating <= 5) review.rating = rating;
+    if (comment !== undefined) review.comment = sanitizeString(maxLength(comment.trim(), 2000));
 
     // Recalculate average rating
     const totalRatings = listing.reviews.reduce((sum, r) => sum + r.rating, 0);

@@ -5,6 +5,7 @@ const ActionLog = require('../models/ActionLog');
 const Users = require('../models/Users');
 const Task = require('../models/Task');
 const { trackApiUsage } = require('../services/apiUsageTracker');
+const { sanitizeString, maxLength, ensureString, isValidEmail, stripNewlines, isOneOf } = require('../middleware/sanitize');
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
@@ -13,7 +14,12 @@ const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 // Generate email content with AI
 const generateEmail = async (req, res) => {
   try {
-    const { ideaId, idea, emailType, context, subject, generateOnly } = req.body;
+    const ideaId = ensureString(req.body.ideaId);
+    const idea = maxLength(ensureString(req.body.idea), 10000);
+    const emailType = isOneOf(ensureString(req.body.emailType), ['cold-outreach', 'partnership', 'investor', 'follow-up', 'introduction', 'custom'], 'custom');
+    const context = sanitizeString(maxLength(ensureString(req.body.context), 2000));
+    const subject = sanitizeString(maxLength(ensureString(req.body.subject), 500));
+    const generateOnly = ensureString(req.body.generateOnly);
     
     if (!idea) {
       return res.status(400).json({ message: 'Idea is required' });
@@ -90,11 +96,21 @@ Do not include placeholders like [Your Name] - end naturally.`;
 // Send email via Gmail API
 const sendEmail = async (req, res) => {
   try {
-    const { ideaId, to, subject, body } = req.body;
+    const { ideaId } = req.body;
     const userId = req.user.userId;
+    
+    // Validate and sanitize email inputs
+    const to = ensureString(req.body.to, '').trim();
+    const subject = stripNewlines(sanitizeString(maxLength(ensureString(req.body.subject), 500)));
+    const body = sanitizeString(maxLength(ensureString(req.body.body), 10000));
     
     if (!to || !body) {
       return res.status(400).json({ message: 'Recipient and body are required' });
+    }
+    
+    // Validate email format
+    if (!isValidEmail(to)) {
+      return res.status(400).json({ message: 'Invalid recipient email address' });
     }
     
     // Get authenticated Gmail client
@@ -157,7 +173,8 @@ const sendEmail = async (req, res) => {
 // Suggest calendar events based on idea
 const suggestEvents = async (req, res) => {
   try {
-    const { ideaId, idea } = req.body;
+    const ideaId = ensureString(req.body.ideaId);
+    const idea = maxLength(ensureString(req.body.idea), 10000);
     
     if (!idea) {
       return res.status(400).json({ message: 'Idea is required' });
@@ -207,7 +224,12 @@ Return ONLY valid JSON array, no other text.`;
 // Create calendar event via Google Calendar API
 const createEvent = async (req, res) => {
   try {
-    const { ideaId, title, date, time, duration, description } = req.body;
+    const ideaId = ensureString(req.body.ideaId);
+    const title = sanitizeString(maxLength(ensureString(req.body.title), 500));
+    const date = ensureString(req.body.date);
+    const time = ensureString(req.body.time);
+    const duration = ensureString(req.body.duration);
+    const description = sanitizeString(maxLength(ensureString(req.body.description), 2000));
     const userId = req.user.userId;
     
     if (!title || !date || !time) {
@@ -282,7 +304,11 @@ const createEvent = async (req, res) => {
 
 const generateContent = async (req, res) => {
   try {
-    const { ideaId, idea, contentType, tone, points } = req.body;
+    const ideaId = ensureString(req.body.ideaId);
+    const idea = maxLength(ensureString(req.body.idea), 10000);
+    const contentType = isOneOf(ensureString(req.body.contentType), ['twitter-thread', 'linkedin-post', 'product-hunt', 'blog-outline', 'landing-copy', 'elevator-pitch'], 'landing-copy');
+    const tone = isOneOf(ensureString(req.body.tone), ['professional', 'casual', 'exciting', 'informative', 'humorous'], 'professional');
+    const points = sanitizeString(maxLength(ensureString(req.body.points), 2000));
     
     if (!idea || !contentType) {
       return res.status(400).json({ message: 'Idea and content type are required' });
@@ -358,7 +384,10 @@ const getHistory = async (req, res) => {
 // Log an action (for draft actions that don't use APIs)
 const logAction = async (req, res) => {
   try {
-    const { ideaId, type, title, data } = req.body;
+    const ideaId = ensureString(req.body.ideaId);
+    const type = isOneOf(ensureString(req.body.type), ['email', 'calendar', 'content', 'slides', 'form', 'sheets', 'other'], 'other');
+    const title = sanitizeString(maxLength(ensureString(req.body.title), 500));
+    const data = req.body.data || {};
     const userId = req.user.userId;
     
     await ActionLog.create({
@@ -385,7 +414,9 @@ const logAction = async (req, res) => {
 // AI composes full email from natural language prompt
 const aiComposeEmail = async (req, res) => {
   try {
-    const { ideaId, idea, prompt } = req.body;
+    const ideaId = ensureString(req.body.ideaId);
+    const idea = maxLength(ensureString(req.body.idea), 10000);
+    const prompt = sanitizeString(maxLength(ensureString(req.body.prompt), 5000));
     
     if (!prompt) {
       return res.status(400).json({ message: 'Prompt is required' });
@@ -453,7 +484,9 @@ IMPORTANT: Return ONLY valid JSON in this exact format, no other text:
 // AI composes calendar event from natural language prompt
 const aiComposeEvent = async (req, res) => {
   try {
-    const { ideaId, idea, prompt } = req.body;
+    const ideaId = ensureString(req.body.ideaId);
+    const idea = maxLength(ensureString(req.body.idea), 10000);
+    const prompt = sanitizeString(maxLength(ensureString(req.body.prompt), 5000));
     
     if (!prompt) {
       return res.status(400).json({ message: 'Prompt is required' });
@@ -544,7 +577,9 @@ IMPORTANT: Return ONLY valid JSON in this exact format, no other text:
 // AI organizes calendar with multiple events
 const aiOrganizeCalendar = async (req, res) => {
   try {
-    const { ideaId, idea, prompt } = req.body;
+    const ideaId = ensureString(req.body.ideaId);
+    const idea = maxLength(ensureString(req.body.idea), 10000);
+    const prompt = sanitizeString(maxLength(ensureString(req.body.prompt), 5000));
     const userId = req.user.userId;
     
     if (!prompt) {
@@ -693,6 +728,11 @@ const createMultipleEvents = async (req, res) => {
     if (!events || !Array.isArray(events) || events.length === 0) {
       return res.status(400).json({ message: 'Events array is required' });
     }
+
+    // Limit max events per batch
+    if (events.length > 20) {
+      return res.status(400).json({ message: 'Maximum 20 events per batch' });
+    }
     
     // Get authenticated Calendar client
     const auth = await getAuthenticatedClient(userId);
@@ -787,7 +827,10 @@ const createMultipleEvents = async (req, res) => {
 // AI generates slide content structure
 const aiGenerateSlides = async (req, res) => {
   try {
-    const { ideaId, idea, prompt, presentationType } = req.body;
+    const ideaId = ensureString(req.body.ideaId);
+    const idea = maxLength(ensureString(req.body.idea), 10000);
+    const prompt = sanitizeString(maxLength(ensureString(req.body.prompt), 5000));
+    const presentationType = isOneOf(ensureString(req.body.presentationType), ['pitch-deck', 'product-demo', 'investor-update', 'team-intro', 'custom'], 'pitch-deck');
     
     if (!idea) {
       return res.status(400).json({ message: 'Idea is required' });
@@ -999,7 +1042,10 @@ const createGoogleSlides = async (req, res) => {
 // AI generates form structure
 const aiGenerateForm = async (req, res) => {
   try {
-    const { ideaId, idea, prompt, formType } = req.body;
+    const ideaId = ensureString(req.body.ideaId);
+    const idea = maxLength(ensureString(req.body.idea), 10000);
+    const prompt = sanitizeString(maxLength(ensureString(req.body.prompt), 5000));
+    const formType = isOneOf(ensureString(req.body.formType), ['customer-feedback', 'market-research', 'user-interview', 'beta-signup', 'feature-request', 'nps-survey', 'custom'], 'customer-feedback');
     
     if (!idea) {
       return res.status(400).json({ message: 'Idea is required' });
@@ -1244,7 +1290,10 @@ const createGoogleForm = async (req, res) => {
 // AI generates spreadsheet structure
 const aiGenerateSheet = async (req, res) => {
   try {
-    const { ideaId, idea, prompt, sheetType } = req.body;
+    const ideaId = ensureString(req.body.ideaId);
+    const idea = maxLength(ensureString(req.body.idea), 10000);
+    const prompt = sanitizeString(maxLength(ensureString(req.body.prompt), 5000));
+    const sheetType = isOneOf(ensureString(req.body.sheetType), ['budget-tracker', 'task-tracker', 'competitor-analysis', 'customer-feedback', 'okr-tracker', 'sales-pipeline', 'content-calendar', 'custom'], 'task-tracker');
     
     if (!idea) {
       return res.status(400).json({ message: 'Idea is required' });

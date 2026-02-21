@@ -7,9 +7,11 @@ const jwt = require('jsonwebtoken')
 const crypto = require('crypto')
 
 const bcrypt = require('bcrypt');
+const rateLimit = require('express-rate-limit');
+const helmet = require('helmet');
 
 const database = require('./db/connect.js')
-
+const { ensureString, isValidEmail, isStrongPassword, isValidPhone, sanitizeString, maxLength, escapeHtml } = require('./middleware/sanitize');
 
 const User   = require('./models/Users.js');
 
@@ -18,17 +20,35 @@ const RefreshTokenModel = require('./models/Refresh-Tokens.js')
 // Email Service
 const { sendWelcomeEmail, sendPasswordResetEmail } = require('./services/emailService')
 
-app.use(express.json())
+app.use(helmet({ contentSecurityPolicy: false }));
+app.use(express.json({ limit: '100kb' }));
 
 const cors = require('cors')
 const cookieParser = require('cookie-parser');
 
 app
 .use(cors({
-  origin: 'http://localhost:5004',
+  origin: process.env.CORS_ORIGIN || 'http://localhost:5004',
   credentials: true
   }))
 .use(cookieParser());
+
+// Rate limiters for auth routes
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 15,                   // 15 attempts per window
+  message: { msg: 'Too many attempts, please try again after 15 minutes.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const forgotPasswordLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 5,                    // 5 attempts per hour
+  message: { msg: 'Too many reset attempts, please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 
 
@@ -73,17 +93,39 @@ app.delete('/logout', async (req, res)=>{
 
 
 
-app.post('/register', async (req, res) => {
+app.post('/register', authLimiter, async (req, res) => {
   try {
-    const email = req.body.email
-    const name = req.body.name
-    const phoneNumber = req.body.phoneNumber
-    const hashedPassword = await bcrypt.hash(req.body.password, 10)
+    const email = ensureString(req.body.email, '').toLowerCase().trim();
+    const name = sanitizeString(maxLength(ensureString(req.body.name), 100));
+    const password = ensureString(req.body.password);
+    const phoneNumber = ensureString(req.body.phoneNumber);
+
+    // Validate email
+    if (!isValidEmail(email)) {
+      return res.status(400).json({ msg: 'Please provide a valid email address' });
+    }
+
+    // Validate name
+    if (!name || name.length < 1) {
+      return res.status(400).json({ msg: 'Name is required' });
+    }
+
+    // Validate password strength
+    if (!isStrongPassword(password)) {
+      return res.status(400).json({ msg: 'Password must be at least 8 characters with 1 uppercase, 1 lowercase, and 1 number' });
+    }
 
     // Validate phone number is provided
     if (!phoneNumber) {
       return res.status(400).json({ msg: 'Phone number is required' })
     }
+
+    // Validate phone number format
+    if (!isValidPhone(phoneNumber)) {
+      return res.status(400).json({ msg: 'Please provide a valid phone number' });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
 
     // Normalize phone number (strip spaces, dashes, parens)
     const normalizedPhone = phoneNumber.replace(/[\s\-\(\)]/g, '')
@@ -112,30 +154,40 @@ app.post('/register', async (req, res) => {
       }
       return res.status(409).json({ msg: 'Email already linked to an existing account' })
     }
-    res.status(500).json({ msg: 'Email already linked to an existing account' })
+    res.status(500).json({ msg: 'Server error during registration' })
   }
 })
 
 
 
-app.post('/login', async (req, res)=>{
+app.post('/login', authLimiter, async (req, res)=>{
   try {
-    const {email, password} = req.body
-    const user1 = await User.findOne({email: email})
+    const email = ensureString(req.body.email, '').toLowerCase().trim();
+    const password = ensureString(req.body.password);
+
+    if (!email || !password) {
+      return res.status(400).json({ msg: 'Email and password are required' });
+    }
+
+    if (!isValidEmail(email)) {
+      return res.status(400).json({ msg: 'Invalid email format' });
+    }
+
+    const user1 = await User.findOne({ email: email })
 
     if (!user1) {
-      return res.status(400).json({msg: 'Cannot find user'})
+      return res.status(400).json({msg: 'Invalid email or password'})
     }
 
     const match = await bcrypt.compare(password, user1.password);
     if (!match) {
-      return res.status(403).json({ msg: 'Incorrect Password' });
+      return res.status(403).json({ msg: 'Invalid email or password' });
     }
 
 
     const user = {userId: user1._id}
     const accessToken = generateAccessToken(user)
-    const refreshToken = jwt.sign(user, process.env.REFRESH_TOKEN_SECRET)
+    const refreshToken = jwt.sign(user, process.env.REFRESH_TOKEN_SECRET, { expiresIn: '7d' })
 
     const deleteOldToken = await RefreshTokenModel.findOneAndDelete({userId: user1._id})
     await RefreshTokenModel.create({refreshToken, userId: user1._id})
@@ -143,20 +195,21 @@ app.post('/login', async (req, res)=>{
     res
       .cookie('token', accessToken, {           
         httpOnly: true,
-        sameSite: 'lax',
-        secure:   false,           // set to true in prod + HTTPS 
+        sameSite: 'strict',
+        secure:   process.env.NODE_ENV === 'production',
         maxAge:   15*60*1000
       })
       .cookie('jid', refreshToken, {          
         httpOnly: true,
-        sameSite: 'lax',
-        secure:   false,
+        sameSite: 'strict',
+        secure:   process.env.NODE_ENV === 'production',
         maxAge:   7*24*60*60*1000
       })
       .json({ ok: true });
 
   } catch (error) {
     console.log(error)
+    res.status(500).json({ msg: 'Server error' });
   }
 })
 
@@ -171,15 +224,15 @@ function generateAccessToken(user) {
 /**
  * Forgot Password - Request a password reset email
  */
-app.post('/forgot-password', async (req, res) => {
+app.post('/forgot-password', forgotPasswordLimiter, async (req, res) => {
   try {
-    const { email } = req.body;
+    const email = ensureString(req.body.email, '').toLowerCase().trim();
     
-    if (!email) {
-      return res.status(400).json({ msg: 'Email is required' });
+    if (!email || !isValidEmail(email)) {
+      return res.status(400).json({ msg: 'Please provide a valid email address' });
     }
     
-    const user = await User.findOne({ email: email.toLowerCase() });
+    const user = await User.findOne({ email });
     
     // Always return success to prevent email enumeration attacks
     if (!user) {
@@ -212,16 +265,17 @@ app.post('/forgot-password', async (req, res) => {
 /**
  * Reset Password - Set new password using reset token
  */
-app.post('/reset-password', async (req, res) => {
+app.post('/reset-password', authLimiter, async (req, res) => {
   try {
-    const { token, password } = req.body;
+    const token = ensureString(req.body.token);
+    const password = ensureString(req.body.password);
     
     if (!token || !password) {
       return res.status(400).json({ msg: 'Token and password are required' });
     }
     
-    if (password.length < 6) {
-      return res.status(400).json({ msg: 'Password must be at least 6 characters' });
+    if (!isStrongPassword(password)) {
+      return res.status(400).json({ msg: 'Password must be at least 8 characters with 1 uppercase, 1 lowercase, and 1 number' });
     }
     
     // Hash the token to compare with stored hash

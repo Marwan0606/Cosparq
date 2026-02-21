@@ -2,9 +2,12 @@ const { openai } = require('../services/openaiService');
 const { trackApiUsage } = require('../services/apiUsageTracker');
 const codeResponseModel = require('../models/Code-response');
 const Diff = require('diff');
+const { sanitizeString, maxLength, ensureString } = require('../middleware/sanitize');
 
 const codeEdit = async (req, res) => {
-  const { instructions, originalFile, ideaId } = req.body;
+  const instructions = sanitizeString(maxLength(ensureString(req.body.instructions), 5000));
+  const originalFile = maxLength(ensureString(req.body.originalFile), 500000);
+  const ideaId = ensureString(req.body.ideaId);
   const userId = req.user?.userId; // Get userId if available
 
   // Set status to pending at the start

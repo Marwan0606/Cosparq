@@ -4,6 +4,7 @@ const IdeaPitchResponseModel = require('../models/Idea-pitch-responses');
 const ScoreboardResponseModel = require('../models/Scoreboard-responses');
 const MarketResponseModel = require('../models/Market-responses');
 const PrdPromptModel = require('../models/PrdPrompt');
+const { sanitizeString, maxLength, ensureString, isOneOf } = require('../middleware/sanitize');
 
 // Rate limits (in milliseconds)
 const PRD_COOLDOWN = 5 * 60 * 1000; // 5 minutes between PRD generations
@@ -123,7 +124,7 @@ const PROMPT_TYPES = {
 // Generate PRD
 const generatePRD = async (req, res) => {
   const userId = req.user.userId;
-  const { ideaId } = req.body;
+  const ideaId = ensureString(req.body.ideaId);
 
   try {
     // Get or create the PRD/Prompt document
@@ -240,7 +241,12 @@ Please create a detailed, professional PRD that a development team could use to 
 // Generate AI Coding Prompt
 const generatePrompt = async (req, res) => {
   const userId = req.user.userId;
-  const { ideaId, platform, promptType, techStack, styling, database } = req.body;
+  const ideaId = ensureString(req.body.ideaId);
+  const platform = ensureString(req.body.platform);
+  const promptType = ensureString(req.body.promptType);
+  const techStack = sanitizeString(maxLength(ensureString(req.body.techStack), 500));
+  const styling = sanitizeString(maxLength(ensureString(req.body.styling), 500));
+  const database = sanitizeString(maxLength(ensureString(req.body.database), 500));
 
   try {
     // Validate platform

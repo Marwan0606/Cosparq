@@ -1,11 +1,14 @@
 const { openai } = require('../services/openaiService');
 const { trackApiUsage } = require('../services/apiUsageTracker');
 const taskAiResponseModel = require('../models/Task')
+const { sanitizeString, maxLength, ensureString } = require('../middleware/sanitize');
 
 const tasksAi = async (req, res) => {
 
   const userId = req.user.userId
-  const { idea, userRequest, ideaId } = req.body;
+  const idea = maxLength(ensureString(req.body.idea), 10000);
+  const userRequest = sanitizeString(maxLength(ensureString(req.body.userRequest), 5000));
+  const ideaId = ensureString(req.body.ideaId);
   const taskAiResponse = await taskAiResponseModel.create({userId, ideaId, status: 'ai-placeholder'})
   console.log(taskAiResponse)
 

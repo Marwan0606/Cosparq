@@ -1,11 +1,14 @@
 const { openai } = require('../services/openaiService');
 const { trackApiUsage } = require('../services/apiUsageTracker');
 const renewIdeaRes = require('../models/Renew-temporary-response')
+const { maxLength, ensureString } = require('../middleware/sanitize');
 
 const renewIdea = async (req, res) => {
 
   const userId = req.user.userId
-  const { oldIdea, chatLogs, ideaId } = req.body;
+  const oldIdea = maxLength(ensureString(req.body.oldIdea), 10000);
+  const chatLogs = maxLength(ensureString(req.body.chatLogs), 50000);
+  const ideaId = ensureString(req.body.ideaId);
   
   console.log('RenewIdea called - chatLogs length:', chatLogs ? chatLogs.length : 0);
   console.log('RenewIdea - chatLogs preview:', chatLogs ? chatLogs.substring(0, 300) : 'EMPTY');

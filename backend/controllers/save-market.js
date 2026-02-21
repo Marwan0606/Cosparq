@@ -1,9 +1,11 @@
 const marketResponses = require('../models/Market-responses.js')
+const { ensureString, maxLength } = require('../middleware/sanitize');
 
 const saveMarketResponse = async (req,res)=>{
   try {
     const userId = req.user.userId
-    const {marketResearchResponse, ideaId} = req.body
+    const marketResearchResponse = maxLength(ensureString(req.body.marketResearchResponse), 100000);
+    const ideaId = ensureString(req.body.ideaId);
     const marketResponse = await marketResponses.create({marketResearchResponse, userId, ideaId})
     res.status(200).json({marketResponse})
   } catch (error) {

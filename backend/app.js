@@ -5,6 +5,11 @@ require('dotenv').config()
 const database = require('./db/connect.js')
 const jwt = require('jsonwebtoken')
 
+// Security packages
+const helmet = require('helmet');
+const hpp = require('hpp');
+const rateLimit = require('express-rate-limit');
+
 const responses = require('./routes/gpt-responses.js')
 const users = require('./routes/users')
 const saveIdea = require('./routes/save-idea.js')
@@ -29,6 +34,26 @@ const authenticateToken = require('./middleware/authenticateToken.js')
 const { captureRawBody, verifyStripeSignature } = require('./middleware/stripeWebhook.js');
 const { handleWebhook, stripe } = require('./controllers/payments.js');
 
+// ============== SECURITY MIDDLEWARE ==============
+
+// Set security HTTP headers (XSS protection, content-type sniffing, etc.)
+app.use(helmet({
+  contentSecurityPolicy: false,  // Disable CSP since we serve static HTML with inline scripts
+  crossOriginEmbedderPolicy: false,
+}));
+
+// Prevent HTTP Parameter Pollution
+app.use(hpp());
+
+// General API rate limiter: 200 requests per 15 minutes per IP
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 200,
+  message: { msg: 'Too many requests, please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 app.use('/', express.static(path.join(__dirname, '../frontend')));
 
 const cors = require('cors')
@@ -36,7 +61,7 @@ const cookieParser = require('cookie-parser');
 
 // apiServer.js
 app.use(cors({
-  origin:      'http://localhost:5004',
+  origin: process.env.CORS_ORIGIN || 'http://localhost:5004',
   credentials: true                // ← allow sending cookies back to client
 }));
 
@@ -49,10 +74,15 @@ app.post(
   handleWebhook
 );
 
-// Increase body size limit for base64 image uploads (50MB to handle up to 5 images at 5MB each with base64 overhead)
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ limit: '50mb', extended: true }));
+// Body parsing with size limits
+// Marketplace image uploads get a higher limit; everything else uses 1MB
+app.use('/api/marketplace', express.json({ limit: '50mb' }));
+app.use(express.json({ limit: '1mb' }));
+app.use(express.urlencoded({ limit: '1mb', extended: true }));
 app.use(cookieParser());
+
+// Apply general rate limiter to all API routes
+app.use('/api', apiLimiter);
 
 
 app.use('/api', authenticateToken);

@@ -1,8 +1,10 @@
 const { openai } = require('../services/openaiService');
 const { trackApiUsage } = require('../services/apiUsageTracker');
+const { sanitizeString, maxLength, ensureString } = require('../middleware/sanitize');
 
 const codeEditCheap = async (req, res) => {
-  const { instructions, originalFile } = req.body;
+  const instructions = sanitizeString(maxLength(ensureString(req.body.instructions), 5000));
+  const originalFile = maxLength(ensureString(req.body.originalFile), 500000);
   const userId = req.user?.userId; // Get userId if available
 
   const messages = [

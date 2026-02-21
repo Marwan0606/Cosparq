@@ -1,6 +1,7 @@
 const BrainstormSession = require('../models/BrainstormSession');
 const OpenAI = require('openai');
 const { trackApiUsage } = require('../services/apiUsageTracker');
+const { sanitizeString, maxLength, ensureString, sanitizeObject } = require('../middleware/sanitize');
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
@@ -12,20 +13,26 @@ const generateSuggestions = async (req, res) => {
     const userId = req.user?.userId;
     const { context, existingIdeas, userPreferences, projectName, projectDescription, focusCategory } = req.body;
     
+    // Sanitize AI prompt inputs with length limits
+    const safeProjectName = sanitizeString(maxLength(ensureString(projectName), 200));
+    const safeProjectDescription = sanitizeString(maxLength(ensureString(projectDescription), 2000));
+    const safeFocusCategory = sanitizeString(maxLength(ensureString(focusCategory), 100));
+    const safeContext = sanitizeString(maxLength(ensureString(context), 2000));
+    
     // Build the prompt - now focused on features for the user's app
     let prompt = `You are a creative product feature brainstorming assistant. Your job is to suggest innovative features that could be added to a user's app or product.`;
     
     // Add project context if available
-    if (projectName && projectName !== 'Your App' && projectName !== 'No project selected') {
-      prompt += `\n\nThe user is building an app called "${projectName}".`;
-      if (projectDescription) {
-        prompt += ` Here's what the app does: ${projectDescription.substring(0, 500)}`;
+    if (safeProjectName && safeProjectName !== 'Your App' && safeProjectName !== 'No project selected') {
+      prompt += `\n\nThe user is building an app called "${safeProjectName}".`;
+      if (safeProjectDescription) {
+        prompt += ` Here's what the app does: ${safeProjectDescription.substring(0, 500)}`;
       }
     }
     
     // FOCUS MODE: If user is focused on a specific category, tailor suggestions
-    if (focusCategory) {
-      prompt += `\n\n**IMPORTANT: The user is in FOCUS MODE for the "${focusCategory}" category.** Generate ideas that specifically fit within this category theme. All suggestions must be directly related to "${focusCategory}".`;
+    if (safeFocusCategory) {
+      prompt += `\n\n**IMPORTANT: The user is in FOCUS MODE for the "${safeFocusCategory}" category.** Generate ideas that specifically fit within this category theme. All suggestions must be directly related to "${safeFocusCategory}".`;
     }
     
     if (userPreferences && userPreferences.acceptedTopics && userPreferences.acceptedTopics.length > 0) {
@@ -36,11 +43,11 @@ const generateSuggestions = async (req, res) => {
       prompt += `\n\nThe user has already brainstormed these features in this category: ${existingIdeas.join('; ')}. Generate NEW and DIFFERENT feature ideas that complement these but don't repeat them.`;
     }
     
-    if (context && context.trim()) {
-      prompt += `\n\nThe user is currently thinking about: "${context}". Generate feature ideas related to this${focusCategory ? ` within the "${focusCategory}" category` : ''}.`;
+    if (safeContext && safeContext.trim()) {
+      prompt += `\n\nThe user is currently thinking about: "${safeContext}". Generate feature ideas related to this${safeFocusCategory ? ` within the "${safeFocusCategory}" category` : ''}.`;
     }
     
-    prompt += `\n\nGenerate exactly 5 unique, specific feature suggestions${focusCategory ? ` for the "${focusCategory}" category` : ' for their app'}. Each should be a concise feature description (max 12 words) that would add value to the product. Focus on practical, implementable features.
+    prompt += `\n\nGenerate exactly 5 unique, specific feature suggestions${safeFocusCategory ? ` for the "${safeFocusCategory}" category` : ' for their app'}. Each should be a concise feature description (max 12 words) that would add value to the product. Focus on practical, implementable features.
 
 Examples of good feature suggestions:
 - "Real-time collaboration with team members"
@@ -55,7 +62,7 @@ Return ONLY a JSON array of 5 strings, no explanation:
     const completion = await openai.chat.completions.create({
       model: 'gpt-5-nano',
       messages: [
-        { role: 'system', content: `You are a product feature brainstorming assistant.${focusCategory ? ` Focus exclusively on "${focusCategory}" category features.` : ''} Return only valid JSON arrays of feature suggestions.` },
+        { role: 'system', content: `You are a product feature brainstorming assistant.${safeFocusCategory ? ` Focus exclusively on "${safeFocusCategory}" category features.` : ''} Return only valid JSON arrays of feature suggestions.` },
         { role: 'user', content: prompt }
       ],
       response_format: { type: 'json_object' },
@@ -212,7 +219,21 @@ Return ONLY valid JSON in this exact format:
 const saveSession = async (req, res) => {
   try {
     const userId = req.user.userId;
-    const { sessionId, projectId, ideas, branches, userContext, name, suggestions, focusSuggestions } = req.body;
+    const sessionId = ensureString(req.body.sessionId);
+    const projectId = ensureString(req.body.projectId);
+    
+    // Sanitize all text inputs
+    const ideas = Array.isArray(req.body.ideas) ? req.body.ideas.map(idea => ({
+      ...idea,
+      text: typeof idea.text === 'string' ? sanitizeString(maxLength(idea.text, 500)) : idea.text
+    })) : [];
+    const branches = Array.isArray(req.body.branches) ? req.body.branches.map(b => ({
+      ...b,
+      name: typeof b.name === 'string' ? sanitizeString(maxLength(b.name, 100)) : b.name
+    })) : [];
+    const userContext = sanitizeString(maxLength(ensureString(req.body.userContext), 2000));
+    const name = sanitizeString(maxLength(ensureString(req.body.name), 200));
+    const { suggestions, focusSuggestions } = req.body;
     
     console.log('Saving session - branches:', JSON.stringify(branches?.slice(0, 2), null, 2));
     
@@ -374,7 +395,10 @@ const deleteSession = async (req, res) => {
 const categorizeIdea = async (req, res) => {
   try {
     const userId = req.user?.userId;
-    const { ideaText, existingBranches, projectName, projectDescription } = req.body;
+    const ideaText = sanitizeString(maxLength(ensureString(req.body.ideaText), 500));
+    const existingBranches = req.body.existingBranches;
+    const projectName = sanitizeString(maxLength(ensureString(req.body.projectName), 200));
+    const projectDescription = sanitizeString(maxLength(ensureString(req.body.projectDescription), 2000));
     
     if (!ideaText) {
       return res.status(400).json({ success: false, message: 'Idea text is required' });

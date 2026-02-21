@@ -1,5 +1,7 @@
 const Task = require('../models/Task.js')
+const { sanitizeString, maxLength, ensureString, isOneOf, pickFields } = require('../middleware/sanitize');
 
+const TASK_ALLOWED_FIELDS = ['title', 'description', 'status', 'completed', 'date', 'urgency', 'ideaId', 'order', 'assignedToName'];
 
 const getAllTasks = async (req, res)=>{
   try {
@@ -15,7 +17,13 @@ const getAllTasks = async (req, res)=>{
 const createTask = async (req, res)=>{
   try {
     const userId = req.user.userId
-    const task = await Task.create({userId, ...req.body})
+    // Only pick allowed fields (prevent mass assignment)
+    const taskData = pickFields(req.body, TASK_ALLOWED_FIELDS);
+    if (taskData.title) taskData.title = sanitizeString(maxLength(ensureString(taskData.title), 500));
+    if (taskData.description) taskData.description = sanitizeString(maxLength(ensureString(taskData.description), 5000));
+    if (taskData.urgency) taskData.urgency = isOneOf(taskData.urgency, ['low', 'medium', 'high'], 'medium');
+    if (taskData.assignedToName) taskData.assignedToName = sanitizeString(maxLength(ensureString(taskData.assignedToName), 100));
+    const task = await Task.create({userId, ...taskData})
     res.status(201).json({ task })
   } catch (error) {
     res.status(500).json({msg: error})
@@ -58,8 +66,13 @@ const updateTask = async (req, res)=>{
   try {
     const userId = req.user.userId
     const taskID = req.params.taskId
-    //const {id: taskID} = req.params
-    const task = await Task.findOneAndUpdate({userId, _id:taskID}, req.body, {
+    // Only pick allowed fields (prevent mass assignment)
+    const updateData = pickFields(req.body, TASK_ALLOWED_FIELDS);
+    if (updateData.title) updateData.title = sanitizeString(maxLength(ensureString(updateData.title), 500));
+    if (updateData.description) updateData.description = sanitizeString(maxLength(ensureString(updateData.description), 5000));
+    if (updateData.urgency) updateData.urgency = isOneOf(updateData.urgency, ['low', 'medium', 'high'], 'medium');
+    if (updateData.assignedToName) updateData.assignedToName = sanitizeString(maxLength(ensureString(updateData.assignedToName), 100));
+    const task = await Task.findOneAndUpdate({userId, _id:taskID}, updateData, {
       new: true,
       runValidators: true,
     })
@@ -75,7 +88,9 @@ const updateTask = async (req, res)=>{
 const correctCredentials = async (req,res)=>{
   try {
     const userId = req.user.userId
-    const tasks = await Task.find({userId, ...req.body})
+    // Only allow querying by safe fields
+    const safeQuery = pickFields(req.body, ['status', 'completed', 'ideaId']);
+    const tasks = await Task.find({userId, ...safeQuery})
   } catch (error) {
     console.log(error)
   }

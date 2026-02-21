@@ -106,9 +106,15 @@ const handleCallback = async (req, res) => {
     `);
   } catch (error) {
     console.error('Google OAuth callback error:', error);
+    // Escape error message to prevent reflected XSS
+    const safeError = (error.message || 'Unknown error')
+      .replace(/\\/g, '\\\\')
+      .replace(/'/g, "\\'")
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
     res.send(`
       <script>
-        window.opener.postMessage({ type: 'google-auth-error', error: '${error.message}' }, '*');
+        window.opener.postMessage({ type: 'google-auth-error', error: '${safeError}' }, '*');
         window.close();
       </script>
     `);

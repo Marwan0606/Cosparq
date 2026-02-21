@@ -1,9 +1,12 @@
 const Chat = require('../models/Chat-response')
+const { sanitizeString, maxLength, ensureString } = require('../middleware/sanitize');
 
 const saveChat = async (req,res)=>{
   try {
     const userId = req.user.userId
-    const {userMessage, AiResponse, ideaId} = req.body
+    const userMessage = sanitizeString(maxLength(ensureString(req.body.userMessage), 10000));
+    const AiResponse = maxLength(ensureString(req.body.AiResponse), 50000);
+    const ideaId = ensureString(req.body.ideaId);
     const savedChat = await Chat.create({userMessage, AiResponse, ideaId, userId})
     res.status(200).json({savedChat})
   } catch (error) {

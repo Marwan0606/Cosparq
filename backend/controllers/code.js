@@ -1,10 +1,13 @@
 const { openai } = require('../services/openaiService');
 const { trackApiUsage } = require('../services/apiUsageTracker');
 const codeResponseModel = require('../models/Code-response')
+const { sanitizeString, maxLength, ensureString } = require('../middleware/sanitize');
 
 const codePage = async (req, res) => {
   const userId = req.user.userId
-  const { idea, userTextInput, ideaId } = req.body;
+  const idea = maxLength(ensureString(req.body.idea), 10000);
+  const userTextInput = sanitizeString(maxLength(ensureString(req.body.userTextInput), 5000));
+  const ideaId = ensureString(req.body.ideaId);
   const codeResponse = await codeResponseModel.create({userId, ideaId})
   console.log(codeResponse)
 

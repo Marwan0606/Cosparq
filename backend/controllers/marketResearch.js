@@ -1,11 +1,13 @@
 const { openai } = require('../services/openaiService');
 const { trackApiUsage } = require('../services/apiUsageTracker');
 const marketResearchResponseModel = require('../models/Market-responses')
+const { maxLength, ensureString } = require('../middleware/sanitize');
 
 const marketResearch = async (req, res) => {
 
   const userId = req.user.userId
-  const { idea, ideaId } = req.body;
+  const idea = maxLength(ensureString(req.body.idea), 10000);
+  const ideaId = ensureString(req.body.ideaId);
   const marketResearchResponse = await marketResearchResponseModel.create({userId, ideaId})
   console.log(marketResearchResponse)
 

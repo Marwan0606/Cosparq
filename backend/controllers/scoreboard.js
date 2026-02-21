@@ -1,11 +1,13 @@
 const { openai } = require('../services/openaiService');
 const { trackApiUsage } = require('../services/apiUsageTracker');
 const scoreboardResponseModel = require('../models/Scoreboard-responses.js')
+const { maxLength, ensureString } = require('../middleware/sanitize');
 
 const rateIdea = async (req, res) => {
 
   const userId = req.user.userId
-  const { idea, ideaId } = req.body;
+  const idea = maxLength(ensureString(req.body.idea), 10000);
+  const ideaId = ensureString(req.body.ideaId);
   const scoreboardResponse = await scoreboardResponseModel.create({userId, ideaId})
   console.log(scoreboardResponse)
 

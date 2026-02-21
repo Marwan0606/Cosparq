@@ -1,9 +1,11 @@
 const scoreboardResponseModel = require('../models/Scoreboard-responses.js')
+const { ensureString, maxLength } = require('../middleware/sanitize');
 
 const saveScoreResponse = async (req,res)=>{
   try {
     const userId = req.user.userId
-    const {scoreboardResponse, ideaId} = req.body
+    const scoreboardResponse = maxLength(ensureString(req.body.scoreboardResponse), 100000);
+    const ideaId = ensureString(req.body.ideaId);
     
     const scoreResponse = await scoreboardResponseModel.create({scoreboardResponse, userId, ideaId})
     res.status(200).json({scoreResponse})

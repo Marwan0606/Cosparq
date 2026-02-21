@@ -1,12 +1,14 @@
 const { openai } = require('../services/openaiService');
 const { trackApiUsage } = require('../services/apiUsageTracker');
 const actionResponses = require('../models/Action-response.js')
+const { maxLength, ensureString } = require('../middleware/sanitize');
 
 const actionPlan = async (req, res) => {
   //const { idea } = req.body;
 
   const userId = req.user.userId
-  const {idea, ideaId} = req.body
+  const idea = maxLength(ensureString(req.body.idea), 10000);
+  const ideaId = ensureString(req.body.ideaId);
   const actionResponse = await actionResponses.create({userId, ideaId})
   console.log(actionResponse)
 

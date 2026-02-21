@@ -1,5 +1,6 @@
 const { openai } = require('../services/openaiService');
 const { trackApiUsage } = require('../services/apiUsageTracker');
+const { maxLength, ensureString } = require('../middleware/sanitize');
 
 /**
  * Sync idea with AI - analyzes chat logs and market research to update the idea
@@ -8,7 +9,10 @@ const { trackApiUsage } = require('../services/apiUsageTracker');
 const syncIdeaWithAI = async (req, res) => {
   try {
     const userId = req.user.userId;
-    const { ideaId, oldIdea, chatLogs, marketData } = req.body;
+    const ideaId = ensureString(req.body.ideaId);
+    const oldIdea = maxLength(ensureString(req.body.oldIdea), 10000);
+    const chatLogs = maxLength(ensureString(req.body.chatLogs), 50000);
+    const marketData = maxLength(ensureString(req.body.marketData), 50000);
 
     if (!oldIdea) {
       return res.status(400).json({ error: 'Old idea is required' });

@@ -20,6 +20,7 @@ const RawChatResponseModel = require('../models/RawChat-responses');
 const ChatResponseModel = require('../models/Chat-response');
 const Task = require('../models/Task');
 const { marked } = require('marked');
+const { sanitizeString, maxLength, ensureString, ensureBoolean, isOneOf, isValidEmail, stripNewlines } = require('../middleware/sanitize');
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
@@ -292,7 +293,7 @@ const chatWithActions = async (req, res) => {
       idea, 
       lastUserResponse, 
       lastAiResponse, 
-      userInput, 
+      userInput: rawUserInput, 
       ideaId,
       // For action approval flow
       pendingAction,
@@ -302,8 +303,28 @@ const chatWithActions = async (req, res) => {
       actionMode
     } = req.body;
 
+    // Sanitize text inputs
+    const userInput = sanitizeString(maxLength(ensureString(rawUserInput), 5000));
+
     // If this is an action approval/modification response
     if (pendingAction && actionApproved !== undefined) {
+      // Server-side validation of pendingAction data
+      const validActionTypes = ['send_email', 'create_calendar_event', 'create_multiple_calendar_events', 'create_slides', 'create_form', 'create_spreadsheet', 'generate_content', 'create_task', 'create_multiple_tasks'];
+      if (!pendingAction.actionType || !validActionTypes.includes(pendingAction.actionType)) {
+        return res.status(400).json({ error: 'Invalid action type' });
+      }
+      if (!pendingAction.actionData || typeof pendingAction.actionData !== 'object') {
+        return res.status(400).json({ error: 'Invalid action data' });
+      }
+      // Sanitize action data fields
+      if (pendingAction.actionType === 'send_email') {
+        if (!isValidEmail(ensureString(pendingAction.actionData.to))) {
+          return res.status(400).json({ error: 'Invalid recipient email address' });
+        }
+        pendingAction.actionData.to = ensureString(pendingAction.actionData.to).trim();
+        pendingAction.actionData.subject = stripNewlines(sanitizeString(maxLength(ensureString(pendingAction.actionData.subject), 500)));
+        pendingAction.actionData.body = sanitizeString(maxLength(ensureString(pendingAction.actionData.body), 10000));
+      }
       return handleActionApproval(req, res, userId, pendingAction, actionApproved, actionModification, ideaId);
     }
 

@@ -1,9 +1,11 @@
 const CodeResponses = require('../models/Code-response.js')
+const { maxLength, ensureString } = require('../middleware/sanitize');
 
 const saveCodeResponse = async (req,res)=>{
   try {
     const userId = req.user.userId
-    const {codeFileResponse, ideaId} = req.body
+    const codeFileResponse = maxLength(ensureString(req.body.codeFileResponse), 500000);
+    const ideaId = ensureString(req.body.ideaId);
     const codeResponse = await CodeResponses.create({codeFileResponse, userId, ideaId})
     res.status(200).json({codeResponse})
   } catch (error) {
@@ -26,7 +28,7 @@ const updateCode = async (req, res) => {
   try {
     const userId = req.user.userId;
     const { ideaId } = req.params;
-    const { codeFileResponse } = req.body;
+    const codeFileResponse = maxLength(ensureString(req.body.codeFileResponse), 500000);
 
     const codeResponse = await CodeResponses.findOneAndUpdate(
       { userId, ideaId },                 // query
