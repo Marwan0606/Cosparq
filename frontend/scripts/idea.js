@@ -31,6 +31,11 @@ let currentStage = 'idea';
 let progressPercent = 0;
 let progressManual = false; // true when user manually overrides the slider
 
+// ════════════════ INTERVIEW STATE ════════════════
+let interviewMessages = [];    // full conversation history [{role, content}]
+let interviewBusy     = false; // prevent overlapping sends
+let interviewDone     = false; // true once AI signals "complete"
+
 // ════════════════ SECTION DEFINITIONS ════════════════
 const SECTIONS = [
   {
@@ -106,8 +111,11 @@ const STAGES = [
 async function init() {
   renderSections();
   wireGlobalEvents();
+  wireInterviewEvents();
 
-  if (ideaId) {
+  if (isNewIdea) {
+    showPitchOverlay();
+  } else if (ideaId) {
     await loadIdea();
   }
 }
@@ -182,10 +190,6 @@ function renderSummaryBody() {
       </span>
     </div>
     <div class="action-buttons">
-      <button class="btn btn-primary js-generate-summary">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-        Generate with AI
-      </button>
       <button class="btn btn-secondary js-edit-summary">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
@@ -341,9 +345,6 @@ function wireGlobalEvents() {
 
   // Version history toggle
   document.querySelector('.js-toggle-history')?.addEventListener('click', toggleHistoryPanel);
-
-  // Generate summary button
-  document.querySelector('.js-generate-summary').addEventListener('click', generateSummary);
 
   // Stage pills
   document.querySelectorAll('.stage-pill').forEach(pill => {
@@ -1085,6 +1086,372 @@ async function refreshToken() {
   const newToken = response.data.accessToken;
   localStorage.setItem('accessToken', newToken);
   axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
+}
+
+// ════════════════ PITCH OVERLAY ════════════════
+function showPitchOverlay() {
+  const overlay = document.getElementById('pitchOverlay');
+  if (overlay) {
+    overlay.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+    // Auto-focus the textarea after animation
+    setTimeout(() => document.getElementById('pitchInput')?.focus(), 400);
+  }
+}
+
+function hidePitchOverlay() {
+  const overlay = document.getElementById('pitchOverlay');
+  if (overlay) overlay.classList.add('hidden');
+}
+
+// ════════════════ INTERVIEW FLOW ════════════════
+function wireInterviewEvents() {
+  // Pitch overlay — Enter to submit (Shift+Enter = new line)
+  const pitchInput = document.getElementById('pitchInput');
+  const pitchBtn   = document.getElementById('pitchSubmit');
+  if (pitchInput) {
+    pitchInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        submitPitch();
+      }
+    });
+  }
+  if (pitchBtn) pitchBtn.addEventListener('click', submitPitch);
+
+  // Close pitch overlay — load most recent idea or go to idea hub
+  const pitchClose = document.getElementById('pitchClose');
+  if (pitchClose) pitchClose.addEventListener('click', async () => {
+    hidePitchOverlay();
+    document.body.style.overflow = '';
+    try {
+      const res = await axios.get('/api/save/ideas');
+      const ideas = (res.data?.idea || res.data || []);
+      if (ideas.length > 0) {
+        // Pick the most recently updated idea
+        ideas.sort((a, b) => new Date(b.updatedAt || b.createdAt) - new Date(a.updatedAt || a.createdAt));
+        const latest = ideas[0];
+        ideaId = latest._id;
+        localStorage.setItem('ideaId', JSON.stringify(ideaId));
+        isNewIdea = false;
+        await loadIdea();
+      } else {
+        window.location.href = '/idea-hub.html';
+      }
+    } catch {
+      window.location.href = '/idea-hub.html';
+    }
+  });
+
+  // Interview — Enter to send (Shift+Enter = new line)
+  const intInput = document.getElementById('interviewInput');
+  const intSend  = document.getElementById('interviewSend');
+  if (intInput) {
+    intInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendInterviewAnswer();
+      }
+    });
+    // Auto-resize
+    intInput.addEventListener('input', () => {
+      intInput.style.height = 'auto';
+      intInput.style.height = Math.min(intInput.scrollHeight, 120) + 'px';
+    });
+  }
+  if (intSend) intSend.addEventListener('click', sendInterviewAnswer);
+
+  // Skip button
+  const skipBtn = document.getElementById('interviewSkip');
+  if (skipBtn) skipBtn.addEventListener('click', skipInterview);
+}
+
+function submitPitch() {
+  const pitchInput = document.getElementById('pitchInput');
+  const text = pitchInput?.value?.trim();
+  if (!text) {
+    pitchInput?.focus();
+    return;
+  }
+  // Transition: hide pitch, open interview
+  hidePitchOverlay();
+  openInterview(text);
+}
+
+function openInterview(initialIdea) {
+  interviewMessages = [];
+  interviewBusy = false;
+  interviewDone = false;
+
+  const modal = document.getElementById('interviewModal');
+  const msgArea = document.getElementById('interviewMessages');
+  if (modal) modal.classList.remove('hidden');
+  if (msgArea) msgArea.innerHTML = '';
+  document.body.style.overflow = 'hidden';
+
+  // Show the user's first message
+  addInterviewBubble('user', initialIdea);
+  interviewMessages.push({ role: 'user', content: initialIdea });
+
+  // Send to AI
+  callInterviewAPI();
+}
+
+async function callInterviewAPI() {
+  if (interviewBusy || interviewDone) return;
+  interviewBusy = true;
+  setInterviewInputEnabled(false);
+  showTypingIndicator();
+  updateInterviewStatus('Thinking…');
+
+  // After 3s of waiting, show a reassurance message so the user isn't left wondering
+  const reassuranceTimer = setTimeout(() => {
+    hideTypingIndicator();
+    addInterviewBubble('ai', "Thanks! Give me a minute — I'm writing your Idea DNA page for you ✍️");
+    updateInterviewStatus('Building your DNA board…');
+    showTypingIndicator();
+  }, 3000);
+
+  try {
+    const res = await axios.post('/api/idea-hub/interview', {
+      messages: interviewMessages,
+    });
+
+    clearTimeout(reassuranceTimer);
+    hideTypingIndicator();
+    const data = res.data;
+
+    if (data.type === 'complete') {
+      interviewDone = true;
+
+      // Store the wrap-up message as plain text for history
+      const wrapMsg = data.message || "Great — I've got everything I need! Building your DNA board now…";
+      interviewMessages.push({ role: 'assistant', content: wrapMsg });
+
+      // Show wrap-up message
+      addInterviewBubble('ai', wrapMsg);
+
+      // Brief pause, then show system message and fill the board
+      setTimeout(() => {
+        addInterviewBubble('system', '✓ DNA board populated!');
+        updateInterviewStatus('Complete!');
+        setInterviewInputEnabled(false);
+      }, 800);
+
+      setTimeout(() => {
+        closeInterview();
+        populateDnaSections(data.sections, data.suggestedName);
+      }, 1800);
+
+    } else {
+      // It's a question — store ONLY the question text (not the JSON wrapper)
+      const question = typeof data.message === 'string' ? data.message : (typeof data === 'string' ? data : JSON.stringify(data));
+
+      // Safety: if the "question" looks like leaked raw JSON, don't display it
+      if (question.trim().startsWith('{') && question.includes('"type"')) {
+        console.warn('Received raw JSON as question — attempting local parse');
+        try {
+          const parsed = JSON.parse(question);
+          if (parsed.type === 'complete' && parsed.sections) {
+            interviewDone = true;
+            const wrapMsg = parsed.message || "Great — I've got everything I need! Building your DNA board now…";
+            interviewMessages.push({ role: 'assistant', content: wrapMsg });
+            addInterviewBubble('ai', wrapMsg);
+            setTimeout(() => {
+              addInterviewBubble('system', '✓ DNA board populated!');
+              updateInterviewStatus('Complete!');
+              setInterviewInputEnabled(false);
+            }, 800);
+            setTimeout(() => {
+              closeInterview();
+              populateDnaSections(parsed.sections, parsed.suggestedName);
+            }, 1800);
+            return;
+          } else if (parsed.message) {
+            // Use the extracted message instead of raw JSON
+            interviewMessages.push({ role: 'assistant', content: parsed.message });
+            addInterviewBubble('ai', parsed.message);
+            setInterviewInputEnabled(true);
+            updateInterviewStatus('Listening…');
+            document.getElementById('interviewInput')?.focus();
+            return;
+          }
+        } catch (_) { /* not valid JSON, display as-is */ }
+      }
+
+      interviewMessages.push({ role: 'assistant', content: question });
+      addInterviewBubble('ai', question);
+      setInterviewInputEnabled(true);
+      updateInterviewStatus('Listening…');
+      document.getElementById('interviewInput')?.focus();
+    }
+  } catch (err) {
+    clearTimeout(reassuranceTimer);
+    hideTypingIndicator();
+    console.error('Interview API error:', err);
+    if (err.response?.status === 403) {
+      await refreshToken();
+      interviewBusy = false;
+      return callInterviewAPI();
+    }
+    addInterviewBubble('system', 'Something went wrong. You can skip the interview and fill the board manually.');
+    setInterviewInputEnabled(true);
+  } finally {
+    interviewBusy = false;
+  }
+}
+
+function sendInterviewAnswer() {
+  if (interviewBusy || interviewDone) return;
+  const input = document.getElementById('interviewInput');
+  const text = input?.value?.trim();
+  if (!text) return;
+
+  addInterviewBubble('user', text);
+  interviewMessages.push({ role: 'user', content: text });
+  input.value = '';
+  input.style.height = 'auto';
+
+  callInterviewAPI();
+}
+
+function skipInterview() {
+  if (interviewBusy || interviewDone) return;
+
+  // Tell the AI to fill everything from its own knowledge
+  const skipMsg = "I can't answer any more questions — please just fill in all the sections using your best judgment based on what I've told you so far.";
+  addInterviewBubble('user', skipMsg);
+  interviewMessages.push({ role: 'user', content: skipMsg });
+
+  // Trigger the API call which will get a "complete" response
+  callInterviewAPI();
+}
+
+function closeInterview() {
+  const modal = document.getElementById('interviewModal');
+  if (modal) modal.classList.add('hidden');
+  document.body.style.overflow = '';
+}
+
+// ── UI helpers ──
+function addInterviewBubble(role, text) {
+  const container = document.getElementById('interviewMessages');
+  if (!container) return;
+  const div = document.createElement('div');
+  div.className = `interview-msg ${role}`;
+  div.textContent = text;
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+}
+
+function showTypingIndicator() {
+  const container = document.getElementById('interviewMessages');
+  if (!container) return;
+  let ind = container.querySelector('.typing-indicator');
+  if (ind) return;
+  ind = document.createElement('div');
+  ind.className = 'typing-indicator';
+  ind.innerHTML = '<span></span><span></span><span></span>';
+  container.appendChild(ind);
+  container.scrollTop = container.scrollHeight;
+}
+
+function hideTypingIndicator() {
+  const ind = document.querySelector('#interviewMessages .typing-indicator');
+  if (ind) ind.remove();
+}
+
+function setInterviewInputEnabled(enabled) {
+  const input = document.getElementById('interviewInput');
+  const btn   = document.getElementById('interviewSend');
+  if (input) input.disabled = !enabled;
+  if (btn) btn.disabled = !enabled;
+}
+
+function updateInterviewStatus(text) {
+  const el = document.querySelector('.js-interview-status');
+  if (el) el.textContent = text;
+}
+
+// ════════════════ POPULATE DNA FROM INTERVIEW ════════════════
+function populateDnaSections(sections, suggestedName) {
+  if (!sections) return;
+
+  // ── Idea name ──
+  const nameInput = document.querySelector('.js-idea-name');
+  if (suggestedName && nameInput && !nameInput.value.trim()) {
+    nameInput.value = suggestedName;
+  }
+
+  // ── Simple textarea fields ──
+  const textFields = {
+    vision: 'vision',
+    coreProblem: 'coreProblem',
+    targetAudience: 'targetAudience',
+    revenueModel: 'revenueModel',
+  };
+  for (const [sectionKey, domField] of Object.entries(textFields)) {
+    if (sections[sectionKey]) {
+      const el = document.querySelector(`.js-dna-field[data-field="${domField}"]`);
+      if (el) el.value = sections[sectionKey];
+    }
+  }
+
+  // ── Brand Identity ──
+  if (sections.brandIdentity) {
+    const descEl = document.querySelector('.js-dna-field[data-field="brandIdentity.description"]');
+    if (descEl && sections.brandIdentity.description) descEl.value = sections.brandIdentity.description;
+
+    if (Array.isArray(sections.brandIdentity.colors)) {
+      brandColors = sections.brandIdentity.colors.filter(c => typeof c === 'string');
+      renderBrandColorTags();
+    }
+    if (Array.isArray(sections.brandIdentity.fonts)) {
+      brandFonts = sections.brandIdentity.fonts.filter(f => typeof f === 'string');
+      renderBrandFontTags();
+    }
+  }
+
+  // ── Tech Stack ──
+  if (sections.techStack) {
+    if (Array.isArray(sections.techStack.tags)) {
+      techTags = sections.techStack.tags.filter(t => typeof t === 'string');
+      renderTechTagList();
+    }
+    const techNotesEl = document.querySelector('.js-dna-field[data-field="techStack.notes"]');
+    if (techNotesEl && sections.techStack.notes) techNotesEl.value = sections.techStack.notes;
+  }
+
+  // ── Stage & Progress ──
+  if (sections.progressStage) {
+    currentStage = sections.progressStage;
+    renderStagePills();
+  }
+  const pNotesEl = document.querySelector('.js-dna-field[data-field="progressNotes"]');
+  if (pNotesEl && sections.progressNotes) pNotesEl.value = sections.progressNotes;
+
+  // ── The Idea summary ──
+  if (sections.idea) {
+    const summaryText  = document.querySelector('.js-summary-text');
+    const placeholder  = document.querySelector('.js-summary-placeholder');
+    const summaryEdit  = document.querySelector('.js-summary-edit');
+    if (summaryText) {
+      summaryText.textContent = sections.idea;
+      summaryText.style.display = 'block';
+    }
+    if (placeholder) placeholder.style.display = 'none';
+    if (summaryEdit) summaryEdit.style.display = 'none';
+    updateWordCount(sections.idea);
+  }
+
+  // ── Refresh everything ──
+  updateCompletion();
+  updateCardPreviews();
+
+  // ── Save immediately with initial history entry ──
+  saveDna('initial', 'Auto-filled by AI co-founder interview');
+  renderHistory();
+  showToast('DNA board filled by your AI co-founder!', 'success');
 }
 
 // ════════════════ BOOT ════════════════

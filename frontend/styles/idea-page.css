@@ -357,8 +357,11 @@ body {
   padding: 40px 20px;
   overflow-y: auto;
   justify-content: center;
-  align-items: flex-start;
+  align-items: center;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
+.section-body::-webkit-scrollbar { display: none; }
 
 .dna-section.open .section-body {
   display: flex;
@@ -372,13 +375,16 @@ body {
 
 .section-body-inner {
   background: var(--panel);
-  border: 1px solid var(--border-light);
+  border: 2px solid transparent;
   border-radius: 18px;
-  max-width: 680px;
+  max-width: 900px;
   width: 100%;
-  margin: 40px auto;
+  margin: 0 auto;
+  background-image: linear-gradient(var(--panel), var(--panel)), var(--grad);
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
   box-shadow: 0 24px 80px rgba(0, 0, 0, 0.55),
-              0 0 0 1px rgba(255, 255, 255, 0.04);
+              0 0 20px rgba(132, 0, 255, 0.15);
   animation: modalSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   overflow: hidden;
 }
@@ -517,7 +523,7 @@ body {
 
 .dna-textarea {
   width: 100%;
-  min-height: 120px;
+  min-height: 260px;
   padding: 16px;
   background: rgba(255, 255, 255, 0.02);
   border: 1px solid var(--border-light);
@@ -528,7 +534,10 @@ body {
   line-height: 1.6;
   resize: vertical;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
+.dna-textarea::-webkit-scrollbar { display: none; }
 .dna-textarea:focus {
   outline: none;
   border-color: var(--purple);
@@ -1087,6 +1096,367 @@ body {
 @keyframes spin { to { transform: rotate(360deg); } }
 
 /* ============================================
+   PITCH OVERLAY (new idea entry)
+   ============================================ */
+
+.pitch-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 900;
+  background: rgba(0, 0, 0, 0.88);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: pitchFadeIn 0.35s ease;
+}
+.pitch-overlay.hidden { display: none; }
+
+@keyframes pitchFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.pitch-card {
+  position: relative;
+  background: var(--panel);
+  border: 2px solid transparent;
+  border-radius: 22px;
+  max-width: 900px;
+  width: 100%;
+  padding: 64px 64px 56px;
+  text-align: center;
+  background-image: linear-gradient(var(--panel), var(--panel)), var(--grad);
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+  box-shadow: 0 32px 80px rgba(0, 0, 0, 0.5),
+              0 0 24px rgba(132, 0, 255, 0.15);
+  animation: pitchSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes pitchSlideUp {
+  from { transform: translateY(32px) scale(0.96); opacity: 0; }
+  to   { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+.pitch-close-btn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 1.4rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  line-height: 1;
+}
+.pitch-close-btn:hover {
+  background: var(--panel-hover);
+  color: var(--text);
+  border-color: var(--border-light);
+}
+
+.pitch-icon-wrap {
+  margin-bottom: 20px;
+}
+
+.pitch-heading {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 12px;
+  letter-spacing: -0.02em;
+}
+
+.pitch-subtext {
+  font-size: 1rem;
+  color: var(--muted);
+  line-height: 1.6;
+  max-width: 560px;
+  margin: 0 auto 28px;
+}
+
+.pitch-textarea {
+  width: 100%;
+  min-height: 220px;
+  padding: 20px 22px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 1rem;
+  line-height: 1.6;
+  resize: vertical;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.pitch-textarea:focus {
+  outline: none;
+  border-color: var(--purple);
+  box-shadow: 0 0 0 3px rgba(132, 0, 255, 0.12);
+}
+.pitch-textarea::placeholder { color: var(--muted); }
+
+.pitch-btn {
+  width: 100%;
+  margin-top: 20px;
+  padding: 14px 24px;
+  font-size: 1rem;
+}
+
+.pitch-hint {
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin-top: 14px;
+  opacity: 0.6;
+}
+
+/* ============================================
+   INTERVIEW CHAT MODAL
+   ============================================ */
+
+.interview-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 950;
+  background: rgba(0, 0, 0, 0.88);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: pitchFadeIn 0.3s ease;
+}
+.interview-overlay.hidden { display: none; }
+
+.interview-panel {
+  background: var(--panel);
+  border: 1px solid var(--border-light);
+  border-radius: 20px;
+  max-width: 640px;
+  width: 100%;
+  height: 75vh;
+  max-height: 680px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 32px 80px rgba(0, 0, 0, 0.5),
+              0 0 0 1px rgba(255, 255, 255, 0.04);
+  animation: pitchSlideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Interview header */
+.interview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 24px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.interview-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.interview-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, rgba(132, 0, 255, 0.2), rgba(249, 64, 22, 0.15));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #c084fc;
+  flex-shrink: 0;
+}
+
+.interview-name {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0;
+}
+
+.interview-status {
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin: 2px 0 0;
+}
+
+.interview-skip-btn {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 500;
+  padding: 6px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.2s ease;
+}
+.interview-skip-btn:hover {
+  color: var(--text);
+  border-color: var(--border-light);
+  background: var(--panel-hover);
+}
+
+/* Interview messages area */
+.interview-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  scroll-behavior: smooth;
+}
+.interview-messages::-webkit-scrollbar { width: 6px; }
+.interview-messages::-webkit-scrollbar-track { background: transparent; }
+.interview-messages::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 3px; }
+
+/* Message bubbles */
+.interview-msg {
+  max-width: 85%;
+  padding: 14px 18px;
+  border-radius: 16px;
+  font-size: 0.95rem;
+  line-height: 1.55;
+  animation: msgFadeIn 0.25s ease;
+  word-wrap: break-word;
+}
+
+@keyframes msgFadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.interview-msg.ai {
+  background: rgba(132, 0, 255, 0.08);
+  border: 1px solid rgba(132, 0, 255, 0.12);
+  color: var(--text);
+  align-self: flex-start;
+  border-bottom-left-radius: 4px;
+}
+
+.interview-msg.user {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border);
+  color: var(--text);
+  align-self: flex-end;
+  border-bottom-right-radius: 4px;
+}
+
+.interview-msg.system {
+  align-self: center;
+  background: rgba(34, 197, 94, 0.08);
+  border: 1px solid rgba(34, 197, 94, 0.15);
+  color: var(--success);
+  font-size: 0.88rem;
+  font-weight: 500;
+  text-align: center;
+  max-width: 90%;
+  border-radius: 12px;
+}
+
+/* Typing indicator */
+.typing-indicator {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  padding: 14px 20px;
+  align-self: flex-start;
+  animation: msgFadeIn 0.25s ease;
+}
+.typing-indicator span {
+  width: 8px;
+  height: 8px;
+  background: rgba(132, 0, 255, 0.4);
+  border-radius: 50%;
+  animation: typingBounce 1.2s ease-in-out infinite;
+}
+.typing-indicator span:nth-child(2) { animation-delay: 0.15s; }
+.typing-indicator span:nth-child(3) { animation-delay: 0.3s; }
+
+@keyframes typingBounce {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+  30% { transform: translateY(-6px); opacity: 1; }
+}
+
+/* Interview input area */
+.interview-input-area {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  padding: 16px 20px;
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.interview-input {
+  flex: 1;
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  resize: none;
+  max-height: 120px;
+  overflow-y: auto;
+  transition: border-color 0.2s ease;
+}
+.interview-input:focus {
+  outline: none;
+  border-color: var(--purple);
+}
+.interview-input::placeholder { color: var(--muted); }
+.interview-input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.interview-send-btn {
+  width: 42px;
+  height: 42px;
+  min-width: 42px;
+  border-radius: 10px;
+  border: none;
+  background: var(--purple);
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+.interview-send-btn:hover {
+  background: #9333ea;
+  transform: scale(1.05);
+}
+.interview-send-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ============================================
    UTILITIES
    ============================================ */
 
@@ -1135,4 +1505,16 @@ body {
   .stage-pill { padding: 6px 12px; font-size: 0.88rem; }
   .progress-bar-slider::-webkit-slider-thumb { width: 22px; height: 22px; }
   .action-buttons { flex-direction: column; }
+
+  /* Pitch overlay mobile */
+  .pitch-card { padding: 36px 24px 32px; }
+  .pitch-heading { font-size: 1.4rem; }
+  .pitch-subtext { font-size: 0.85rem; }
+
+  /* Interview mobile */
+  .interview-panel { height: 85vh; max-height: none; border-radius: 16px; }
+  .interview-header { padding: 14px 16px; }
+  .interview-messages { padding: 16px; }
+  .interview-input-area { padding: 12px 14px; }
+  .interview-msg { max-width: 92%; font-size: 0.9rem; padding: 12px 14px; }
 }
