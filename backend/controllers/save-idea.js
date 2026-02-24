@@ -28,16 +28,81 @@ const updateIdea = async (req, res)=>{
   try {
     const userId = req.user.userId
     const {ideaId} = req.params
-    // Only allow updating specific fields (prevent mass assignment)
-    const allowedFields = ['idea', 'ideaName', 'archived'];
+
+    // String fields with their max lengths
+    const stringFields = {
+      idea: 10000,
+      ideaName: 200,
+      vision: 10000,
+      coreProblem: 10000,
+      targetAudience: 10000,
+      revenueModel: 10000,
+      competitiveLandscape: 10000,
+      mvpScope: 10000,
+      progressStage: 50,
+      progressNotes: 10000,
+    };
+
     const updateData = {};
-    for (const field of allowedFields) {
+
+    // Handle simple string fields
+    for (const [field, limit] of Object.entries(stringFields)) {
       if (req.body[field] !== undefined) {
-        updateData[field] = typeof req.body[field] === 'string' 
-          ? sanitizeString(maxLength(req.body[field], field === 'idea' ? 10000 : 200))
-          : req.body[field];
+        updateData[field] = sanitizeString(maxLength(ensureString(req.body[field]), limit));
       }
     }
+
+    // Handle boolean field
+    if (req.body.archived !== undefined) {
+      updateData.archived = !!req.body.archived;
+    }
+
+    // Handle brandIdentity (nested object)
+    if (req.body.brandIdentity !== undefined) {
+      const bi = req.body.brandIdentity;
+      updateData.brandIdentity = {
+        description: sanitizeString(maxLength(ensureString(bi.description || ''), 5000)),
+        colors: Array.isArray(bi.colors) ? bi.colors.map(c => sanitizeString(ensureString(c))).slice(0, 20) : [],
+        fonts: Array.isArray(bi.fonts) ? bi.fonts.map(f => sanitizeString(ensureString(f))).slice(0, 20) : [],
+      };
+    }
+
+    // Handle techStack (nested object)
+    if (req.body.techStack !== undefined) {
+      const ts = req.body.techStack;
+      updateData.techStack = {
+        tags: Array.isArray(ts.tags) ? ts.tags.map(t => sanitizeString(ensureString(t))).slice(0, 50) : [],
+        notes: sanitizeString(maxLength(ensureString(ts.notes || ''), 5000)),
+      };
+    }
+
+    // Handle progressMilestones (array of objects)
+    if (req.body.progressMilestones !== undefined) {
+      const milestones = Array.isArray(req.body.progressMilestones) ? req.body.progressMilestones : [];
+      updateData.progressMilestones = milestones.slice(0, 50).map(m => ({
+        label: sanitizeString(maxLength(ensureString(m.label || ''), 500)),
+        completed: !!m.completed,
+      }));
+    }
+
+    // Handle progress percent
+    if (req.body.progressPercent !== undefined) {
+      updateData.progressPercent = Math.max(0, Math.min(100, Number(req.body.progressPercent) || 0));
+    }
+    if (req.body.progressPercentManual !== undefined) {
+      updateData.progressPercentManual = !!req.body.progressPercentManual;
+    }
+
+    // Handle ideaHistory (array push — only if explicitly provided)
+    if (req.body.ideaHistory !== undefined) {
+      updateData.ideaHistory = req.body.ideaHistory;
+    }
+
+    // Handle lastSyncedAt
+    if (req.body.lastSyncedAt !== undefined) {
+      updateData.lastSyncedAt = req.body.lastSyncedAt;
+    }
+
     const idea = await Idea.findOneAndUpdate({userId, _id: ideaId}, updateData, {
       new: true,
       runValidators: true,

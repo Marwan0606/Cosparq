@@ -120,4 +120,95 @@ Based on the conversations, co-founder meetings, and research above, should the 
   }
 };
 
-module.exports = { syncIdeaWithAI };
+/**
+ * Generate a summary from all DNA sections using AI.
+ * The summary is stored in the `idea` field for backward compatibility.
+ */
+const generateDnaSummary = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const {
+      vision,
+      coreProblem,
+      targetAudience,
+      revenueModel,
+      competitiveLandscape,
+      mvpScope,
+      brandIdentity,
+      techStack,
+      progressStage,
+      progressNotes,
+      ideaName,
+    } = req.body;
+
+    // Build DNA context string from all sections
+    const sections = [];
+    if (ideaName) sections.push(`Idea Name: ${ideaName}`);
+    if (vision) sections.push(`Vision & Purpose: ${vision}`);
+    if (coreProblem) sections.push(`Core Problem: ${coreProblem}`);
+    if (targetAudience) sections.push(`Target Audience: ${targetAudience}`);
+    if (revenueModel) sections.push(`Revenue Model: ${revenueModel}`);
+    if (competitiveLandscape) sections.push(`Competitive Landscape: ${competitiveLandscape}`);
+    if (mvpScope) sections.push(`MVP Scope: ${mvpScope}`);
+    if (brandIdentity) {
+      const parts = [];
+      if (brandIdentity.description) parts.push(brandIdentity.description);
+      if (brandIdentity.colors?.length) parts.push(`Colors: ${brandIdentity.colors.join(', ')}`);
+      if (brandIdentity.fonts?.length) parts.push(`Fonts: ${brandIdentity.fonts.join(', ')}`);
+      if (parts.length) sections.push(`Brand & Identity: ${parts.join('. ')}`);
+    }
+    if (techStack) {
+      const parts = [];
+      if (techStack.tags?.length) parts.push(`Technologies: ${techStack.tags.join(', ')}`);
+      if (techStack.notes) parts.push(techStack.notes);
+      if (parts.length) sections.push(`Tech Stack: ${parts.join('. ')}`);
+    }
+    if (progressStage) sections.push(`Current Stage: ${progressStage}`);
+    if (progressNotes) sections.push(`Progress Notes: ${progressNotes}`);
+
+    if (sections.length === 0) {
+      return res.status(400).json({ error: 'At least one DNA section must be filled in to generate a summary.' });
+    }
+
+    const dnaContent = sections.join('\n\n');
+
+    const messages = [
+      {
+        role: 'system',
+        content: `You are a startup idea summarization expert. Your job is to take structured information about a startup idea and produce a clear, detailed, and comprehensive summary.
+
+RULES:
+1. The summary MUST be a maximum of 600 words
+2. Include ALL important details: the concept, the vision, the problem it solves, the target audience, the revenue model, technology, and current progress
+3. Write in a clear, professional third-person style
+4. Do NOT add information that is not in the provided sections — only summarize what is given
+5. Make the summary flow naturally as one cohesive description, not a list of bullet points
+6. Prioritize clarity — an AI reading this summary should fully understand what this idea is
+
+Return ONLY the summary text. No headings, no bullet points, no markdown formatting, no extra commentary.`,
+      },
+      {
+        role: 'user',
+        content: `Here are all the DNA sections for this startup idea. Please create a comprehensive summary (max 600 words):\n\n${dnaContent}`,
+      },
+    ];
+
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages,
+      temperature: 0.3,
+      max_tokens: 1200,
+    });
+
+    await trackApiUsage(userId, response, 'dnaSummaryGeneration');
+
+    const summary = response.choices[0].message.content.trim();
+
+    res.json({ summary });
+  } catch (error) {
+    console.error('DNA Summary generation error:', error);
+    res.status(500).json({ error: 'Failed to generate DNA summary' });
+  }
+};
+
+module.exports = { syncIdeaWithAI, generateDnaSummary };

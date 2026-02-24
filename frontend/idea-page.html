@@ -3,131 +3,52 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Your AI Cofounder — Pitch Your Idea</title>
+  <title>The DNA — CoSparq</title>
   <link rel="stylesheet" href="styles/idea-page.css"/>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
 
-  
+  <!-- Animated Background -->
+  <div class="background-gradient"></div>
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
 
-
-
-
-
-  
   <div id="sidebar-placeholder"></div>
-  <!-- background effects -->
-  <div class="background-glow"></div>
-  <div class="background-grid"></div>
 
-  <!-- main content -->
   <div class="container">
-    <div class="idea-card">
-      <div class="icon-wrap">
-        <svg viewBox="0 0 24 24" fill="currentColor" class="feature-icon">
-          <path d="M9 21h6v-1H9v1zm3-19a5 5 0 00-5 5c0 2.25 1.5 4.13 3.5 4.72V14h3v-2.28c2-.59 3.5-2.47 3.5-4.72a5 5 0 00-5-5z"/>
+    <!-- Header -->
+    <header class="page-header">
+      <h1 class="headline"><span class="gradient-text">The DNA</span></h1>
+      <p class="subtitle">The more detail you provide, the smarter your AI becomes.</p>
+    </header>
+
+    <!-- Name + Completion Bar -->
+    <div class="name-bar">
+      <div class="name-bar-left">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20" style="color:var(--purple);flex-shrink:0;">
+          <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
         </svg>
+        <input class="name-input js-idea-name" placeholder="Name your idea..." />
       </div>
-
-      <h2 class="headline">What's Your Big Idea?</h2>
-      <p class="subtitle">
-        Share your business concept and let’s analyze its potential together.
-      </p>
-
-      <textarea
-        class="idea-input js-input"
-        rows="5"
-        placeholder="Describe your business idea in as much detail as you can…"
-      ></textarea>
-
-      <input class="idea-name js-idea-name" placeholder="Put your idea name or any name to identify this idea">
-
-      <button class="cta-button js-analyze-button">Analyze My Idea →</button>
-
-
+      <div class="completion-wrap">
+        <span class="completion-label js-completion-label">0 / 8 sections</span>
+        <div class="completion-bar"><div class="completion-fill js-completion-fill"></div></div>
+      </div>
     </div>
+
+    <!-- DNA Sections -->
+    <div class="dna-content" id="dnaSections"></div>
   </div>
+
 <script>
-/*
 (function () {
   const LOGIN_URL = '/auth.html';
-
-  // don't loop on the login page itself
-  const IS_LOGIN_PAGE = location.pathname.endsWith('/login.html');
-
-  function isLoggedIn() {
-    try {
-      const raw = localStorage.getItem('user');
-      if (!raw) return false;
-      const u = JSON.parse(raw);
-      // match your structure: user.data.user._id
-      return !!(u && u.data && u.data.user && u.data.user._id);
-    } catch (_) {
-      return false;
-    }
-  }
-
-  function redirectToLogin() {
-    if (!IS_LOGIN_PAGE) {
-      // replace() avoids polluting history with a broken page
-      location.replace(LOGIN_URL);
-    }
-  }
-
-  // Initial check ASAP
-  if (!isLoggedIn()) redirectToLogin();
-
-  // If localStorage is cleared/changed in another tab
-  window.addEventListener('storage', (e) => {
-    // e.key === null means localStorage.clear()
-    if (e.key === 'user' || e.key === null) {
-      if (!isLoggedIn()) redirectToLogin();
-    }
-  });
-
-  // Re-check when user comes back to the tab
-  window.addEventListener('visibilitychange', () => {
-    if (!document.hidden && !isLoggedIn()) redirectToLogin();
-  });
-
-  // Optional: if you use axios, catch auth failures
-  if (window.axios) {
-    axios.interceptors.response.use(
-      (res) => res,
-      (err) => {
-        const status = err?.response?.status;
-        if (status === 401 || status === 403) redirectToLogin();
-        return Promise.reject(err);
-      }
-    );
-  }
-
-  // (Optional) Same-tab “instant” nuke catch:
-  // uncomment if you want a lightweight periodic check.
-  // setInterval(() => { if (!isLoggedIn()) redirectToLogin(); }, 1500);
-})();
-*/
-
-
-(function () {
-  const LOGIN_URL = '/auth.html';
-
-  // If you're already on auth.html, do nothing
   if (location.pathname.endsWith('/auth.html')) return;
-
   const token = localStorage.getItem('accessToken');
-  if (!token) {
-    // Not logged in (no token) → redirect
-    return location.replace(LOGIN_URL);
-  }
-
-  // Optionally: verify expiry client-side with jwt-decode or
-  // ping a /token/verify endpoint. Otherwise, just let the
-  // axios interceptor handle 401s server-side.
+  if (!token) return location.replace(LOGIN_URL);
 })();
-
-
 </script>
 
 
@@ -140,58 +61,16 @@
   ></script>
   <script src="./scripts/subscriptionHandler.js"></script>
 
-  
-
   <script type="module">
     async function loadSidebar() {
       const res  = await fetch('sidebar.html');
       const html = await res.text();
       document.getElementById('sidebar-placeholder').innerHTML = html;
-
       const { initSidebar } = await import('./scripts/sidebar.js');
       await initSidebar();
     }
     loadSidebar();
   </script>
 
-
-
-
-
-  <script>
-  (() => {
-    const el = document.querySelector('.idea-input.js-input');
-    if (!el) return;
-
-    const text  = 'Describe your idea in as much detail as you can…';
-    const speed = 40; // ms per character
-    let i = 0;
-    let stopped = false;
-
-    // If user focuses or types, stop the effect
-    function stop() { stopped = true; }
-    el.addEventListener('focus', stop);
-    el.addEventListener('input', stop);
-
-    // If there’s already text, don’t animate
-    if (el.value) return;
-
-    // Start from empty placeholder so the typing is visible
-    el.placeholder = '';
-
-    function type() {
-      if (stopped) return;
-      el.placeholder = text.slice(0, i++);
-      if (i <= text.length) {
-        setTimeout(type, speed);
-      }
-    }
-
-    // small delay so it feels smooth on load
-    setTimeout(type, 250);
-  })();
-  </script>
-
   <script type="module" src="./scripts/idea.js"></script>
 </body>
-</html>
