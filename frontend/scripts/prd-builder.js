@@ -126,7 +126,7 @@ function showNoIdeaMessage() {
   container.innerHTML = `
     <header class="header">
       <h1 class="headline">
-        <span class="gradient-text">Build It</span>
+        <span class="gradient-text">CoPrompt</span>
       </h1>
     </header>
     <div class="empty-state">

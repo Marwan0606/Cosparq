@@ -264,7 +264,7 @@ function formatRecentActivity(chats, tasks, brainstormSessions, idea) {
       activities.push({
         type: 'chat',
         icon: 'chat',
-        title: 'AI Chat',
+        title: 'Chat Agent',
         description: chat.userMessage?.substring(0, 60) + '...',
         timestamp: new Date(chat.createdAt).getTime()
       });
@@ -330,7 +330,7 @@ function generateRecommendations(idea, scoreData, marketData, chats, tasks) {
   if (chats.length === 0) {
     recommendations.push({
       priority: 'medium',
-      title: 'Chat with Your AI Co-Founder',
+      title: 'Chat with Your Chat Agent',
       description: 'Brainstorm ideas and get strategic advice',
       link: '/chat-page.html',
       icon: 'chat'
