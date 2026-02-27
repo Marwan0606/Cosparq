@@ -24,6 +24,14 @@ const { sanitizeString, maxLength, ensureString, ensureBoolean, isOneOf, isValid
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
+const isExplicitTaskRequest = (input = '') => {
+  const text = String(input).toLowerCase();
+  const explicitTaskCommand = /(add|create|make|put|note|save|log|track|break down|turn)\s+(this|that|it|a|an|my)?\s*(task|tasks|to[- ]?do|todo|action item)/.test(text);
+  const addToBoardPattern = /(add|put|save|log)\s+.*\s+(to|on)\s+.*(task board|tasks|to[- ]?do|todo)/.test(text);
+  const directTaskPhrase = /(create (a )?task|add (a )?task|add to my tasks|add to tasks|make a to[- ]?do|break this into tasks)/.test(text);
+  return explicitTaskCommand || addToBoardPattern || directTaskPhrase;
+};
+
 // ============== ACTION TOOL DEFINITIONS ==============
 const ACTION_TOOLS = [
   {
@@ -224,7 +232,7 @@ const ACTION_TOOLS = [
     type: "function",
     function: {
       name: "create_task",
-      description: "Create a single task on the user's task board. Use when the user asks to add, create, or note down a task, to-do, or action item.",
+      description: "Create a single task on the user's task board. ONLY use when the user EXPLICITLY asks to create/add/save a task or to-do item. Do NOT use for general planning, brainstorming, or advice requests.",
       parameters: {
         type: "object",
         properties: {
@@ -254,7 +262,7 @@ const ACTION_TOOLS = [
     type: "function",
     function: {
       name: "create_multiple_tasks",
-      description: "Create MULTIPLE tasks on the user's task board at once. Use when the user asks to add several tasks, break something into steps, or create a list of to-dos.",
+      description: "Create MULTIPLE tasks on the user's task board at once. ONLY use when the user EXPLICITLY asks to create/add multiple tasks or a to-do list. Do NOT use for general planning unless they directly requested task creation.",
       parameters: {
         type: "object",
         properties: {
@@ -371,7 +379,8 @@ CRITICAL INSTRUCTIONS:
 2. You have ALL the context you need - DO NOT ask for details you can generate yourself
 3. If the user says "generate it for me" or "you decide" - USE YOUR JUDGMENT and create something great
 4. Only ask for information you CANNOT determine from context (like a specific email address if not mentioned)
-${userName ? `5. The user's name is ${userName}. ONLY sign off with their name when composing emails or letters via tools — NEVER sign off regular chat replies with "Best, ${userName}" or similar.` : ''}
+5. Make responses specific to the user's startup idea, scoreboard, and tasks whenever relevant. Avoid generic advice when you have concrete context.
+${userName ? `6. The user's name is ${userName}. ONLY sign off with their name when composing emails or letters via tools — NEVER sign off regular chat replies with "Best, ${userName}" or similar.` : ''}
 
 CONTEXT YOU HAVE ACCESS TO:
 === STARTUP IDEA ===
@@ -444,6 +453,16 @@ If the user asks to perform an action like sending an email, creating a calendar
 
 However, if the user asks to add, create, or note down a task or to-do item, you CAN do that directly using the create_task or create_multiple_tasks tools. Do not redirect them to action buttons for task requests.
 
+TASK TOOL SAFETY:
+- Only call task tools when the user directly and explicitly asks to create/add/save tasks or to-dos.
+- Do NOT create tasks from implied intent, suggestions, brainstorming, strategy discussions, or generic planning questions.
+- If the user asks for advice only, respond with advice only.
+
+RESPONSE STYLE:
+- Be specific to the user's startup idea and known context (idea details, scoreboard, current tasks) whenever relevant.
+- Avoid generic boilerplate answers when context is available.
+- Only give generic answers when the user's question is naturally generic.
+
 Be helpful, concise, and actionable with your advice.`;
     }
 
@@ -510,6 +529,47 @@ Be helpful, concise, and actionable with your advice.`;
       }
 
       console.log(`Tool called: ${functionName}`, args);  // Debug logging
+
+      const taskToolCalled = functionName === 'create_task' || functionName === 'create_multiple_tasks';
+      if (!actionMode && taskToolCalled && !isExplicitTaskRequest(userInput)) {
+        const fallbackMessages = [
+          {
+            role: 'system',
+            content: `${systemPrompt}\n\nOVERRIDE FOR THIS TURN: The user did not explicitly ask to create tasks. Do NOT call task tools. Provide advice only.`
+          },
+          ...messages.slice(1)
+        ];
+
+        const fallbackCompletion = await openai.chat.completions.create({
+          model: 'gpt-4o-mini',
+          messages: fallbackMessages,
+          max_tokens: 1000,
+          temperature: 0.7
+        });
+
+        await trackApiUsage(userId, fallbackCompletion, 'chat-with-actions');
+
+        const fallbackReply = fallbackCompletion.choices[0].message.content || 'Here is my advice based on your idea context.';
+
+        await RawChatResponseModel.findOneAndUpdate(
+          { userId, ideaId, status: 'pending' },
+          { AiResponse: marked(fallbackReply), status: 'success' },
+          { new: true, runValidators: true, sort: { createdAt: -1 } }
+        );
+
+        await ChatResponseModel.findOneAndUpdate(
+          { userId, ideaId },
+          { userMessage: userInput.substring(0, 200), AiResponse: fallbackReply.substring(0, 200), status: 'success' },
+          { new: true, upsert: true, runValidators: true, sort: { createdAt: -1 } }
+        );
+
+        return res.json({
+          type: 'message',
+          reply: fallbackReply,
+          user_summary: userInput.substring(0, 100),
+          assistant_summary: fallbackReply.substring(0, 100)
+        });
+      }
 
       // Generate a preview for the user
       let preview;

@@ -387,4 +387,233 @@ CRITICAL: Every text section must meet its minimum word count. Do NOT write shor
   }
 };
 
-module.exports = { syncIdeaWithAI, generateDnaSummary, interviewChat };
+/**
+ * Resync DNA board with AI — reviews recent chat conversations and voice agent
+ * meeting summaries, updating only sections that need changes.
+ * Only reviews NEW data since the last resync (lastSyncedAt).
+ */
+const resyncWithAI = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const ideaId = ensureString(req.body.ideaId);
+
+    if (!ideaId) {
+      return res.status(400).json({ error: 'ideaId is required' });
+    }
+
+    // 1. Fetch the current idea
+    const Idea = require('../models/Idea-pitch-responses');
+    const idea = await Idea.findOne({ userId, _id: ideaId });
+    if (!idea) {
+      return res.status(404).json({ error: 'Idea not found' });
+    }
+
+    const lastSync = idea.lastSyncedAt || null;
+
+    // 2. Fetch raw chat messages (new since last sync, max 30)
+    const RawChat = require('../models/RawChat-responses');
+    const chatQuery = { userId, ideaId, status: 'success' };
+    if (lastSync) {
+      chatQuery.createdAt = { $gt: lastSync };
+    }
+    const chats = await RawChat.find(chatQuery)
+      .sort({ createdAt: -1 })
+      .limit(30)
+      .lean();
+    chats.reverse(); // oldest first for chronological context
+
+    // 3. Fetch cofounder meeting sessions (new since last sync, max 5)
+    const CofounderSession = require('../models/CofounderSession');
+    const sessionQuery = { userId, status: 'completed' };
+    // Match sessions tied to this idea, or general sessions (no ideaId)
+    sessionQuery.$or = [{ ideaId }, { ideaId: null }];
+    if (lastSync) {
+      sessionQuery.endedAt = { $gt: lastSync };
+    }
+    const sessions = await CofounderSession.find(sessionQuery)
+      .sort({ endedAt: -1 })
+      .limit(5)
+      .lean();
+    sessions.reverse(); // oldest first
+
+    // 4. Check if there's anything new to review
+    if (chats.length === 0 && sessions.length === 0) {
+      return res.json({
+        noChanges: true,
+        message: lastSync
+          ? 'No new conversations or meetings since your last resync. You\'re all up to date!'
+          : 'No conversations or meetings found yet. Start chatting or have a voice meeting first!'
+      });
+    }
+
+    // 5. Build context strings
+    let chatContext = '';
+    if (chats.length > 0) {
+      chatContext = chats.map((c, i) => {
+        const date = new Date(c.createdAt).toLocaleDateString();
+        return `[Chat ${i + 1} — ${date}]\nUser: ${c.userMessage}\nAI: ${c.AiResponse}`;
+      }).join('\n\n');
+    }
+
+    let meetingContext = '';
+    if (sessions.length > 0) {
+      meetingContext = sessions.map((s, i) => {
+        const date = new Date(s.endedAt || s.startedAt).toLocaleDateString();
+        const parts = [`[Meeting ${i + 1} — ${date}]`];
+        if (s.summary) {
+          if (s.summary.ideaStanding) parts.push(`Idea Standing: ${s.summary.ideaStanding}`);
+          if (s.summary.discussed?.length) parts.push(`Discussed: ${s.summary.discussed.join('; ')}`);
+          if (s.summary.insights?.length) parts.push(`Insights: ${s.summary.insights.join('; ')}`);
+          if (s.summary.whatsNew?.length) parts.push(`What's New: ${s.summary.whatsNew.join('; ')}`);
+          if (s.summary.nextSteps?.length) parts.push(`Next Steps: ${s.summary.nextSteps.map(n => n.text).join('; ')}`);
+        }
+        return parts.join('\n');
+      }).join('\n\n');
+    }
+
+    // 6. Build current DNA board state
+    const currentDna = [];
+    if (idea.ideaName) currentDna.push(`APP/PRODUCT NAME: ${idea.ideaName}`);
+    if (idea.idea) currentDna.push(`THE IDEA (summary): ${idea.idea}`);
+    if (idea.targetAudience) currentDna.push(`TARGET AUDIENCE: ${idea.targetAudience}`);
+    if (idea.vision) currentDna.push(`VISION & PURPOSE: ${idea.vision}`);
+    if (idea.coreProblem) currentDna.push(`CORE PROBLEM: ${idea.coreProblem}`);
+    if (idea.brandIdentity?.description) {
+      let brand = `BRAND & IDENTITY: ${idea.brandIdentity.description}`;
+      if (idea.brandIdentity.colors?.length) brand += ` | Colors: ${idea.brandIdentity.colors.join(', ')}`;
+      if (idea.brandIdentity.fonts?.length) brand += ` | Fonts: ${idea.brandIdentity.fonts.join(', ')}`;
+      currentDna.push(brand);
+    }
+    if (idea.revenueModel) currentDna.push(`REVENUE MODEL: ${idea.revenueModel}`);
+    if (idea.techStack?.tags?.length || idea.techStack?.notes) {
+      let tech = 'TECH STACK:';
+      if (idea.techStack.tags?.length) tech += ` Tags: ${idea.techStack.tags.join(', ')}.`;
+      if (idea.techStack.notes) tech += ` Notes: ${idea.techStack.notes}`;
+      currentDna.push(tech);
+    }
+    if (idea.progressStage) currentDna.push(`STAGE: ${idea.progressStage}`);
+    if (idea.progressNotes) currentDna.push(`PROGRESS NOTES: ${idea.progressNotes}`);
+    const dnaState = currentDna.join('\n\n');
+
+    // 7. Call OpenAI
+    const messages = [
+      {
+        role: 'system',
+        content: `You are an AI assistant that reviews recent conversations and meeting summaries to determine if a startup's DNA board needs updating.
+
+You will receive:
+1. The CURRENT state of all DNA board sections
+2. NEW chat conversations (between the user and their AI chat agent)
+3. NEW voice meeting summaries (from the user's AI voice agent meetings)
+
+YOUR JOB:
+- Read through the new conversations and meetings
+- Determine which DNA sections should be updated based on what was discussed
+- ONLY update sections where the conversations reveal new information, decisions, or changes
+- If nothing meaningful was discussed that affects a section, DO NOT include that section in your response
+- Preserve all existing good content — merge new insights into existing text, don't replace wholesale unless the direction has fundamentally changed
+- If ANY section is updated, you MUST also regenerate the "idea" section (the summary) to reflect the changes
+
+SECTIONS YOU CAN UPDATE:
+- "ideaName" — The app/product name (just the name, 1-4 words). Only update if the user explicitly mentioned wanting to rename their app or discussed a new name.
+- "idea" — The comprehensive summary (400-600 words, professional flowing prose covering the full startup picture)
+- "targetAudience" — Who the product is for (100-200 words, specific personas)
+- "vision" — Long-term vision and purpose (80-150 words)
+- "coreProblem" — The pain points being solved (80-150 words)
+- "brandIdentity" — Object with "description" (60-120 words), "colors" (array of hex codes), "fonts" (array of font names). Only include if explicitly discussed.
+- "revenueModel" — Monetization strategy (80-150 words)
+- "techStack" — Object with "tags" (array of technology names) and "notes" (80-150 words). Only include if explicitly discussed.
+- "progressStage" — One of: idea, validating, designing, building-mvp, mvp-done, launched, growing, scaling. Only change if the user explicitly mentioned moving to a new stage.
+- "progressNotes" — Notes about current progress. Only update if discussed.
+
+CRITICAL RULES:
+1. Return ONLY valid JSON — no markdown, no code blocks
+2. ONLY include sections that NEED updating — omit unchanged sections entirely
+3. If no sections need updating, return {"noChanges": true, "resyncMessage": "<short friendly explanation of what you reviewed and why nothing needed changing>"}
+4. Do NOT hallucinate or invent information not present in the conversations
+5. Merge new information INTO the existing content — don't lose existing details
+6. The "idea" summary must ALWAYS be included if any other section is updated
+7. ALWAYS include a "resyncMessage" field — a short, friendly 1-3 sentence summary written in first person as the AI, explaining what you found in the conversations and what you updated (or why nothing was updated). Keep it conversational and helpful.`,
+      },
+      {
+        role: 'user',
+        content: `### CURRENT DNA BOARD STATE
+${dnaState || 'No sections filled yet.'}
+
+### NEW CHAT CONVERSATIONS (${chats.length} messages${lastSync ? ' since last sync' : ''})
+${chatContext || 'None'}
+
+### NEW VOICE MEETING SUMMARIES (${sessions.length} meetings${lastSync ? ' since last sync' : ''})
+${meetingContext || 'None'}
+
+Review the new conversations and meetings above. Which DNA board sections need updating? Return a JSON object with ONLY the sections that need changes. If no changes are needed, return {"noChanges": true}. Always include a "resyncMessage" field — a friendly 1-3 sentence summary for the user about what you reviewed and what you updated (or why nothing needed updating). If changes are needed, also include a "changeSummary" field with a brief description of what changed.`,
+      },
+    ];
+
+    console.log(`Resync — ${chats.length} new chats, ${sessions.length} new meetings (since ${lastSync || 'beginning'})`);
+
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages,
+      temperature: 0.3,
+      max_tokens: 8192,
+      response_format: { type: 'json_object' },
+    });
+
+    await trackApiUsage(userId, response, 'dnaResync');
+
+    let result;
+    try {
+      result = JSON.parse(response.choices[0].message.content.trim());
+    } catch (parseError) {
+      console.error('Resync parse error:', parseError);
+      return res.status(500).json({ error: 'AI returned invalid response format' });
+    }
+
+    if (result.ideaName === undefined && result.name !== undefined) {
+      result.ideaName = result.name;
+    }
+
+    // Handle truncation — retry once with shorter prompt if needed
+    if (response.choices[0].finish_reason === 'length') {
+      console.warn('Resync response was truncated, returning partial');
+    }
+
+    // 8. Update lastSyncedAt regardless of outcome
+    idea.lastSyncedAt = new Date();
+    await idea.save();
+
+    if (result.noChanges) {
+      return res.json({
+        noChanges: true,
+        message: result.resyncMessage || 'Your DNA board is already up to date based on recent conversations!',
+        reviewedChats: chats.length,
+        reviewedMeetings: sessions.length,
+      });
+    }
+
+    // Return the sections that need updating
+    const updatedSections = {};
+    const sectionKeys = ['ideaName', 'idea', 'targetAudience', 'vision', 'coreProblem', 'brandIdentity', 'revenueModel', 'techStack', 'progressStage', 'progressNotes'];
+    for (const key of sectionKeys) {
+      if (result[key] !== undefined) {
+        updatedSections[key] = result[key];
+      }
+    }
+
+    res.json({
+      noChanges: false,
+      sections: updatedSections,
+      changeSummary: result.changeSummary || 'Updated based on recent conversations and meetings',
+      resyncMessage: result.resyncMessage || result.changeSummary || 'I updated your DNA board based on recent conversations.',
+      reviewedChats: chats.length,
+      reviewedMeetings: sessions.length,
+    });
+
+  } catch (error) {
+    console.error('Resync error:', error);
+    res.status(500).json({ error: 'Failed to resync with AI' });
+  }
+};
+
+module.exports = { syncIdeaWithAI, generateDnaSummary, interviewChat, resyncWithAI };

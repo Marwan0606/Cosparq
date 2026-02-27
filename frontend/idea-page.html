@@ -82,6 +82,10 @@
         </svg>
         <input class="name-input js-idea-name" placeholder="Name your idea..." />
       </div>
+      <button class="btn-resync js-resync-btn" title="Review recent chats & meetings and update your DNA board">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+        <span class="resync-text">Resync with AI</span>
+      </button>
       <div class="completion-wrap">
         <span class="completion-label js-completion-label">0 / 8 sections</span>
         <div class="completion-bar"><div class="completion-fill js-completion-fill"></div></div>
@@ -90,6 +94,21 @@
 
     <!-- DNA Sections -->
     <div class="dna-content" id="dnaSections"></div>
+  </div>
+
+  <!-- Resync Result Popup -->
+  <div class="resync-popup-overlay js-resync-overlay hidden">
+    <div class="resync-popup">
+      <div class="resync-popup-header">
+        <div class="resync-popup-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="url(#resyncGrad)" stroke-width="2" width="24" height="24"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/><defs><linearGradient id="resyncGrad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#8400ff"/><stop offset="100%" stop-color="#f94016"/></linearGradient></defs></svg>
+        </div>
+        <h3 class="resync-popup-title js-resync-popup-title">Resync Complete</h3>
+      </div>
+      <p class="resync-popup-body js-resync-popup-body"></p>
+      <div class="resync-popup-meta js-resync-popup-meta"></div>
+      <button class="btn btn-primary resync-popup-close js-resync-popup-close">Got it</button>
+    </div>
   </div>
 
 <script>

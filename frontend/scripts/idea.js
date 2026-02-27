@@ -332,6 +332,18 @@ function wireGlobalEvents() {
   // Idea name
   document.querySelector('.js-idea-name').addEventListener('input', () => { queueAutoSave(); });
 
+  // Resync with AI button
+  document.querySelector('.js-resync-btn')?.addEventListener('click', resyncWithAI);
+
+  // Resync popup close button
+  document.querySelector('.js-resync-popup-close')?.addEventListener('click', () => {
+    document.querySelector('.js-resync-overlay')?.classList.add('hidden');
+  });
+  // Close popup on overlay click
+  document.querySelector('.js-resync-overlay')?.addEventListener('click', (e) => {
+    if (e.target === e.currentTarget) e.currentTarget.classList.add('hidden');
+  });
+
   // Edit Manually button for summary
   document.querySelector('.js-edit-summary')?.addEventListener('click', toggleSummaryEdit);
 
@@ -731,6 +743,185 @@ async function generateSummary() {
   } finally {
     btn.disabled = false;
     btn.innerHTML = origText;
+  }
+}
+
+// ════════════════ RESYNC WITH AI ════════════════
+function showResyncPopup({ title, message, reviewedChats, reviewedMeetings, updatedSections }) {
+  const overlay = document.querySelector('.js-resync-overlay');
+  const titleEl = document.querySelector('.js-resync-popup-title');
+  const bodyEl = document.querySelector('.js-resync-popup-body');
+  const metaEl = document.querySelector('.js-resync-popup-meta');
+  if (!overlay) return;
+
+  titleEl.textContent = title || 'Resync Complete';
+  bodyEl.textContent = message || '';
+
+  // Build meta tags
+  const metaParts = [];
+  if (reviewedChats > 0) {
+    metaParts.push(`<span class="resync-meta-tag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>${reviewedChats} chat${reviewedChats > 1 ? 's' : ''} reviewed</span>`);
+  }
+  if (reviewedMeetings > 0) {
+    metaParts.push(`<span class="resync-meta-tag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/></svg>${reviewedMeetings} meeting${reviewedMeetings > 1 ? 's' : ''} reviewed</span>`);
+  }
+  if (updatedSections && updatedSections.length > 0) {
+    metaParts.push(`<span class="resync-meta-tag updated"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>${updatedSections.length} section${updatedSections.length > 1 ? 's' : ''} updated</span>`);
+  }
+  metaEl.innerHTML = metaParts.join('');
+
+  overlay.classList.remove('hidden');
+}
+
+async function resyncWithAI() {
+  if (isNewIdea || !ideaId) {
+    showToast('Save your idea first before resyncing.', 'error');
+    return;
+  }
+
+  const btn = document.querySelector('.js-resync-btn');
+  const textEl = btn.querySelector('.resync-text');
+  const origText = textEl.textContent;
+
+  btn.disabled = true;
+  textEl.textContent = 'Syncing...';
+  btn.classList.add('syncing');
+
+  try {
+    const res = await axios.post('/api/idea-hub/resync', { ideaId });
+    const data = res.data;
+
+    if (data.noChanges) {
+      showResyncPopup({
+        title: 'All Up to Date',
+        message: data.message || 'Your DNA board is already up to date!',
+        reviewedChats: data.reviewedChats || 0,
+        reviewedMeetings: data.reviewedMeetings || 0,
+        updatedSections: [],
+      });
+      return;
+    }
+
+    // Apply only the sections that were updated
+    const sections = data.sections;
+    if (!sections || Object.keys(sections).length === 0) {
+      showResyncPopup({
+        title: 'All Up to Date',
+        message: data.resyncMessage || 'No updates needed — your DNA board already reflects your latest conversations.',
+        reviewedChats: data.reviewedChats || 0,
+        reviewedMeetings: data.reviewedMeetings || 0,
+        updatedSections: [],
+      });
+      return;
+    }
+
+    // Update name if changed
+    if (sections.ideaName || sections.name) {
+      const nameInput = document.querySelector('.js-idea-name');
+      if (nameInput) nameInput.value = sections.ideaName || sections.name;
+    }
+
+    // Update simple textarea fields
+    const textFields = ['vision', 'coreProblem', 'targetAudience', 'revenueModel', 'progressNotes'];
+    for (const field of textFields) {
+      if (sections[field] !== undefined) {
+        const el = document.querySelector(`.js-dna-field[data-field="${field}"]`);
+        if (el) el.value = sections[field];
+      }
+    }
+
+    // Update brand identity
+    if (sections.brandIdentity) {
+      const bi = sections.brandIdentity;
+      if (bi.description) {
+        const descEl = document.querySelector('.js-dna-field[data-field="brandIdentity.description"]');
+        if (descEl) descEl.value = bi.description;
+      }
+      if (Array.isArray(bi.colors) && bi.colors.length) {
+        brandColors = bi.colors.filter(c => typeof c === 'string');
+        renderBrandColorTags();
+      }
+      if (Array.isArray(bi.fonts) && bi.fonts.length) {
+        brandFonts = bi.fonts.filter(f => typeof f === 'string');
+        renderBrandFontTags();
+      }
+    }
+
+    // Update tech stack
+    if (sections.techStack) {
+      if (Array.isArray(sections.techStack.tags) && sections.techStack.tags.length) {
+        techTags = sections.techStack.tags.filter(t => typeof t === 'string');
+        renderTechTagList();
+      }
+      if (sections.techStack.notes) {
+        const notesEl = document.querySelector('.js-dna-field[data-field="techStack.notes"]');
+        if (notesEl) notesEl.value = sections.techStack.notes;
+      }
+    }
+
+    // Update stage
+    if (sections.progressStage) {
+      currentStage = sections.progressStage;
+      renderStagePills();
+    }
+
+    // Update the idea summary (always last since it depends on other sections)
+    if (sections.idea) {
+      const summaryText = document.querySelector('.js-summary-text');
+      const placeholder = document.querySelector('.js-summary-placeholder');
+      const summaryEdit = document.querySelector('.js-summary-edit');
+      if (summaryText) {
+        summaryText.textContent = sections.idea;
+        summaryText.style.display = 'block';
+      }
+      if (placeholder) placeholder.style.display = 'none';
+      if (summaryEdit) summaryEdit.style.display = 'none';
+      updateWordCount(sections.idea);
+    }
+
+    // Refresh UI
+    updateCompletion();
+    updateCardPreviews();
+
+    // Save with history entry
+    const changeSummary = data.changeSummary || 'Resynced from recent conversations';
+    await saveDna('ai_sync', `AI Resync: ${changeSummary}`);
+    renderHistory();
+
+    // Update in-memory lastSyncedAt
+    if (ideaData) ideaData.lastSyncedAt = new Date().toISOString();
+
+    // Collect updated section names for display
+    const sectionLabels = {
+      ideaName: 'App Name', name: 'App Name', idea: 'The Idea', targetAudience: 'Target Audience', vision: 'Vision & Purpose',
+      coreProblem: 'Core Problem', brandIdentity: 'Brand & Identity', revenueModel: 'Revenue Model',
+      techStack: 'Tech Stack', progressStage: 'Stage', progressNotes: 'Progress Notes',
+    };
+    const updatedKeys = Object.keys(sections).filter(k => k !== 'changeSummary' && k !== 'resyncMessage');
+    const updatedLabels = updatedKeys.map(k => sectionLabels[k] || k);
+
+    showResyncPopup({
+      title: 'DNA Board Updated',
+      message: data.resyncMessage || data.changeSummary || 'Your DNA board has been updated based on recent conversations.',
+      reviewedChats: data.reviewedChats || 0,
+      reviewedMeetings: data.reviewedMeetings || 0,
+      updatedSections: updatedLabels,
+    });
+
+  } catch (err) {
+    if (err.response?.status === 403) {
+      await refreshToken();
+      btn.disabled = false;
+      textEl.textContent = origText;
+      btn.classList.remove('syncing');
+      return resyncWithAI();
+    }
+    showToast('Resync failed. Please try again.', 'error');
+    console.error('Resync error:', err);
+  } finally {
+    btn.disabled = false;
+    textEl.textContent = origText;
+    btn.classList.remove('syncing');
   }
 }
 
